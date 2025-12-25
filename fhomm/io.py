@@ -5,9 +5,17 @@ def must_read(f, n):
     return b
 
 
+def read_byte(f):
+    return must_read(f, 1)[0]
+
+
 def read_le16(f):
     b = must_read(f, 2)
     return (b[1] << 8) | b[0]
+
+
+def read_signed_le16(f):
+    return (read_le16(f) ^ 0x8000) - 0x8000
 
 
 def read_le32(f):

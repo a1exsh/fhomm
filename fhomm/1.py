@@ -4,8 +4,9 @@ import threading
 import pygame
 
 import fhomm.agg
-import fhomm.bmp
 import fhomm.pal
+import fhomm.bmp
+import fhomm.icn
 
 FPS_COLOR = pygame.color.Color('white')
 
@@ -27,9 +28,21 @@ def bmp_to_sdl(bmp):
     return s
 
 
+def icn_to_sdl(icn):
+    s = pygame.image.frombuffer(icn.data, (icn.width, icn.height), 'P')
+    s.set_colorkey(255)
+    s.set_palette(SDL_PALETTE)
+    return s
+
+
 def load_bmp(agg, name):
     agg.f.seek(agg.entries[name].offset, os.SEEK_SET)
     return fhomm.bmp.read_bitmap(agg.f)
+
+
+def load_icn(agg, name):
+    agg.f.seek(agg.entries[name].offset, os.SEEK_SET)
+    return fhomm.icn.read_icn_sprites(agg.f)
 
 
 pygame.init()
@@ -47,10 +60,19 @@ SDL_PALETTE = pal_to_sdl(PALETTE)
 HEROESBG = bmp_to_sdl(load_bmp(AGG, 'heroes.bmp'))
 REDBACK = bmp_to_sdl(load_bmp(AGG, 'redback.bmp'))
 
+BTNMAIN = load_icn(AGG, 'btnmain.icn')
+BTNLOAD = icn_to_sdl(BTNMAIN[0])
+DRAGON = load_icn(AGG, 'dragon.wlk')
+
+DRAGFLY = [icn_to_sdl(sprite) for sprite in DRAGON[0:6]]
+DRAGTICK = 0
 
 def render(screen):
+    global DRAGTICK
     screen.blit(HEROESBG, (0, 0))
     screen.blit(REDBACK, (screen.get_width() - (REDBACK.get_width() + 46), 35))
+    screen.blit(DRAGFLY[DRAGTICK], (250, 100))
+    DRAGTICK = (DRAGTICK + 1) % len(DRAGFLY)
 
 
 def render_fps(screen, dt):
