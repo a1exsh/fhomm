@@ -8,6 +8,7 @@ INDEX_ENTRY_SIZE = 2 + 4 + 4 + 4  # 2-byte "hash" + 4-byte offset + 4-byte size 
 ENTRY_NAME_SIZE = 15
 
 IndexEntry = namedtuple('IndexEntry', ['offset', 'size'])
+File = namedtuple('File', ['f', 'entries'])
 
 
 def read_entry_name(f):
@@ -62,3 +63,11 @@ def read_entries(f):
         entries[name] = read_index_entry(f)
 
     return entries
+
+
+def open_file(filepath):
+    f = open(filepath, 'rb')
+    try:
+        return File(f, read_entries(f))
+    except:
+        f.close()

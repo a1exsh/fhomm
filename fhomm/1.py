@@ -1,12 +1,16 @@
 import os
+import sys
+import threading
 import pygame
 
 import fhomm.agg
 import fhomm.bmp
 import fhomm.pal
 
+FPS_COLOR = pygame.color.Color('white')
 
-def make_sdl_palette(palette):
+
+def pal_to_sdl(palette):
     return [
         (
             4*palette[i*3],
@@ -17,42 +21,65 @@ def make_sdl_palette(palette):
     ]
 
 
-with open('/home/ash/Downloads/homm/data/HEROES.AGG', 'rb') as f:
-    entries = fhomm.agg.read_entries(f)
+def bmp_to_sdl(bmp):
+    s = pygame.image.frombuffer(bmp.data, (bmp.width, bmp.height), 'P')
+    s.set_palette(SDL_PALETTE)
+    return s
 
-    palette = fhomm.pal.read_palette(f, entries)
 
-    heroesbmp = entries['heroes.bmp']
-    f.seek(heroesbmp.offset, os.SEEK_SET)
-    heroes = fhomm.bmp.read_bitmap(f)
+def load_bmp(agg, name):
+    agg.f.seek(agg.entries[name].offset, os.SEEK_SET)
+    return fhomm.bmp.read_bitmap(agg.f)
 
 
 pygame.init()
-screen = pygame.display.set_mode((640, 480))
+SCREEN = pygame.display.set_mode((640, 480))
 
-sdl_palette = make_sdl_palette(palette)
+FONT = pygame.font.SysFont('Mono', 16)
 
-s = pygame.image.frombuffer(heroes.data, (heroes.width, heroes.height), 'P')
-s.set_palette(sdl_palette)
+HEROES_AGG_PATH = os.path.join(os.getenv('FHOMM_DATA'), 'HEROES.AGG')
+AGG = fhomm.agg.open_file(HEROES_AGG_PATH)
 
-clock = pygame.time.Clock()
-running = True
-dt = 0
+PALETTE = fhomm.pal.read_palette(AGG.f, AGG.entries)
 
-while running:
-    # poll for events
-    # pygame.QUIT event means the user clicked X to close your window
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
 
-    screen.blit(s, (0, 0))
+SDL_PALETTE = pal_to_sdl(PALETTE)
+HEROESBG = bmp_to_sdl(load_bmp(AGG, 'heroes.bmp'))
+REDBACK = bmp_to_sdl(load_bmp(AGG, 'redback.bmp'))
 
-    # RENDER YOUR GAME HERE
 
-    # flip() the display to put your work on screen
-    pygame.display.flip()
+def render(screen):
+    screen.blit(HEROESBG, (0, 0))
+    screen.blit(REDBACK, (screen.get_width() - (REDBACK.get_width() + 46), 35))
 
-    dt = clock.tick(60)  # limits FPS to 60
 
-pygame.quit()
+def render_fps(screen, dt):
+    fps = 0 if dt == 0 else 1000 // dt
+    s = FONT.render(str(fps), False, FPS_COLOR)
+    screen.blit(s, (0,0))       # screen.get_width() - s.get_width()
+
+
+def game_loop():
+    clock = pygame.time.Clock()
+    running = True
+    dt = 0
+
+    while running:
+        # poll for events
+        # pygame.QUIT event means the user clicked X to close your window
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+        render(SCREEN)
+        render_fps(SCREEN, dt)
+
+        # flip() the display to put your work on screen
+        pygame.display.flip()
+
+        dt = clock.tick(60)  # limits FPS to 60
+
+    pygame.quit()
+
+
+threading.Thread(target=game_loop).start()
