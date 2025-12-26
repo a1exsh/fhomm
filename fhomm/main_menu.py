@@ -5,37 +5,12 @@ from fhomm.ui import Pos
 
 
 class Handler(fhomm.handler.Handler):
-    def run(self):
-        if self.first_run:
-            self.first_run = False
-            self.setup()
-            return fhomm.handler.RENDER
+    def __init__(self, screen, loader):
+        super().__init__(screen, loader)
 
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                return fhomm.handler.QUIT
-
-            elif event.type == pygame.KEYDOWN:
-                for button in self.buttons:
-                    if event.key == button.hotkey:
-                        return fhomm.handler.QUIT
-
-            elif event.type == pygame.MOUSEMOTION:
-                #print(event)
-                changed = False
-                mouse_pos = Pos(event.pos[0], event.pos[1])
-                for button in self.buttons:
-                    if fhomm.ui.pos_in_rect(mouse_pos, button.rect):
-                        changed = changed or button.set_pressed()
-                    else:
-                        changed = changed or button.set_released()
-                if changed:
-                    return fhomm.handler.RENDER
-
-    def setup(self):
-        self.REDBACK = self.loader.load_image('redback.bmp')
+        self.bg_image = self.loader.load_image('redback.bmp')
         self.pos = Pos(
-            self.screen.get_width() - (self.REDBACK.get_width() + 46),
+            self.screen.get_width() - (self.bg_image.get_width() + 46),
             35
         )
         self.buttons = [
@@ -71,7 +46,31 @@ class Handler(fhomm.handler.Handler):
             ),
         ]
 
+    def on_event(self, event):
+        if event.type == pygame.QUIT:
+            return fhomm.handler.CMD_QUIT
+
+        elif event.type == fhomm.handler.EVENT_INIT:
+            return fhomm.handler.CMD_RENDER
+
+        elif event.type == pygame.KEYDOWN:
+            for button in self.buttons:
+                if event.key == button.hotkey:
+                    return fhomm.handler.CMD_QUIT
+
+        elif event.type == pygame.MOUSEMOTION:
+            #print(event)
+            changed = False
+            mouse_pos = Pos(event.pos[0], event.pos[1])
+            for button in self.buttons:
+                if fhomm.ui.pos_in_rect(mouse_pos, button.rect):
+                    changed = changed or button.set_pressed()
+                else:
+                    changed = changed or button.set_released()
+            if changed:
+                return fhomm.handler.CMD_RENDER
+
     def render(self):
-        self.REDBACK.render(self.screen, self.pos)
+        self.bg_image.render(self.screen, self.pos)
         for button in self.buttons:
             button.render(self.screen)
