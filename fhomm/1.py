@@ -62,14 +62,28 @@ REDBACK = bmp_to_sdl(load_bmp(AGG, 'redback.bmp'))
 
 BTNMAIN = load_icn(AGG, 'btnmain.icn')
 BTNLOAD = sprite_to_sdl(BTNMAIN[0])
+BTNNEW = sprite_to_sdl(BTNMAIN[2])
+BTNSCORE = sprite_to_sdl(BTNMAIN[4])
+BTNCREDITS = sprite_to_sdl(BTNMAIN[6])
+BTNQUIT = sprite_to_sdl(BTNMAIN[8])
+
 DRAGON = load_icn(AGG, 'dragon.wlk')
 
 DRAGFLY = [sprite_to_sdl(sprite) for sprite in DRAGON[0:6]]
 
+
 def render(screen):
     screen.blit(HEROESBG, (0, 0))
-    screen.blit(REDBACK, (screen.get_width() - (REDBACK.get_width() + 46), 35))
-    screen.blit(DRAGFLY[0], (250, 100))
+
+    menu_pos = (screen.get_width() - (REDBACK.get_width() + 46), 35)
+    screen.blit(REDBACK, menu_pos)
+    screen.blit(BTNNEW,     (menu_pos[0] + 33, menu_pos[1] + 45))
+    screen.blit(BTNLOAD,    (menu_pos[0] + 33, menu_pos[1] + 45 + 66))
+    screen.blit(BTNSCORE,   (menu_pos[0] + 33, menu_pos[1] + 45 + 66*2))
+    screen.blit(BTNCREDITS, (menu_pos[0] + 33, menu_pos[1] + 45 + 66*3))
+    screen.blit(BTNQUIT,    (menu_pos[0] + 33, menu_pos[1] + 45 + 66*4))
+
+    screen.blit(DRAGFLY[1], (250, 100))
 
 
 def render_fps(screen, dt):
