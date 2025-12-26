@@ -28,9 +28,9 @@ def bmp_to_sdl(bmp):
     return s
 
 
-def icn_to_sdl(icn):
-    s = pygame.image.frombuffer(icn.data, (icn.width, icn.height), 'P')
-    s.set_colorkey(255)
+def sprite_to_sdl(sprite):
+    s = pygame.image.frombuffer(sprite.data, (sprite.width, sprite.height), 'P')
+    s.set_colorkey(0)
     s.set_palette(SDL_PALETTE)
     return s
 
@@ -61,18 +61,15 @@ HEROESBG = bmp_to_sdl(load_bmp(AGG, 'heroes.bmp'))
 REDBACK = bmp_to_sdl(load_bmp(AGG, 'redback.bmp'))
 
 BTNMAIN = load_icn(AGG, 'btnmain.icn')
-BTNLOAD = icn_to_sdl(BTNMAIN[0])
+BTNLOAD = sprite_to_sdl(BTNMAIN[0])
 DRAGON = load_icn(AGG, 'dragon.wlk')
 
-DRAGFLY = [icn_to_sdl(sprite) for sprite in DRAGON[0:6]]
-DRAGTICK = 0
+DRAGFLY = [sprite_to_sdl(sprite) for sprite in DRAGON[0:6]]
 
 def render(screen):
-    global DRAGTICK
     screen.blit(HEROESBG, (0, 0))
     screen.blit(REDBACK, (screen.get_width() - (REDBACK.get_width() + 46), 35))
-    screen.blit(DRAGFLY[DRAGTICK], (250, 100))
-    DRAGTICK = (DRAGTICK + 1) % len(DRAGFLY)
+    screen.blit(DRAGFLY[0], (250, 100))
 
 
 def render_fps(screen, dt):

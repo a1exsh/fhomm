@@ -55,7 +55,7 @@ def read_sprite_data(f, h):
                 # fill to the end of the row
                 skip = h.width - x
                 # print(f"end of row => filling {skip}")
-                data.write(b'\xff'*skip)
+                data.write(b'\x00'*skip)
                 x = 0
 
             elif n < 0x80:      # read next N pixels
@@ -68,5 +68,5 @@ def read_sprite_data(f, h):
             else:               # skip (N - 0x80) transparent pixels
                 skip = n - 0x80
                 # print(f"transparency => filling {skip}")
-                data.write(b'\xff'*skip)
+                data.write(b'\x00'*skip)
                 x += skip
