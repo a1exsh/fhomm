@@ -18,20 +18,21 @@ class PygameLoader(object):
         self.loader = loader
         self.palette = palette
 
-    def load_bmp(self, name):
-        bmp = self.loader.load_bmp(name)
-        s = pygame.image.frombuffer(bmp.data, (bmp.width, bmp.height), 'P')
-        s.set_palette(self.palette)
-        return s
+    def load_image(self, bmp_name):
+        bmp = self.loader.load_bmp(bmp_name)
+        img = self.make_image(bmp.data, bmp.width, bmp.height)
+        return fhomm.ui.Image(img)
 
-    def load_sprite(self, name, idx):
-        icn = self.loader.load_icn(name)
-        sprite = icn[idx]
-        s = pygame.image.frombuffer(sprite.data, (sprite.width, sprite.height), 'P')
-        s.set_colorkey(0)
-        s.set_palette(self.palette)
-        return s
+    def load_sprite(self, icn_name, idx):
+        s = self.loader.load_icn(icn_name)[idx]
+        img = self.make_image(s.data, s.width, s.height)
+        img.set_colorkey(0)
+        return fhomm.ui.Sprite(img, s.offx, s.offy)
 
+    def make_image(self, data, width, height):
+        img = pygame.image.frombuffer(data, (width, height), 'P')
+        img.set_palette(self.palette)
+        return img
 
 def pal_to_pygame(palette):
     return [
@@ -62,9 +63,6 @@ SCREEN.set_palette(PALETTE.palette)
 
 FONT = pygame.font.SysFont('Mono', 16)
 FPS_COLOR = pygame.color.Color('white')
-
-
-HEROESBG = PYGAME_LOADER.load_bmp('heroes.bmp')
 
 # DRAGON = load_icn(AGG, 'dragon.wlk')
 # PHOENIX = load_icn(AGG, 'phoenix.wlk')
@@ -98,7 +96,6 @@ class MainHandler(fhomm.handler.Handler):
             self.handlers.append(
                 fhomm.main_menu.Handler(self.screen, self.loader, self.handlers)
             )
-            self.render()
             return fhomm.handler.RENDER
 
         for event in pygame.event.get():
@@ -106,7 +103,7 @@ class MainHandler(fhomm.handler.Handler):
                 return fhomm.handler.QUIT
 
     def render(self):
-        self.screen.blit(self.loader.load_bmp('heroes.bmp'), (0, 0))
+        self.loader.load_image('heroes.bmp').render(self.screen, (0, 0))
 
 
 def game_loop():
@@ -121,10 +118,18 @@ def game_loop():
     while True:
         handler = handlers[-1]
         cmd = handler.run()
-        if cmd == fhomm.handler.QUIT:
+        if cmd is None:
+            pass
+
+        elif cmd == fhomm.handler.QUIT:
             break
+
         elif cmd == fhomm.handler.RENDER:
+            handler.render()
             pygame.display.flip()
+
+        else:
+            print(f"unknown command from handler: {cmd}")
 
         dt = clock.tick(60)
         if PALETTE.update_tick(dt):
