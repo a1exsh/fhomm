@@ -7,8 +7,7 @@ import fhomm.agg
 import fhomm.pal
 import fhomm.bmp
 import fhomm.icn
-
-FPS_COLOR = pygame.color.Color('white')
+import fhomm.palette
 
 
 def pal_to_sdl(palette):
@@ -19,30 +18,6 @@ def pal_to_sdl(palette):
             4*palette[i*3+2],
         )
         for i in range(256)
-    ]
-
-
-def pal_cycle_index(i):
-    if i < 224:
-        return i
-    elif i < 228:
-        return 224 + ((i - 224) + 1) % 4
-    elif i < 232:
-        return 228 + ((i - 228) + 1) % 4
-    elif i < 240:
-        return i
-    elif i < 245:
-        return 240 + ((i - 240) + 1) % 5
-    elif i < 251:
-        return 245 + ((i - 245) + 1) % 6
-    else:
-        return i
-
-
-def pal_cycle(palette):
-    return [
-        palette[pal_cycle_index(i)]
-        for i in range(len(palette))
     ]
 
 
@@ -72,15 +47,16 @@ def load_icn(agg, name):
 HEROES_AGG_PATH = os.path.join(os.getenv('FHOMM_DATA'), 'HEROES.AGG')
 AGG = fhomm.agg.open_file(HEROES_AGG_PATH)
 
-PALETTE = fhomm.pal.read_palette(AGG.f, AGG.entries)
-SDL_PALETTE = pal_to_sdl(PALETTE)
+SDL_PALETTE = pal_to_sdl(fhomm.pal.read_palette(AGG))
+PALETTE = fhomm.palette.Palette(SDL_PALETTE)
 
 # pygame setup
 pygame.init()
 SCREEN = pygame.display.set_mode((640, 480), depth=8)
-SCREEN.set_palette(SDL_PALETTE)
+SCREEN.set_palette(PALETTE.palette)
 
 FONT = pygame.font.SysFont('Mono', 16)
+FPS_COLOR = pygame.color.Color('white')
 
 
 HEROESBG = bmp_to_sdl(load_bmp(AGG, 'heroes.bmp'))
@@ -115,16 +91,11 @@ def render(screen):
     screen.blit(PHOEFLY[0], (250, 150))
 
 
+# DEBUG
 def render_fps(screen, dt):
     fps = 0 if dt == 0 else 1000 // dt
     s = FONT.render(str(fps), False, FPS_COLOR)
     screen.blit(s, (0,0))       # screen.get_width() - s.get_width()
-
-
-PALETTE_CYCLE_TICK = 0
-PAL_CYCLE_EVERY = 250
-
-RENDERED_ONCE = False
 
 
 def render_palette(screen, size, offx, offy):
@@ -133,33 +104,17 @@ def render_palette(screen, size, offx, offy):
             screen.fill((y << 4) | x, (offx + x*size, offy + y*size, size, size))
 
 
-def game_loop_step(clock):
-    global SDL_PALETTE
-    global PALETTE_CYCLE_TICK
-    global RENDERED_ONCE
-
-    dt = clock.tick(10)  # limits FPS to 60
-
-    if not RENDERED_ONCE:
-        render(SCREEN)
-        render_palette(SCREEN, 8, 258, 8)
-        render_fps(SCREEN, PALETTE_CYCLE_TICK)
-
-        pygame.display.flip()
-        RENDERED_ONCE = True
-
-    PALETTE_CYCLE_TICK += dt
-
-    if PALETTE_CYCLE_TICK >= PAL_CYCLE_EVERY:
-        while PALETTE_CYCLE_TICK >= PAL_CYCLE_EVERY:
-            SDL_PALETTE = pal_cycle(SDL_PALETTE)
-            PALETTE_CYCLE_TICK -= PAL_CYCLE_EVERY
-
-        SCREEN.set_palette(SDL_PALETTE)
+def game_loop_step():
+    pass
 
 
 def game_loop():
     clock = pygame.time.Clock()
+
+    render(SCREEN)
+    # render_palette(SCREEN, 8, 258, 8)
+    # render_fps(SCREEN, PALETTE_CYCLE_TICK)
+    pygame.display.flip()
 
     running = True
     while running:
@@ -169,7 +124,11 @@ def game_loop():
             if event.type == pygame.QUIT:
                 running = False
 
-        game_loop_step(clock)
+        dt = clock.tick(60)
+        if PALETTE.update_tick(dt):
+            SCREEN.set_palette(PALETTE.palette)
+
+        game_loop_step()
 
     pygame.quit()
 
