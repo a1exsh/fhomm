@@ -1,23 +1,25 @@
 import pygame
 
-import fhomm.handler
-from fhomm.ui import Pos
+import fhomm.ui
+from fhomm.ui import Pos, Rect
 
 
-class Handler(fhomm.handler.Handler):
+class Handler(fhomm.ui.Handler):
     def __init__(self, screen, loader):
         super().__init__(screen, loader)
 
         self.bg_image = self.loader.load_image('redback.bmp')
-        self.pos = Pos(
+        self.rect = Rect(
             self.screen.get_width() - (self.bg_image.get_width() + 46),
-            35
+            35,
+            self.bg_image.get_width(),
+            self.bg_image.get_height(),
         )
         self.children = [
             fhomm.ui.IcnButton(
                 self.screen,
                 self.loader,
-                Pos(self.pos.x + 33, self.pos.y + 45),
+                Pos(self.rect.x + 33, self.rect.y + 45),
                 'btnmain.icn',
                 2,
                 pygame.K_n,
@@ -25,7 +27,7 @@ class Handler(fhomm.handler.Handler):
             fhomm.ui.IcnButton(
                 self.screen,
                 self.loader,
-                Pos(self.pos.x + 33, self.pos.y + 45 + 66),
+                Pos(self.rect.x + 33, self.rect.y + 45 + 66),
                 'btnmain.icn',
                 0,
                 pygame.K_l,
@@ -33,7 +35,7 @@ class Handler(fhomm.handler.Handler):
             fhomm.ui.IcnButton(
                 self.screen,
                 self.loader,
-                Pos(self.pos.x + 33, self.pos.y + 45 + 66*2),
+                Pos(self.rect.x + 33, self.rect.y + 45 + 66*2),
                 'btnmain.icn',
                 4,
                 pygame.K_s,
@@ -41,7 +43,7 @@ class Handler(fhomm.handler.Handler):
             fhomm.ui.IcnButton(
                 self.screen,
                 self.loader,
-                Pos(self.pos.x + 33, self.pos.y + 45 + 66*3),
+                Pos(self.rect.x + 33, self.rect.y + 45 + 66*3),
                 'btnmain.icn',
                 6,
                 pygame.K_c,
@@ -49,7 +51,7 @@ class Handler(fhomm.handler.Handler):
             fhomm.ui.IcnButton(
                 self.screen,
                 self.loader,
-                Pos(self.pos.x + 33, self.pos.y + 45 + 66*4),
+                Pos(self.rect.x + 33, self.rect.y + 45 + 66*4),
                 'btnmain.icn',
                 8,
                 pygame.K_q,
@@ -85,7 +87,7 @@ class Handler(fhomm.handler.Handler):
         pal[224:232] = [(255, 255, 255)]*8
         pal[240:251] = [(255, 255, 255)]*11
         self.screen.set_palette(pal)
-        self.screen.blit(shadow, (self.pos.x + 16, self.pos.y + 16))
+        self.screen.blit(shadow, (self.rect.x + 16, self.rect.y + 16))
         self.screen.set_palette(org)
 
-        self.bg_image.render(self.screen, self.pos)
+        self.bg_image.render(self.screen, Pos(self.rect.x, self.rect.y))

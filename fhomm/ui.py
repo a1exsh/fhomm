@@ -7,52 +7,84 @@ Pos = namedtuple('Pos', ['x', 'y'])
 Rect = namedtuple('Rect', ['x', 'y', 'w', 'h'])
 
 
-class Image(object):
-    def __init__(self, img):
-        self.img = img
+class Handler(object):
+    def __init__(self, screen, loader):
+        self.screen = screen
+        self.loader = loader
+        self.children = []
+        self.hovered = False
+        self._dirty = True
 
-    def render(self, screen, pos):
-        screen.blit(self.img, pos)
+    def dirty(self):
+        self._dirty = True
 
-    def get_width(self):
-        return self.img.get_width()
+    def render(self, force=False):
+        flip = False
 
-    def get_height(self):
-        return self.img.get_height()
+        if self._dirty or force:
+            # print(f"needs render: {self}")
+            self.on_render()
+            # DEBUG
+            if self.hovered:
+                pygame.draw.rect(self.screen, 228, self.rect, 1)
+            # DEBUG
+            self._dirty = False
+            flip = True
+            force = True
+
+        for child in self.children:
+            if child.render(force):
+                flip = True
+
+        return flip
+
+    def on_render(self):
+        pass
+
+    def handle(self, event):
+#        print(f"{self}.handle: {event}")
+
+        if event.type == pygame.MOUSEMOTION:
+            # print(f"{self}.handle MOUSEMOTION: {event}")
+            cur_mouse_pos = Pos(event.pos[0], event.pos[1])
+            old_mouse_pos = Pos(event.pos[0] - event.rel[0], event.pos[1] - event.rel[1])
+            for child in self.children:
+                if pos_in_rect(cur_mouse_pos, child.rect) or \
+                   pos_in_rect(old_mouse_pos, child.rect):
+                    child.handle(event)
+        else:
+            for child in self.children:
+                cmd = child.handle(event)
+                if cmd is not None:
+                    #print(cmd)
+                    return cmd
+
+        return self.on_event(event)
+
+    def on_event(self, event):
+        #print(f"{self}.on_event: {event}")
+
+        if event.type == pygame.MOUSEMOTION:
+            mouse_pos = Pos(event.pos[0], event.pos[1])
+            if pos_in_rect(mouse_pos, self.rect):
+                old_hovered, self.hovered = self.hovered, True
+            else:
+                old_hovered, self.hovered = self.hovered, False
+            if old_hovered != self.hovered:
+                self.dirty()    # DEBUG
+                if self.hovered:
+                    self.on_mouse_enter()
+                else:
+                    self.on_mouse_leave()
+
+    def on_mouse_enter(self):
+        pass
+
+    def on_mouse_leave(self):
+        pass
 
 
-class Sprite(Image):
-    def __init__(self, img, offx, offy):
-        super().__init__(img)
-        self.offx = offx
-        self.offy = offy
-
-    def render(self, screen, pos):
-        screen.blit(self.img, (pos.x + self.offx, pos.y + self.offy))
-
-
-# class Button(object):
-#     def __init__(self, pos, img, img_pressed, hotkey=None):
-#         self.pos = pos
-#         self.img = img
-#         self.img_pressed = img_pressed
-#         self.hotkey = hotkey
-
-#         self.rect = Rect(
-#             self.pos.x,
-#             self.pos.y,
-#             self.img.get_width(),
-#             self.img.get_height(),
-#         )
-#         self.is_pressed = False
-
-#     # TODO: doesn't have to be screen, could be some random surface
-#     def render(self, screen):
-#         img = self.img_pressed if self.is_pressed else self.img
-#         img.render(screen, self.pos)
-
-
-class IcnButton(fhomm.handler.Handler):
+class IcnButton(Handler):
     def __init__(self, screen, loader, pos, icn_name, base_idx, hotkey=None):
         super().__init__(screen, loader)
         self.pos = pos
@@ -78,24 +110,24 @@ class IcnButton(fhomm.handler.Handler):
         self.is_pressed = False
         return changed
 
-    def on_event(self, event):
-        if event.type == pygame.KEYDOWN:
-            if event.key == self.hotkey:
-                print(f"hotkey: {self.hotkey}")
-
-        elif event.type == pygame.MOUSEMOTION:
-            #print(event)
-            mouse_pos = Pos(event.pos[0], event.pos[1])
-            if pos_in_rect(mouse_pos, self.rect):
-                if self.set_pressed():
-                    self.needs_render = True
-            else:
-                if self.set_released():
-                    self.needs_render = True
-
     def on_render(self):
         img = self.img_pressed if self.is_pressed else self.img
         img.render(self.screen, self.pos)
+
+    def on_mouse_enter(self):
+        self.is_pressed = True
+        self.dirty()
+
+    def on_mouse_leave(self):
+        self.is_pressed = False
+        self.dirty()
+
+    # def on_event(self, event):
+    #     #print(f"IcnButton.on_event: {event}")
+
+    #     if event.type == pygame.KEYDOWN:
+    #         if event.key == self.hotkey:
+    #             print(f"hotkey: {self.hotkey}")
         
 
 def pos_in_rect(pos, rect):

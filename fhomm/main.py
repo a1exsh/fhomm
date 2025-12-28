@@ -9,8 +9,33 @@ import fhomm.bmp
 import fhomm.icn
 import fhomm.loader
 import fhomm.palette
+import fhomm.ui
 import fhomm.handler
 import fhomm.main_menu
+
+
+class Image(object):
+    def __init__(self, img):
+        self.img = img
+
+    def render(self, screen, pos):
+        screen.blit(self.img, pos)
+
+    def get_width(self):
+        return self.img.get_width()
+
+    def get_height(self):
+        return self.img.get_height()
+
+
+class Sprite(Image):
+    def __init__(self, img, offx, offy):
+        super().__init__(img)
+        self.offx = offx
+        self.offy = offy
+
+    def render(self, screen, pos):
+        screen.blit(self.img, (pos.x + self.offx, pos.y + self.offy))
 
 
 class PygameLoader(object):
@@ -21,13 +46,13 @@ class PygameLoader(object):
     def load_image(self, bmp_name):
         bmp = self.loader.load_bmp(bmp_name)
         img = self.make_image(bmp.data, bmp.width, bmp.height)
-        return fhomm.ui.Image(img)
+        return Image(img)
 
     def load_sprite(self, icn_name, idx):
         s = self.loader.load_icn(icn_name)[idx]
         img = self.make_image(s.data, s.width, s.height)
         img.set_colorkey(0)
-        return fhomm.ui.Sprite(img, s.offx, s.offy)
+        return Sprite(img, s.offx, s.offy)
 
     def make_image(self, data, width, height):
         img = pygame.image.frombuffer(data, (width, height), 'P')
@@ -90,17 +115,16 @@ def render_palette(screen, size, offx, offy):
             screen.fill((y << 4) | x, (offx + x*size, offy + y*size, size, size))
 
 
-class MainHandler(fhomm.handler.Handler):
+class MainHandler(fhomm.ui.Handler):
     def __init__(self, screen, loader):
         super().__init__(screen, loader)
         self.bg_image = self.loader.load_image('heroes.bmp')
+        self.rect = fhomm.ui.Rect(0, 0, screen.get_width(), screen.get_height())
         self.children.append(fhomm.main_menu.Handler(self.screen, self.loader))
 
     def on_event(self, event):
         if event.type == pygame.QUIT:
             return fhomm.handler.CMD_QUIT
-
-        return super().on_event(event)
 
     def on_render(self):
         self.bg_image.render(self.screen, (0, 0))
@@ -122,7 +146,7 @@ class Game(object):
         self.running = True
         while self.running:
             for event in pygame.event.get():
-                command = self.handler.on_event(event)
+                command = self.handler.handle(event)
                 if command is not None:
                     self.run_command(command)
 
