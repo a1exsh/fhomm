@@ -76,4 +76,16 @@ class Handler(fhomm.handler.Handler):
         #         return fhomm.handler.CMD_RENDER
 
     def on_render(self):
+        shadow = pygame.Surface((self.bg_image.get_width(), self.bg_image.get_height()))
+        shadow.set_alpha(96)
+
+        # overwrite the cycling blocks in the palette to avoid mapping to them due to blend
+        org = list(self.screen.get_palette()) # it's a tuple, so make a copy to assign
+        pal = list(org)
+        pal[224:232] = [(255, 255, 255)]*8
+        pal[240:251] = [(255, 255, 255)]*11
+        self.screen.set_palette(pal)
+        self.screen.blit(shadow, (self.pos.x + 16, self.pos.y + 16))
+        self.screen.set_palette(org)
+
         self.bg_image.render(self.screen, self.pos)
