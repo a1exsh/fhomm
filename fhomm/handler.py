@@ -8,11 +8,13 @@ QUIT = -1
 # RENDER = 0
 # PUSH_HANDLER = 1
 # COMPOSE = 2
+TOGGLE_FULLSCREEN = 3
 
 Command = namedtuple('Command', ['code', 'kwargs'], defaults=[None])
 
 CMD_QUIT = Command(QUIT)
 # CMD_RENDER = Command(RENDER)
+CMD_TOGGLE_FULLSCREEN = Command(TOGGLE_FULLSCREEN)
 
 
 # def cmd_push_handler(handler):

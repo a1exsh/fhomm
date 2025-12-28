@@ -126,6 +126,10 @@ class MainHandler(fhomm.ui.Handler):
         if event.type == pygame.QUIT:
             return fhomm.handler.CMD_QUIT
 
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_F4:
+                return fhomm.handler.CMD_TOGGLE_FULLSCREEN
+
     def on_render(self):
         self.bg_image.render(self.screen, (0, 0))
 
@@ -163,6 +167,9 @@ class Game(object):
     def run_command(self, command):
         if command.code == fhomm.handler.QUIT:
             self.running = False
+
+        elif command.code == fhomm.handler.TOGGLE_FULLSCREEN:
+            pygame.display.toggle_fullscreen()
 
         # elif command.code == fhomm.handler.COMPOSE:
         #     for cmd in command.kwargs['commands']:
