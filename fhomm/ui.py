@@ -99,6 +99,7 @@ class IcnButton(fhomm.handler.Handler):
         
 
 def pos_in_rect(pos, rect):
-    return \
-        rect.x <= pos.x and pos.x <= (rect.x + rect.w) and \
+    return (
+        rect.x <= pos.x and pos.x <= (rect.x + rect.w) and
         rect.y <= pos.y and pos.y <= (rect.y + rect.h)
+    )

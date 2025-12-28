@@ -41,7 +41,7 @@ class Handler(object):
 
         # self.needs_render = True
         if self.needs_render:
-            print(f"needs render: {self}")
+            # print(f"needs render: {self}")
             self.on_render()
             self.needs_render = False
             flip = True

@@ -127,7 +127,7 @@ class Game(object):
                     self.run_command(command)
 
             if self.handler.render():
-                print("flippin")
+                # print("flippin")
                 pygame.display.flip()
 
             dt = clock.tick(60)
