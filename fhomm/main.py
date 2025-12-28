@@ -34,6 +34,7 @@ class PygameLoader(object):
         img.set_palette(self.palette)
         return img
 
+
 def pal_to_pygame(palette):
     return [
         (
@@ -93,33 +94,24 @@ class MainHandler(fhomm.handler.Handler):
     def __init__(self, screen, loader):
         super().__init__(screen, loader)
         self.bg_image = self.loader.load_image('heroes.bmp')
+        self.children.append(fhomm.main_menu.Handler(self.screen, self.loader))
 
     def on_event(self, event):
         if event.type == pygame.QUIT:
             return fhomm.handler.CMD_QUIT
 
-        elif event.type == fhomm.handler.EVENT_INIT:
-            return fhomm.handler.cmd_compose(
-                fhomm.handler.CMD_RENDER,
-                fhomm.handler.cmd_push_handler(
-                    fhomm.main_menu.Handler(self.screen, self.loader),
-                )
-            )
+        return super().on_event(event)
 
-    def render(self):
+    def on_render(self):
         self.bg_image.render(self.screen, (0, 0))
 
 
 class Game(object):
     def __init__(self):
-        self.handlers = []
-        self.handlers.append(MainHandler(SCREEN, PYGAME_LOADER))
+        self.handler = MainHandler(SCREEN, PYGAME_LOADER)
 
     def __call__(self):
         self.run()
-
-    def top_handler(self):
-        return self.handlers[-1]
 
     def run(self):
         clock = pygame.time.Clock()
@@ -127,14 +119,16 @@ class Game(object):
         # render_palette(SCREEN, 8, 258, 8)
         # render_fps(SCREEN, PALETTE_CYCLE_TICK)
 
-        pygame.event.post(pygame.event.Event(fhomm.handler.EVENT_INIT))
-
         self.running = True
         while self.running:
             for event in pygame.event.get():
-                handler = self.top_handler()
-                command = handler.on_event(event)
-                self.run_command(command, handler)
+                command = self.handler.on_event(event)
+                if command is not None:
+                    self.run_command(command)
+
+            if self.handler.render():
+                print("flippin")
+                pygame.display.flip()
 
             dt = clock.tick(60)
             if PALETTE.update_tick(dt):
@@ -142,24 +136,13 @@ class Game(object):
 
         pygame.quit()
 
-    def run_command(self, command, handler):
-        if command is None:
-            return
-
+    def run_command(self, command):
         if command.code == fhomm.handler.QUIT:
             self.running = False
 
-        elif command.code == fhomm.handler.RENDER:
-            handler.render()
-            pygame.display.flip()
-
-        elif command.code == fhomm.handler.PUSH_HANDLER:
-            self.handlers.append(command.kwargs['handler'])
-            pygame.event.post(pygame.event.Event(fhomm.handler.EVENT_INIT))
-
-        elif command.code == fhomm.handler.COMPOSE:
-            for cmd in command.kwargs['commands']:
-                self.run_command(cmd, handler)
+        # elif command.code == fhomm.handler.COMPOSE:
+        #     for cmd in command.kwargs['commands']:
+        #         self.run_command(cmd, handler)
 
         else:
             print(f"unknown command from handler: {command}")
