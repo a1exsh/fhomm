@@ -7,7 +7,7 @@ Pos = namedtuple('Pos', ['x', 'y'])
 Rect = namedtuple('Rect', ['x', 'y', 'w', 'h'])
 
 
-class Handler(object):
+class Element(object):
     def __init__(self, screen, loader):
         self.screen = screen
         self.loader = loader
@@ -103,7 +103,53 @@ class Handler(object):
         pass
 
 
-class IcnButton(Handler):
+class BackgroundCapturingElement(Element):
+    def on_first_render(self):
+        self.capture_background()
+
+    def capture_background(self, rect=None):
+        # TODO: assert before first render?
+        if rect is None:
+            rect = self.rect
+
+        self.captured_bg = pygame.Surface((rect.w, rect.h), depth=8)
+        self.captured_bg.set_palette(self.screen.get_palette())
+        self.captured_bg.blit(self.screen, (0, 0), area=rect)
+
+    def restore_background(self, pos=None):
+        if pos is None:
+            pos = Pos(self.rect.x, self.rect.y)
+
+        self.screen.blit(self.captured_bg, pos)
+
+
+class ShadowCastingWindow(BackgroundCapturingElement):
+    def on_first_render(self):
+        shadow_pos = Pos(16, 16)
+        bg_area = Rect(
+            self.rect.x,
+            self.rect.y,
+            self.rect.w + shadow_pos.x,
+            self.rect.h + shadow_pos.y,
+        )
+        self.capture_background(rect=bg_area)
+
+        bg_copy = pygame.Surface((bg_area.w, bg_area.h), depth=8)
+        # TODO: get the pre-made shadow-safe palette from the Palette object
+        bg_copy.set_palette(fhomm.palette.make_safe_for_shadow(self.screen.get_palette()))
+        bg_copy.blit(self.captured_bg, (0, 0))
+
+        shadow = pygame.Surface((self.rect.w, self.rect.h))
+        shadow.set_alpha(96)
+        bg_copy.blit(shadow, shadow_pos)
+
+        self.screen.blit(bg_copy, (self.rect.x, self.rect.y))
+
+    def on_detach(self):
+        self.restore_background()
+
+
+class IcnButton(BackgroundCapturingElement):
     def __init__(self, screen, loader, pos, icn_name, base_idx, hotkey=None):
         super().__init__(screen, loader)
         self.pos = pos
@@ -129,26 +175,8 @@ class IcnButton(Handler):
         self.is_pressed = False
         return changed
 
-    def on_first_render(self):
-        self.capture_background()
-
-    def capture_background(self, rect=None):
-        # TODO: assert before first render?
-        if rect is None:
-            rect = self.rect
-
-        self.captured_bg = pygame.Surface((rect.w, rect.h), depth=8)
-        self.captured_bg.set_palette(self.screen.get_palette())
-        self.captured_bg.blit(self.screen, (0, 0), area=rect)
-
-    def restore_background(self, pos=None):
-        if pos is None:
-            pos = Pos(self.rect.x, self.rect.y)
-
-        self.screen.blit(self.captured_bg, pos)
-
     def on_render(self):
-        self.restore_background()
+        self.restore_background() # optional
 
         img = self.img_pressed if self.is_pressed else self.img
         img.render(self.screen, self.pos)

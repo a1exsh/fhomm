@@ -115,12 +115,12 @@ def render_palette(screen, size, offx, offy):
             screen.fill((y << 4) | x, (offx + x*size, offy + y*size, size, size))
 
 
-class MainHandler(fhomm.ui.Handler):
+class MainHandler(fhomm.ui.Element):
     def __init__(self, screen, loader):
         super().__init__(screen, loader)
         self.bg_image = self.loader.load_image('heroes.bmp')
         self.rect = fhomm.ui.Rect(0, 0, screen.get_width(), screen.get_height())
-        self.children.append(fhomm.main_menu.Handler(self.screen, self.loader))
+        self.attach(fhomm.main_menu.Handler(self.screen, self.loader))
 
     def on_event(self, event):
         if event.type == pygame.QUIT:
