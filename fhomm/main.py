@@ -9,33 +9,35 @@ import fhomm.bmp
 import fhomm.icn
 import fhomm.loader
 import fhomm.palette
+import fhomm.render
+from fhomm.render import Pos, Rect
 import fhomm.ui
 import fhomm.handler
 import fhomm.main_menu
 
 
-class Image(object):
-    def __init__(self, img):
-        self.img = img
+# class Image(object):
+#     def __init__(self, img):
+#         self.img = img
 
-    def render(self, screen, pos):
-        screen.blit(self.img, pos)
+#     def render(self, screen, pos):
+#         screen.blit(self.img, pos)
 
-    def get_width(self):
-        return self.img.get_width()
+#     def get_width(self):
+#         return self.img.get_width()
 
-    def get_height(self):
-        return self.img.get_height()
+#     def get_height(self):
+#         return self.img.get_height()
 
 
-class Sprite(Image):
-    def __init__(self, img, offx, offy):
-        super().__init__(img)
-        self.offx = offx
-        self.offy = offy
+# class Sprite(Image):
+#     def __init__(self, img, offx, offy):
+#         super().__init__(img)
+#         self.offx = offx
+#         self.offy = offy
 
-    def render(self, screen, pos):
-        screen.blit(self.img, (pos.x + self.offx, pos.y + self.offy))
+#     def render(self, screen, pos):
+#         screen.blit(self.img, (pos.x + self.offx, pos.y + self.offy))
 
 
 class PygameLoader(object):
@@ -46,13 +48,13 @@ class PygameLoader(object):
     def load_image(self, bmp_name):
         bmp = self.loader.load_bmp(bmp_name)
         img = self.make_image(bmp.data, bmp.width, bmp.height)
-        return Image(img)
+        return fhomm.render.Image(img)
 
     def load_sprite(self, icn_name, idx):
         s = self.loader.load_icn(icn_name)[idx]
         img = self.make_image(s.data, s.width, s.height)
         img.set_colorkey(0)
-        return Sprite(img, s.offx, s.offy)
+        return fhomm.render.Sprite(img, Pos(s.offx, s.offy))
 
     def make_image(self, data, width, height):
         img = pygame.image.frombuffer(data, (width, height), 'P')
@@ -116,13 +118,21 @@ def render_palette(screen, size, offx, offy):
 
 
 class MainHandler(fhomm.ui.Element):
-    def __init__(self, screen, loader):
-        super().__init__(screen, loader)
+    def __init__(self, loader):
+        super().__init__(loader)
         self.bg_image = self.loader.load_image('heroes.bmp')
-        self.rect = fhomm.ui.Rect(0, 0, screen.get_width(), screen.get_height())
-        self.attach(fhomm.main_menu.Handler(self.screen, self.loader))
+        self.measure(self.bg_image.dim)
+
+        self.attach(
+            fhomm.main_menu.Handler(self.loader),
+            Pos(401, 35),
+        )
 
     def on_event(self, event):
+        # cmd = super().on_event(event)
+        # if cmd is not None:
+        #     return cmd
+
         if event.type == pygame.QUIT:
             return fhomm.handler.CMD_QUIT
 
@@ -130,13 +140,15 @@ class MainHandler(fhomm.ui.Element):
             if event.key == pygame.K_F4:
                 return fhomm.handler.CMD_TOGGLE_FULLSCREEN
 
-    def on_render(self):
-        self.bg_image.render(self.screen, (0, 0))
+    def on_render(self, ctx):
+        self.bg_image.render(ctx)
 
 
 class Game(object):
-    def __init__(self):
-        self.handler = MainHandler(SCREEN, PYGAME_LOADER)
+    def __init__(self, loader, screen):
+        self.loader = loader
+        self.handler = MainHandler(loader)
+        self.screen = screen
 
     def __call__(self):
         self.run()
@@ -146,6 +158,7 @@ class Game(object):
 
         # render_palette(SCREEN, 8, 258, 8)
         # render_fps(SCREEN, PALETTE_CYCLE_TICK)
+        screen_ctx = fhomm.render.Context(self.screen)
 
         self.running = True
         while self.running:
@@ -154,7 +167,7 @@ class Game(object):
                 if command is not None:
                     self.run_command(command)
 
-            if self.handler.render():
+            if self.handler.render(screen_ctx):
                 # print("flippin")
                 pygame.display.flip()
 
@@ -179,5 +192,5 @@ class Game(object):
             print(f"unknown command from handler: {command}")
 
 
-game = Game()
+game = Game(PYGAME_LOADER, SCREEN)
 threading.Thread(target=game).start()
