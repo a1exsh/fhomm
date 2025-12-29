@@ -1,5 +1,6 @@
 import pygame
 
+import fhomm.palette
 import fhomm.ui
 from fhomm.ui import Pos, Rect
 
@@ -15,88 +16,95 @@ class Handler(fhomm.ui.Handler):
             self.bg_image.get_width(),
             self.bg_image.get_height(),
         )
-        self.children = [
+        self.attach(
             fhomm.ui.IcnButton(
                 self.screen,
                 self.loader,
                 Pos(self.rect.x + 33, self.rect.y + 45),
                 'btnmain.icn',
                 2,
-                pygame.K_n,
-            ),
+                pygame.K_n,     # new game
+            )
+        )
+        self.attach(
             fhomm.ui.IcnButton(
                 self.screen,
                 self.loader,
                 Pos(self.rect.x + 33, self.rect.y + 45 + 66),
                 'btnmain.icn',
                 0,
-                pygame.K_l,
-            ),
+                pygame.K_l,     # load game
+            )
+        )
+        self.attach(
             fhomm.ui.IcnButton(
                 self.screen,
                 self.loader,
                 Pos(self.rect.x + 33, self.rect.y + 45 + 66*2),
                 'btnmain.icn',
                 4,
-                pygame.K_s,
-            ),
+                pygame.K_s,     # high score
+            )
+        )
+        self.attach(
             fhomm.ui.IcnButton(
                 self.screen,
                 self.loader,
                 Pos(self.rect.x + 33, self.rect.y + 45 + 66*3),
                 'btnmain.icn',
                 6,
-                pygame.K_c,
-            ),
+                pygame.K_c,     # credits
+            )
+        )
+        self.attach(
             fhomm.ui.IcnButton(
                 self.screen,
                 self.loader,
                 Pos(self.rect.x + 33, self.rect.y + 45 + 66*4),
                 'btnmain.icn',
                 8,
-                pygame.K_q,
-            ),
-        ]
-
-    # def on_event(self, event):
-
-        # elif event.type == pygame.KEYDOWN:
-        #     for button in self.buttons:
-        #         if event.key == button.hotkey:
-        #             return fhomm.handler.CMD_QUIT
-
-        # if event.type == pygame.MOUSEMOTION:
-        #     #print(event)
-        #     changed = False
-        #     mouse_pos = Pos(event.pos[0], event.pos[1])
-        #     for button in self.buttons:
-        #         if fhomm.ui.pos_in_rect(mouse_pos, button.rect):
-        #             changed = changed or button.set_pressed()
-        #         else:
-        #             changed = changed or button.set_released()
-        #     if changed:
-        #         return fhomm.handler.CMD_RENDER
-
-    def on_render(self):
-        # overwrite the cycling blocks in the palette to avoid mapping to them due to blend
-        org = list(self.screen.get_palette()) # it's a tuple, so make a copy to assign
-        pal = list(org)
-        pal[224:232] = [(255, 255, 255)]*8
-        pal[240:251] = [(255, 255, 255)]*11
-
-        # capture background in on_attach: restore in on_detach
-        background = pygame.Surface((self.bg_image.get_width(), self.bg_image.get_height()), depth=8)
-        background.set_palette(pal)
-        background.blit(
-            self.screen,
-            (0, 0),
-            area=(self.rect.x + 16, self.rect.y + 16, background.get_width(), background.get_height()),
+                pygame.K_q,     # quit
+            )
         )
 
-        shadow = pygame.Surface((self.bg_image.get_width(), self.bg_image.get_height()))
+    def on_first_render(self):
+        shadow_pos = Pos(16, 16)
+        self.capture_background(
+            rect=Rect(
+                self.rect.x,
+                self.rect.y,
+                self.rect.w + shadow_pos.x,
+                self.rect.h + shadow_pos.y,
+            )
+        )
+
+        bg_copy = self.captured_bg.copy()
+        # TODO: get the pre-made shadow-safe palette from the Palette object
+        bg_copy.set_palette(fhomm.palette.make_safe_for_shadow(self.screen.get_palette()))
+
+        shadow = pygame.Surface((self.rect.w, self.rect.h))
         shadow.set_alpha(96)
-        background.blit(shadow, (0, 0))
+        bg_copy.blit(shadow, shadow_pos)
 
-        self.screen.blit(background, (self.rect.x + 16, self.rect.y + 16))
+        self.screen.blit(bg_copy, (self.rect.x, self.rect.y))
 
+    def on_detach(self):
+        self.restore_background()
+
+    def capture_background(self, rect=None):
+        # TODO: assert before first render?
+        if rect is None:
+            rect = self.rect
+
+        self.captured_bg = pygame.Surface((rect.w, rect.h), depth=8)
+        self.captured_bg.set_palette(self.screen.get_palette())
+        self.captured_bg.blit(self.screen, (0, 0), area=rect)
+
+    def restore_background(self, pos=None):
+        if pos is None:
+            pos = Pos(self.rect.x, self.rect.y)
+
+        self.screen.blit(self.captured_bg, pos)
+
+    def on_render(self):
         self.bg_image.render(self.screen, Pos(self.rect.x, self.rect.y))

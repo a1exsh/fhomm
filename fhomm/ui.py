@@ -13,7 +13,16 @@ class Handler(object):
         self.loader = loader
         self.children = []
         self.hovered = False
-        self._dirty = True
+        self._first_render = True
+        self._dirty = False
+
+    def attach(self, child):
+        # TODO: assert not attached already?
+        self.children.append(child)
+        child.on_attach()
+
+    def on_attach(self):
+        pass
 
     def dirty(self):
         self._dirty = True
@@ -21,22 +30,32 @@ class Handler(object):
     def render(self, force=False):
         flip = False
 
-        if self._dirty or force:
+        if self._first_render:
+            self.on_first_render()
+            self._first_render = False
+            force = True
+
+        if self._dirty:
+            self._dirty = False
+            force = True
+
+        if force:
             # print(f"needs render: {self}")
             self.on_render()
             # DEBUG
             if self.hovered:
                 pygame.draw.rect(self.screen, 228, self.rect, 1)
             # DEBUG
-            self._dirty = False
             flip = True
-            force = True
 
         for child in self.children:
             if child.render(force):
                 flip = True
 
         return flip
+
+    def on_first_render(self):
+        pass
 
     def on_render(self):
         pass
@@ -110,7 +129,27 @@ class IcnButton(Handler):
         self.is_pressed = False
         return changed
 
+    def on_first_render(self):
+        self.capture_background()
+
+    def capture_background(self, rect=None):
+        # TODO: assert before first render?
+        if rect is None:
+            rect = self.rect
+
+        self.captured_bg = pygame.Surface((rect.w, rect.h), depth=8)
+        self.captured_bg.set_palette(self.screen.get_palette())
+        self.captured_bg.blit(self.screen, (0, 0), area=rect)
+
+    def restore_background(self, pos=None):
+        if pos is None:
+            pos = Pos(self.rect.x, self.rect.y)
+
+        self.screen.blit(self.captured_bg, pos)
+
     def on_render(self):
+        self.restore_background()
+
         img = self.img_pressed if self.is_pressed else self.img
         img.render(self.screen, self.pos)
 

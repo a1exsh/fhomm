@@ -42,3 +42,10 @@ def cycle_index(i):
 
 def cycle_for_span(start, size, i):
     return start + ((i - start) + 1) % size
+
+
+def make_safe_for_shadow(palette):
+    palette = list(palette)     # make an assignable copy
+    palette[224:232] = [(255, 255, 255)]*8
+    palette[240:251] = [(255, 255, 255)]*11
+    return palette
