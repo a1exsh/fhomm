@@ -69,18 +69,18 @@ class Handler(fhomm.ui.Handler):
 
     def on_first_render(self):
         shadow_pos = Pos(16, 16)
-        self.capture_background(
-            rect=Rect(
-                self.rect.x,
-                self.rect.y,
-                self.rect.w + shadow_pos.x,
-                self.rect.h + shadow_pos.y,
-            )
+        bg_area = Rect(
+            self.rect.x,
+            self.rect.y,
+            self.rect.w + shadow_pos.x,
+            self.rect.h + shadow_pos.y,
         )
+        self.capture_background(rect=bg_area)
 
-        bg_copy = self.captured_bg.copy()
+        bg_copy = pygame.Surface((bg_area.w, bg_area.h), depth=8)
         # TODO: get the pre-made shadow-safe palette from the Palette object
         bg_copy.set_palette(fhomm.palette.make_safe_for_shadow(self.screen.get_palette()))
+        bg_copy.blit(self.captured_bg, (0, 0))
 
         shadow = pygame.Surface((self.rect.w, self.rect.h))
         shadow.set_alpha(96)
