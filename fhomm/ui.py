@@ -270,11 +270,10 @@ class Window(Container):
         )
 
 
-class IcnButton(Element): #BackgroundCapturingElement
-    def __init__(self, loader, icn_name, base_idx, command, hotkey=None):
+class ImgButton(Element):
+    def __init__(self, img, command, hotkey=None):
         super().__init__()
-        self.img = loader.load_sprite(icn_name, base_idx)
-        self.img_pressed = loader.load_sprite(icn_name, base_idx + 1)
+        self.img = img
         self.command = command
         self.hotkey = hotkey
 
@@ -283,8 +282,7 @@ class IcnButton(Element): #BackgroundCapturingElement
         self.measure(self.img.dim)
 
     def on_render(self, ctx):
-        img = self.img_pressed if self.is_pressed else self.img
-        img.render(ctx)
+        self.img.render(ctx)
 
     def set_pressed(self):
         old, self.is_pressed = self.is_pressed, True
@@ -319,3 +317,30 @@ class IcnButton(Element): #BackgroundCapturingElement
     def on_mouse_up(self, pos, button):
         if button == 1:
             return self.release()
+
+
+class IcnButton(ImgButton): #BackgroundCapturingElement
+    def __init__(self, loader, icn_name, base_idx, command, hotkey=None):
+        super().__init__(
+            loader.load_sprite(icn_name, base_idx),
+            command,
+            hotkey=hotkey
+        )
+        self.img_pressed = loader.load_sprite(icn_name, base_idx + 1)
+
+    def on_render(self, ctx):
+        img = self.img_pressed if self.is_pressed else self.img
+        img.render(ctx)
+
+
+class ImgList(Element):
+
+    Item = namedtuple('Item', ['img', 'text'])
+
+    def __init__(self, items):
+        super().__init__()
+        self.items = items
+
+    def on_render(self, ctx):
+        for i in range(7):
+            self.items[i][0].render(ctx, Pos(3, 3 + 28*i))

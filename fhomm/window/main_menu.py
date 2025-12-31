@@ -35,7 +35,7 @@ class Handler(fhomm.ui.Window):
     def cmd_new_game(self):
         return fhomm.handler.cmd_show(
             fhomm.window.new_game.Handler(self.loader),
-            Pos(311, 14),
+            Pos(401, 35),
         )
 
     def cmd_load_game(self):
