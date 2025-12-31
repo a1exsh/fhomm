@@ -60,10 +60,14 @@ class Element(object):
     def handle(self, event):
         return self.on_event(event)
 
+    # on_event is low level, better define one of the more specific on_XXX
     def on_event(self, event):
         #print(f"{self}.on_event: {event}")
 
-        if event.type == pygame.MOUSEMOTION:
+        if event.type == fhomm.handler.EVENT_TICK:
+            return self.on_tick(event.dt)
+
+        elif event.type == pygame.MOUSEMOTION:
             mouse_pos = Pos(event.pos[0], event.pos[1])
             old, self.hovered = self.hovered, self.rect.contains(mouse_pos)
             if old != self.hovered:
@@ -71,14 +75,40 @@ class Element(object):
                     self.dirty()
 
                 if self.hovered:
-                    self.on_mouse_enter()
+                    self.on_mouse_enter() # no way to issue cmd for now
                 else:
                     self.on_mouse_leave()
+
+            return self.on_mouse_move(mouse_pos)
+
+        elif event.type == pygame.KEYDOWN:
+            return self.on_key_down(event.key)
+
+        elif event.type == pygame.KEYUP:
+            return self.on_key_up(event.key)
+
+        elif event.type == pygame.QUIT:
+            return self.on_quit()
+
+    def on_tick(self, dt):
+        pass
 
     def on_mouse_enter(self):
         pass
 
     def on_mouse_leave(self):
+        pass
+
+    def on_mouse_move(self, pos):
+        pass
+
+    def on_key_down(self, key):
+        pass
+
+    def on_key_up(self, key):
+        pass
+
+    def on_quit(self):
         pass
 
 
@@ -156,7 +186,7 @@ class Container(Element):
                 return child.element.handle(
                     translate_mouse_event(event, child.relpos),
                 )
-            # command from mouse motion is ignored for now
+
         else:
             return child.element.handle(event)
 
@@ -207,13 +237,6 @@ class Window(Container):
                 self.dim.h - 2*self.border_width,
             )
         )
-
-    def on_event(self, event):
-        if event.type == pygame.QUIT:
-            return fhomm.handler.CMD_IGNORE
-
-        # TODO: forget this, and debug-highlight is gone...
-        return super().on_event(event)
 
 
 # class ShadowCastingWindow(BackgroundCapturingElement):
@@ -272,18 +295,11 @@ class IcnButton(Element): #BackgroundCapturingElement
         img = self.img_pressed if self.is_pressed else self.img
         img.render(ctx)
 
-    def on_event(self, event):
-        #print(f"IcnButton.on_event: {event}")
+    def on_key_down(self, key):
+        if key == self.hotkey and self.set_pressed():
+            self.dirty()
 
-        if event.type == pygame.KEYDOWN:
-            if event.key == self.hotkey:
-                if self.set_pressed():
-                    self.dirty()
-
-        elif event.type == pygame.KEYUP:
-            if event.key == self.hotkey:
-                if self.set_released():
-                    self.dirty()
-                return self.command()
-
-        return super().on_event(event)
+    def on_key_up(self, key):
+        if key == self.hotkey and self.set_released():
+            self.dirty()
+            return self.command()

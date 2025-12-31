@@ -13,11 +13,10 @@ class TitleScreen(fhomm.ui.Element): # Screen
 
         self.main_menu = None
 
-    def on_event(self, event):
-        if event.type == fhomm.handler.EVENT_TICK:
-            if self.main_menu is None:
-                self.main_menu = fhomm.window.main_menu.Handler(self.loader)
-                return fhomm.handler.cmd_show(self.main_menu, Pos(401, 35))
+    def on_tick(self, dt):
+        if self.main_menu is None:
+            self.main_menu = fhomm.window.main_menu.Handler(self.loader)
+            return fhomm.handler.cmd_show(self.main_menu, Pos(401, 35))
 
     def on_render(self, ctx):
         self.bg_image.render(ctx)

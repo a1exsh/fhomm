@@ -13,6 +13,5 @@ class Handler(fhomm.ui.Element): #ShadowCastingWindow
     def on_render(self, ctx):
         self.image.render(ctx)
 
-    def on_event(self, event):
-        if event.type == pygame.KEYUP:
-            return fhomm.handler.CMD_CLOSE
+    def on_key_up(self, _key):
+        return fhomm.handler.CMD_CLOSE

@@ -13,7 +13,6 @@ class Handler(fhomm.ui.Window):
     def on_render(self, ctx):
         self.image.render(ctx)
 
-    def on_event(self, event):
-        if event.type == pygame.KEYUP:
-            if event.key == pygame.K_ESCAPE:
-                return fhomm.handler.CMD_CLOSE
+    def on_key_up(self, key):
+        if key == pygame.K_ESCAPE:
+            return fhomm.handler.CMD_CLOSE
