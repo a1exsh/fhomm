@@ -67,8 +67,22 @@ class Element(object):
         if event.type == fhomm.handler.EVENT_TICK:
             return self.on_tick(event.dt)
 
-        elif event.type == pygame.MOUSEMOTION:
-            mouse_pos = Pos(event.pos[0], event.pos[1])
+        elif is_mouse_event(event):
+            return self.handle_mouse_event(event)
+
+        elif event.type == pygame.KEYDOWN:
+            return self.on_key_down(event.key)
+
+        elif event.type == pygame.KEYUP:
+            return self.on_key_up(event.key)
+
+        elif event.type == pygame.QUIT:
+            return self.on_quit()
+
+    def handle_mouse_event(self, event):
+        mouse_pos = Pos(event.pos[0], event.pos[1])
+
+        if event.type == pygame.MOUSEMOTION:
             old, self.hovered = self.hovered, self.rect.contains(mouse_pos)
             if old != self.hovered:
                 if DEBUG:
@@ -81,14 +95,11 @@ class Element(object):
 
             return self.on_mouse_move(mouse_pos)
 
-        elif event.type == pygame.KEYDOWN:
-            return self.on_key_down(event.key)
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            return self.on_mouse_down(mouse_pos, event.button)
 
-        elif event.type == pygame.KEYUP:
-            return self.on_key_up(event.key)
-
-        elif event.type == pygame.QUIT:
-            return self.on_quit()
+        elif event.type == pygame.MOUSEBUTTONUP:
+            return self.on_mouse_up(mouse_pos, event.button)
 
     def on_tick(self, dt):
         pass
@@ -100,6 +111,12 @@ class Element(object):
         pass
 
     def on_mouse_move(self, pos):
+        pass
+
+    def on_mouse_down(self, pos, button):
+        pass
+
+    def on_mouse_up(self, pos, button):
         pass
 
     def on_key_down(self, key):
@@ -175,20 +192,34 @@ class Container(Element):
                 return cmd
 
     def handle_by_child(self, child, event):
-        # TODO: if is_mouse_event(event):
-        if event.type == pygame.MOUSEMOTION:
-            # print(f"{self}.handle MOUSEMOTION: {event}")
+        if is_mouse_event(event):
             cur_pos = Pos(event.pos[0], event.pos[1])
-            old_pos = Pos(event.pos[0] - event.rel[0], event.pos[1] - event.rel[1])
+            if event.type == pygame.MOUSEMOTION:
+                old_pos = Pos(
+                    event.pos[0] - event.rel[0],
+                    event.pos[1] - event.rel[1],
+                )
+            else:
+                old_pos = None
+
             child_rect = child.relrect.offset(self.rect.pos)
             if child_rect.contains(cur_pos) or \
-               child_rect.contains(old_pos):
+               (old_pos is not None and child_rect.contains(old_pos)):
                 return child.element.handle(
                     translate_mouse_event(event, child.relpos),
                 )
 
         else:
             return child.element.handle(event)
+
+
+def is_mouse_event(event):
+    return event.type in [
+        pygame.MOUSEMOTION,
+        pygame.MOUSEBUTTONDOWN,
+        pygame.MOUSEBUTTONUP,
+        pygame.MOUSEWHEEL,
+    ]
 
 
 def translate_mouse_event(event, child_pos):
@@ -239,36 +270,6 @@ class Window(Container):
         )
 
 
-# class ShadowCastingWindow(BackgroundCapturingElement):
-#     def __init__(self, shadow_offset=Pos(16, 16)):
-#         super().__init__()
-#         self._shadow_offset = shadow_offset
-
-#     def measure(self, dim):
-#         self._content_dim = dim
-#         shadow_dim = Dim(
-#             dim.w + self._shadow_offset.x,
-#             dim.h + self._shadow_offset.y,
-#         )
-#         super().measure(shadow_dim)
-
-#     def on_first_render(self, ctx):
-#         self.capture_background(ctx)
-
-#         img_shadow = fhomm.render.Context.make_shadow_image(self._content_dim)
-
-#         bg_copy = ctx.copy_image_for_shadow(self._bg_captured)
-#         bg_copy.get_context().blit(img_shadow, self._shadow_offset)
-#         bg_copy.render(ctx)
-
-#     def on_render(self, ctx):
-#         with ctx.restrict(Rect(self._content_dim)) as content_ctx:
-#             self.on_render_content(content_ctx)
-
-#     # def on_detach(self):
-#     #     self.restore_background()
-
-
 class IcnButton(Element): #BackgroundCapturingElement
     def __init__(self, loader, icn_name, base_idx, command, hotkey=None):
         super().__init__()
@@ -281,6 +282,10 @@ class IcnButton(Element): #BackgroundCapturingElement
 
         self.measure(self.img.dim)
 
+    def on_render(self, ctx):
+        img = self.img_pressed if self.is_pressed else self.img
+        img.render(ctx)
+
     def set_pressed(self):
         old, self.is_pressed = self.is_pressed, True
         return old != self.is_pressed
@@ -289,17 +294,28 @@ class IcnButton(Element): #BackgroundCapturingElement
         old, self.is_pressed = self.is_pressed, False
         return old != self.is_pressed
 
-    def on_render(self, ctx):
-        # self.restore_background(ctx) # optional
-
-        img = self.img_pressed if self.is_pressed else self.img
-        img.render(ctx)
-
-    def on_key_down(self, key):
-        if key == self.hotkey and self.set_pressed():
+    def press(self):
+        if self.set_pressed():
             self.dirty()
 
-    def on_key_up(self, key):
-        if key == self.hotkey and self.set_released():
+    def release(self):
+        if self.set_released():
             self.dirty()
             return self.command()
+
+    def on_key_down(self, key):
+        if key == self.hotkey:
+            return self.press()
+
+    def on_key_up(self, key):
+        if key == self.hotkey:
+            return self.release()
+
+    def on_mouse_down(self, pos, button):
+        # print(f"{self} mouse down: {pos} {button}")
+        if button == 1:         # TODO: are there consts for this?
+            return self.press()
+
+    def on_mouse_up(self, pos, button):
+        if button == 1:
+            return self.release()

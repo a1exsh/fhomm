@@ -3,6 +3,7 @@ import pygame
 import fhomm.ui
 import fhomm.handler
 import fhomm.window.new_game
+import fhomm.window.load_game
 import fhomm.window.credits
 import fhomm.window.high_scores
 from fhomm.render import Pos
@@ -39,8 +40,8 @@ class Handler(fhomm.ui.Window):
 
     def cmd_load_game(self):
         return fhomm.handler.cmd_show(
-            fhomm.window.credits.Handler(self.loader),
-            Pos(0, 0),
+            fhomm.window.load_game.Handler(self.loader),
+            Pos(311, 14),
         )
 
     def cmd_high_scores(self):

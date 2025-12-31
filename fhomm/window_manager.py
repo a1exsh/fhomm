@@ -79,7 +79,7 @@ class WindowManager(fhomm.ui.Container):
             if event.key == pygame.K_F4:
                 return fhomm.handler.CMD_TOGGLE_FULLSCREEN
 
-            elif event.key == pygame.K_F5:
+            elif event.key == pygame.K_F1:
                 return fhomm.handler.CMD_TOGGLE_DEBUG_UI
 
         cmd = self.handle_by_child(self.active_child(), event)
