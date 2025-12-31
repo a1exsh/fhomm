@@ -5,6 +5,8 @@ import pygame
 import fhomm.render
 from fhomm.render import Pos, Dim, Rect
 
+DEBUG = False
+
 
 class Element(object):
     def __init__(self):
@@ -41,10 +43,10 @@ class Element(object):
         if force:
             # print(f"needs render: {self}")
             self.on_render(ctx)
-            # DEBUG
-            if self.hovered:
+
+            if DEBUG and self.hovered:
                 ctx.draw_rect(228, self.rect, 1)
-            # DEBUG
+
             return True         # rendered, tell to update the screen
 
         return False
@@ -65,7 +67,9 @@ class Element(object):
             mouse_pos = Pos(event.pos[0], event.pos[1])
             old, self.hovered = self.hovered, self.rect.contains(mouse_pos)
             if old != self.hovered:
-                self.dirty()    # DEBUG
+                if DEBUG:
+                    self.dirty()
+
                 if self.hovered:
                     self.on_mouse_enter()
                 else:

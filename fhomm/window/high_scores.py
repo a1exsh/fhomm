@@ -4,10 +4,10 @@ import fhomm.ui
 import fhomm.handler
 
 
-class Handler(fhomm.ui.Element): #ShadowCastingWindow
+class Handler(fhomm.ui.Window):
     def __init__(self, loader):
-        super().__init__()
-        self.image = loader.load_image('credits.bmp')
+        super().__init__(border_width=0)
+        self.image = loader.load_image('hiscore.bmp')
         self.measure(self.image.dim)
 
     def on_render(self, ctx):
@@ -15,4 +15,5 @@ class Handler(fhomm.ui.Element): #ShadowCastingWindow
 
     def on_event(self, event):
         if event.type == pygame.KEYUP:
-            return fhomm.handler.CMD_CLOSE
+            if event.key == pygame.K_ESCAPE:
+                return fhomm.handler.CMD_CLOSE

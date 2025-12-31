@@ -7,7 +7,7 @@ from fhomm.render import Pos
 
 class Handler(fhomm.ui.Window):
     def __init__(self, loader):
-        super().__init__()
+        super().__init__(border_width=16)
         self.bg_image = loader.load_image('newgame.bmp')
         self.measure(self.bg_image.dim)
 
@@ -18,3 +18,5 @@ class Handler(fhomm.ui.Window):
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_ESCAPE:
                 return fhomm.handler.CMD_CLOSE
+
+        super().on_event(event)
