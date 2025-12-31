@@ -5,10 +5,17 @@ import pygame
 
 import fhomm.palette
 
-Pos = namedtuple('Pos', ['x', 'y'])
 Dim = namedtuple('Dim', ['w', 'h'])
 
 
+class Pos(namedtuple('Pos', ['x', 'y'])):
+    __slots__ = ()
+
+    def offset(self, relpos):
+        return Pos(self.x + relpos.x, self.y + relpos.y)
+
+
+# TODO: go back to (x, y, w, h), compatible with pygame's representation
 class Rect(namedtuple('Rect', ['dim', 'pos'], defaults=[Pos(0, 0)])):
     __slots__ = ()
 
@@ -50,6 +57,9 @@ class Rect(namedtuple('Rect', ['dim', 'pos'], defaults=[Pos(0, 0)])):
     @property
     def right(self):
         return self.pos.x + self.dim.w
+
+    def offset(self, relpos):
+        return Rect(self.dim, self.pos.offset(relpos))
 
     def contains(self, pos):
         return (
@@ -140,32 +150,19 @@ class ClippingContext(Context):
 
 class RestrictingContext(ClippingContext):
     def draw_rect(self, color, rect, width=0):
-        super().draw_rect(color, self._offset_rect(rect), width)
+        super().draw_rect(color, rect.offset(self._restriction.pos), width)
 
     def blit(self, source, pos=Pos(0, 0), rect=None):
-        super().blit(source, self._offset_pos(pos), rect=rect)
+        super().blit(source, pos.offset(self._restriction.pos), rect=rect)
 
     def capture(self, rect):
-        return super().capture(self._offset_rect(rect))
+        return super().capture(rect.offset(self._restriction.pos))
 
     def clip(self, rect):
-        off_rect = self._offset_rect(rect)
+        off_rect = rect.offset(self._restriction.pos)
         print(f"clipping to {rect} => {off_rect}")
         return super().clip(off_rect)
 
     def restrict(self, rect):
-        return super().restrict(self._offset_rect(rect))
-
-    def _offset_pos(self, pos):
-        return Pos(
-            self._restriction.x + pos.x,
-            self._restriction.y + pos.y,
-        )
-
-    def _offset_rect(self, rect):
-        return Rect.of(
-            self._restriction.x + rect.x,
-            self._restriction.y + rect.y,
-            rect.w,
-            rect.h,
-        )
+        # TODO: should also restrict width and height
+        return super().restrict(rect.offset(self._restriction.pos))

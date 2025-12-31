@@ -1,6 +1,8 @@
 import os
 import sys
 import threading
+from collections import namedtuple
+
 import pygame
 
 import fhomm.agg
@@ -10,7 +12,7 @@ import fhomm.icn
 import fhomm.loader
 import fhomm.palette
 import fhomm.render
-from fhomm.render import Pos, Rect
+from fhomm.render import Pos, Dim, Rect
 import fhomm.ui
 import fhomm.handler
 import fhomm.main_menu
@@ -117,23 +119,33 @@ def render_palette(screen, size, offx, offy):
             screen.fill((y << 4) | x, (offx + x*size, offy + y*size, size, size))
 
 
-class MainHandler(fhomm.ui.Element):
+class TitleScreen(fhomm.ui.Element):
     def __init__(self, loader):
-        super().__init__(loader)
+        super().__init__()
+        self.loader = loader
         self.bg_image = self.loader.load_image('heroes.bmp')
         self.measure(self.bg_image.dim)
 
-        self.attach(
-            fhomm.main_menu.Handler(self.loader),
-            Pos(401, 35),
-        )
+        self.main_menu = None
+        # self.attach(
+        #     fhomm.main_menu.Handler(self.loader),
+        #     Pos(401, 35),
+        # )
 
     def on_event(self, event):
         # cmd = super().on_event(event)
         # if cmd is not None:
         #     return cmd
 
-        if event.type == pygame.QUIT:
+        if event.type == fhomm.handler.EVENT_TICK:
+            if self.main_menu is None:
+                self.main_menu = fhomm.main_menu.Handler(self.loader)
+                return fhomm.handler.cmd_push_handler(
+                    self.main_menu,
+                    Pos(401, 35),
+                )
+
+        elif event.type == pygame.QUIT:
             return fhomm.handler.CMD_QUIT
 
         elif event.type == pygame.KEYDOWN:
@@ -144,11 +156,16 @@ class MainHandler(fhomm.ui.Element):
         self.bg_image.render(ctx)
 
 
-class Game(object):
-    def __init__(self, loader, screen):
-        self.loader = loader
-        self.handler = MainHandler(loader)
+class WindowManager(fhomm.ui.WindowManager):
+
+    def __init__(self, screen, main_handler):
+        super().__init__(main_handler)
         self.screen = screen
+        self.screen_ctx = fhomm.render.Context(screen)
+        self.measure(Dim(screen.get_width(), screen.get_height()))
+
+    def push_handler(self, handler, screen_pos):
+        self.attach(handler, screen_pos)
 
     def __call__(self):
         self.run()
@@ -158,24 +175,28 @@ class Game(object):
 
         # render_palette(SCREEN, 8, 258, 8)
         # render_fps(SCREEN, PALETTE_CYCLE_TICK)
-        screen_ctx = fhomm.render.Context(self.screen)
 
         self.running = True
         while self.running:
             for event in pygame.event.get():
-                command = self.handler.handle(event)
+                command = self.handle(event)
                 if command is not None:
                     self.run_command(command)
 
-            if self.handler.render(screen_ctx):
+            if self.render(self.screen_ctx):
                 # print("flippin")
                 pygame.display.flip()
 
             dt = clock.tick(60)
             if PALETTE.update_tick(dt):
-                SCREEN.set_palette(PALETTE.palette)
+                self.screen.set_palette(PALETTE.palette)
+
+            self.post_tick(dt)
 
         pygame.quit()
+
+    def post_tick(self, dt):
+        pygame.event.post(pygame.event.Event(fhomm.handler.EVENT_TICK, dt=dt))
 
     def run_command(self, command):
         if command.code == fhomm.handler.QUIT:
@@ -183,6 +204,9 @@ class Game(object):
 
         elif command.code == fhomm.handler.TOGGLE_FULLSCREEN:
             pygame.display.toggle_fullscreen()
+
+        elif command.code == fhomm.handler.PUSH_HANDLER:
+            self.push_handler(**command.kwargs)
 
         # elif command.code == fhomm.handler.COMPOSE:
         #     for cmd in command.kwargs['commands']:
@@ -192,5 +216,6 @@ class Game(object):
             print(f"unknown command from handler: {command}")
 
 
-game = Game(PYGAME_LOADER, SCREEN)
-threading.Thread(target=game).start()
+main_handler = TitleScreen(PYGAME_LOADER)
+window_manager = WindowManager(SCREEN, main_handler)
+threading.Thread(target=window_manager).start()
