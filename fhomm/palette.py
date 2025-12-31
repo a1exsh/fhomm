@@ -4,6 +4,7 @@ class Palette(object):
         self.tick = 0
         self.cycle_ticks = cycle_ticks
 
+    # TODO: kind of out of place here
     def update_tick(self, dt):
         cycled = False
 

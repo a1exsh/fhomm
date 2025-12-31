@@ -6,27 +6,25 @@ import pygame
 EVENT_TICK = pygame.USEREVENT + 1
 
 QUIT = -1
-# RENDER = 0
-PUSH_HANDLER = 1
-# COMPOSE = 2
-TOGGLE_FULLSCREEN = 3
+IGNORE = 0
+TOGGLE_FULLSCREEN = 1
+SHOW = 2                        # open a new window or a screen
+CLOSE = 3                       # close the active window or a screen
+# COMPOSE = 2 # could be expressed by posting events to the queue
 
 Command = namedtuple('Command', ['code', 'kwargs'], defaults=[{}])
 
 CMD_QUIT = Command(QUIT)
-# CMD_RENDER = Command(RENDER)
+CMD_IGNORE = Command(IGNORE)
 CMD_TOGGLE_FULLSCREEN = Command(TOGGLE_FULLSCREEN)
+CMD_CLOSE = Command(CLOSE)
 
 
-def cmd_push_handler(handler, screen_pos):
+def cmd_show(element, screen_pos):
     return Command(
-        PUSH_HANDLER,
+        SHOW,
         {
-            'handler': handler,
+            'element': element,
             'screen_pos': screen_pos,
         }
     )
-
-
-# def cmd_compose(*cmds):
-#     return Command(COMPOSE, {'commands': cmds})

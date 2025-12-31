@@ -126,26 +126,26 @@ class Context(object):
         img.get_context().blit(Image(self._image), (0, 0), rect)
         return img
 
-    def clip(self, rect):
-        return ClippingContext(self, rect)
+    # def clip(self, rect):
+    #     return ClippingContext(self, rect)
 
     def restrict(self, rect):
         # print(f"restricting to {rect}")
         return RestrictingContext(self, rect)
 
 
-class ClippingContext(Context):
-    def __init__(self, ctx, rect):
-        super().__init__(ctx._image)
-        self._restriction = rect
+# class ClippingContext(Context):
+#     def __init__(self, ctx, rect):
+#         super().__init__(ctx._image)
+#         self._restriction = rect
 
-    def __enter__(self):
-        self._old_clip = self._image.get_clip()
-        self._image.set_clip(self._restriction.to_pygame())
-        return self
+#     def __enter__(self):
+#         self._old_clip = self._image.get_clip()
+#         self._image.set_clip(self._restriction.to_pygame())
+#         return self
 
-    def __exit__(self, *args, **kwargs):
-        self._image.set_clip(self._old_clip)
+#     def __exit__(self, *args, **kwargs):
+#         self._image.set_clip(self._old_clip)
 
 
 class RestrictingContext(ClippingContext):
@@ -158,10 +158,10 @@ class RestrictingContext(ClippingContext):
     def capture(self, rect):
         return super().capture(rect.offset(self._restriction.pos))
 
-    def clip(self, rect):
-        off_rect = rect.offset(self._restriction.pos)
-        print(f"clipping to {rect} => {off_rect}")
-        return super().clip(off_rect)
+    # def clip(self, rect):
+    #     off_rect = rect.offset(self._restriction.pos)
+    #     print(f"clipping to {rect} => {off_rect}")
+    #     return super().clip(off_rect)
 
     def restrict(self, rect):
         # TODO: should also restrict width and height

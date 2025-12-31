@@ -1,8 +1,9 @@
 import pygame
 
-import fhomm.palette
 import fhomm.ui
-from fhomm.render import Pos, Dim, Rect
+import fhomm.handler
+import fhomm.credits
+from fhomm.render import Pos
 
 
 class Handler(fhomm.ui.Window): #ShadowCastingWindow
@@ -11,6 +12,10 @@ class Handler(fhomm.ui.Window): #ShadowCastingWindow
         self.bg_image = loader.load_image('redback.bmp')
         self.measure(self.bg_image.dim)
 
+        command = lambda: fhomm.handler.cmd_show(
+            fhomm.credits.Handler(loader),
+            Pos(0, 0),
+        )
         buttons = [
             (2, pygame.K_n),    # new game
             (0, pygame.K_l),    # load game
@@ -20,7 +25,7 @@ class Handler(fhomm.ui.Window): #ShadowCastingWindow
         ]
         for i, (base_idx, key) in enumerate(buttons):
             self.attach(
-                fhomm.ui.IcnButton(loader, 'btnmain.icn', base_idx, key),
+                fhomm.ui.IcnButton(loader, 'btnmain.icn', base_idx, command, key),
                 Pos(8, 20 + 66*i),
             )
 

@@ -12,7 +12,7 @@ class Element(object):
 
         self.hovered = False
         # self._first_render = True
-        self._dirty = True
+        self._dirty = False
 
     def measure(self, dim):
         print(f"{self} measured at {dim}")
@@ -20,6 +20,9 @@ class Element(object):
         self.rect = Rect(dim)
 
     def on_attach(self, parent):
+        pass
+
+    def on_detach(self):
         pass
 
     def dirty(self):
@@ -96,6 +99,18 @@ class Container(Element):
         element.on_attach(self)
         self.child_slots.append(Container.ChildSlot(element, relpos))
 
+    def detach(self, element):
+        if self is not element.parent:
+            raise Exception(f"The UI element {element} is not attached to {self}!")
+
+        self.child_slots = [
+            child
+            for child in self.child_slots
+            if element is not child
+        ]
+        element.on_detach()
+        element.parent = None
+
     def render(self, ctx, force=False):
         update = super().render(ctx, force)
         if update:
@@ -155,22 +170,6 @@ def translate_mouse_event(event, child_pos):
     )
 
 
-class WindowManager(Container):
-
-    def __init__(self, main_handler):
-        super().__init__()
-        self.attach(main_handler, Pos(0, 0))
-
-    def active_handler(self):
-        return self.child_slots[-1]
-
-    def render(self, ctx, force=False):
-        return self.render_child(self.active_handler(), ctx, force)
-
-    def handle(self, event):
-        return self.handle_by_child(self.active_handler(), event)
-
-
 # class BackgroundCapturingElement(Element):
 #     def on_first_render(self, ctx):
 #         self.capture_background(ctx)
@@ -186,9 +185,6 @@ class WindowManager(Container):
 
 
 class Window(Container):
-
-    # class WindowContents(Container):
-    #     pass
 
     def __init__(self, border_width=25):
         super().__init__()
@@ -207,6 +203,13 @@ class Window(Container):
                 self.dim.h - 2*self.border_width,
             )
         )
+
+    def on_event(self, event):
+        if event.type == pygame.QUIT:
+            return fhomm.handler.CMD_IGNORE
+
+        # TODO: forget this, and debug-highlight is gone...
+        return super().on_event(event)
 
 
 # class ShadowCastingWindow(BackgroundCapturingElement):
@@ -239,44 +242,25 @@ class Window(Container):
 #     #     self.restore_background()
 
 
-# class ContentClippingWindow(BackgroundCapturingElement):
-#     def __init__(self, border_width=25):
-#         super().__init__()
-#         self._border_width = border_width
-
-#     def measure(self, dim):
-#         super().measure(dim)
-#         self._clipping_rect = Rect.of(
-#             self._border_width,
-#             self._border_width,
-#             dim.w - self._border_width,
-#             dim.h - self._border_width,
-#         )
-
-#     def on_render(self, ctx):
-#         with ctx.clip(self._clipping_rect) as clip_ctx:
-#             self.on_render_content(clip_ctx)
-
-
 class IcnButton(Element): #BackgroundCapturingElement
-    def __init__(self, loader, icn_name, base_idx, hotkey=None):
+    def __init__(self, loader, icn_name, base_idx, command, hotkey=None):
         super().__init__()
         self.img = loader.load_sprite(icn_name, base_idx)
         self.img_pressed = loader.load_sprite(icn_name, base_idx + 1)
+        self.command = command
         self.hotkey = hotkey
+
         self.is_pressed = False
 
         self.measure(self.img.dim)
 
-    # def set_pressed(self):
-    #     changed = not self.is_pressed
-    #     self.is_pressed = True
-    #     return changed
+    def set_pressed(self):
+        old, self.is_pressed = self.is_pressed, True
+        return old != self.is_pressed
 
-    # def set_released(self):
-    #     changed = self.is_pressed
-    #     self.is_pressed = False
-    #     return changed
+    def set_released(self):
+        old, self.is_pressed = self.is_pressed, False
+        return old != self.is_pressed
 
     def on_render(self, ctx):
         # self.restore_background(ctx) # optional
@@ -284,17 +268,18 @@ class IcnButton(Element): #BackgroundCapturingElement
         img = self.img_pressed if self.is_pressed else self.img
         img.render(ctx)
 
-    def on_mouse_enter(self):
-        self.is_pressed = True
-        self.dirty()
+    def on_event(self, event):
+        #print(f"IcnButton.on_event: {event}")
 
-    def on_mouse_leave(self):
-        self.is_pressed = False
-        self.dirty()
+        if event.type == pygame.KEYDOWN:
+            if event.key == self.hotkey:
+                if self.set_pressed():
+                    self.dirty()
 
-    # def on_event(self, event):
-    #     #print(f"IcnButton.on_event: {event}")
+        elif event.type == pygame.KEYUP:
+            if event.key == self.hotkey:
+                if self.set_released():
+                    self.dirty()
+                return self.command.__call__()
 
-    #     if event.type == pygame.KEYDOWN:
-    #         if event.key == self.hotkey:
-    #             print(f"hotkey: {self.hotkey}")
+        return super().on_event(event)
