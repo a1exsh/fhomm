@@ -4,20 +4,20 @@ import threading
 
 import pygame
 
-import fhomm.agg
-import fhomm.loader
+import fhomm.resource.agg
+import fhomm.resource.loader
 import fhomm.palette
 from fhomm.pygame_loader import PygameLoader
 from fhomm.window_manager import WindowManager
-from fhomm.title_screen import TitleScreen
+from fhomm.window.title_screen import TitleScreen
 
 
 HEROES_AGG_PATH = os.path.join(os.getenv('FHOMM_DATA'), 'HEROES.AGG')
-AGG = fhomm.agg.open_file(HEROES_AGG_PATH)
+HEROES_AGG = fhomm.resource.agg.open_file(HEROES_AGG_PATH)
 
 PYGAME_LOADER = PygameLoader(
-    fhomm.loader.CachingLoader(
-        fhomm.loader.Loader(AGG),
+    fhomm.resource.loader.CachingLoader(
+        fhomm.resource.loader.AggResourceLoader(HEROES_AGG),
     ),
     'kb.pal',
 )

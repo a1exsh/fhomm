@@ -1,6 +1,6 @@
 from fhomm.render import Pos
 import fhomm.handler
-import fhomm.main_menu
+import fhomm.window.main_menu
 import fhomm.ui
 
 
@@ -16,7 +16,7 @@ class TitleScreen(fhomm.ui.Element): # Screen
     def on_event(self, event):
         if event.type == fhomm.handler.EVENT_TICK:
             if self.main_menu is None:
-                self.main_menu = fhomm.main_menu.Handler(self.loader)
+                self.main_menu = fhomm.window.main_menu.Handler(self.loader)
                 return fhomm.handler.cmd_show(self.main_menu, Pos(401, 35))
 
     def on_render(self, ctx):

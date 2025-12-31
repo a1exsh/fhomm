@@ -1,10 +1,10 @@
 import os
-import fhomm.agg
-import fhomm.bmp
-import fhomm.icn
+import fhomm.resource.agg
+import fhomm.resource.bmp
+import fhomm.resource.icn
 
 
-class Loader(object):
+class AggResourceLoader(object):
     def __init__(self, agg):
         self.agg = agg
 
@@ -13,15 +13,15 @@ class Loader(object):
         if 768 != pal.size:
             raise Exception(f"Expected the palette chunk to have 768 bytes, but got: {pal.size}")
 
-        return fhomm.agg.read_entry_data(self.agg.f, pal)
+        return fhomm.resource.agg.read_entry_data(self.agg.f, pal)
 
     def load_bmp(self, name):
         self.seek_to(name)
-        return fhomm.bmp.read_bitmap(self.agg.f)
+        return fhomm.resource.bmp.read_bitmap(self.agg.f)
 
     def load_icn(self, name):
         self.seek_to(name)
-        return fhomm.icn.read_icn_sprites(self.agg.f)
+        return fhomm.resource.icn.read_icn_sprites(self.agg.f)
 
     def seek_to(self, name):
         self.agg.f.seek(self.agg.entries[name].offset, os.SEEK_SET)

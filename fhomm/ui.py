@@ -280,6 +280,6 @@ class IcnButton(Element): #BackgroundCapturingElement
             if event.key == self.hotkey:
                 if self.set_released():
                     self.dirty()
-                return self.command.__call__()
+                return self.command()
 
         return super().on_event(event)

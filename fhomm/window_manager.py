@@ -7,13 +7,15 @@ import fhomm.ui
 
 class WindowManager(fhomm.ui.Container):
 
+    _SHADOW_OFFSET = Pos(16, 16)
+
     def __init__(self, screen, palette, main_handler):
         super().__init__()
         self.screen = screen
         self.palette = palette
 
         self.screen_ctx = fhomm.render.Context(screen)
-        self.captured_background = []
+        self.bg_captures = []
         self.running = False
 
         self.measure(Dim(screen.get_width(), screen.get_height()))
@@ -29,8 +31,7 @@ class WindowManager(fhomm.ui.Container):
     def show(self, element, screen_pos):
         super().attach(element, screen_pos)
 
-        bg_rect = Rect(element.dim, screen_pos)
-        self.captured_background.append(self.screen_ctx.capture(bg_rect))
+        self._capture_background(element, screen_pos)
 
         element.dirty()
 
@@ -38,9 +39,33 @@ class WindowManager(fhomm.ui.Container):
         child = self.active_child()
         super().detach(child.element)
 
-        print(f"remaining slots: {self.child_slots}")
+        self.bg_captures.pop().render(self.screen_ctx, child.relpos)
 
-        self.captured_background.pop().render(self.screen_ctx, child.relpos)
+    def _capture_background(self, element, screen_pos):
+        if element.dim.w < self.screen.get_width() or \
+           element.dim.h < self.screen.get_height():
+            shadow = True
+            capture_dim = Dim(
+                element.dim.w + WindowManager._SHADOW_OFFSET.x,
+                element.dim.h + WindowManager._SHADOW_OFFSET.y,
+            )
+            bg_rect = Rect(capture_dim, screen_pos)
+        else:
+            shadow = False
+            bg_rect = Rect(element.dim, screen_pos)
+
+        background = self.screen_ctx.capture(bg_rect)
+        self.bg_captures.append(background)
+
+        if shadow:
+            self._cast_shadow(background, bg_rect)
+
+    def _cast_shadow(self, background, rect):
+        img_shadow = fhomm.render.Context.make_shadow_image(rect.dim)
+
+        bg_copy = self.screen_ctx.copy_image_for_shadow(background)
+        img_shadow.render(bg_copy.get_context(), WindowManager._SHADOW_OFFSET)
+        bg_copy.render(self.screen_ctx, rect.pos)
 
     def active_child(self):
         return self.child_slots[-1]
