@@ -1,6 +1,6 @@
 import pygame
 
-from fhomm.render import Pos, Dim
+from fhomm.render import Pos, Dim, Rect
 import fhomm.handler
 import fhomm.ui
 
@@ -13,6 +13,7 @@ class WindowManager(fhomm.ui.Container):
         self.palette = palette
 
         self.screen_ctx = fhomm.render.Context(screen)
+        self.captured_background = []
         self.running = False
 
         self.measure(Dim(screen.get_width(), screen.get_height()))
@@ -27,11 +28,19 @@ class WindowManager(fhomm.ui.Container):
 
     def show(self, element, screen_pos):
         super().attach(element, screen_pos)
+
+        bg_rect = Rect(element.dim, screen_pos)
+        self.captured_background.append(self.screen_ctx.capture(bg_rect))
+
         element.dirty()
 
     def close_active(self):
-        super().detach(self.active_child().element)
-        # TODO: restore background
+        child = self.active_child()
+        super().detach(child.element)
+
+        print(f"remaining slots: {self.child_slots}")
+
+        self.captured_background.pop().render(self.screen_ctx, child.relpos)
 
     def active_child(self):
         return self.child_slots[-1]
@@ -40,6 +49,11 @@ class WindowManager(fhomm.ui.Container):
         return self.render_child(self.active_child(), ctx, force)
 
     def handle(self, event):
+        # kind of has to be here to always react
+        if event.type == pygame.KEYUP:
+            if event.key == pygame.K_F4:
+                return fhomm.handler.CMD_TOGGLE_FULLSCREEN
+
         cmd = self.handle_by_child(self.active_child(), event)
         if cmd is not None:
             return cmd
@@ -49,10 +63,6 @@ class WindowManager(fhomm.ui.Container):
     def on_event(self, event):
         if event.type == pygame.QUIT:
             return fhomm.handler.CMD_QUIT
-
-        elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_F4:
-                return fhomm.handler.CMD_TOGGLE_FULLSCREEN
 
     def __call__(self):
         self.run_event_loop()

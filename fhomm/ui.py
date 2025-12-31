@@ -106,7 +106,7 @@ class Container(Element):
         self.child_slots = [
             child
             for child in self.child_slots
-            if element is not child
+            if element is not child.element
         ]
         element.on_detach()
         element.parent = None
