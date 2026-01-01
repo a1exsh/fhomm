@@ -5,7 +5,7 @@ import pygame
 
 import fhomm.palette
 
-Dim = namedtuple('Dim', ['w', 'h'])
+Dim = namedtuple('Dim', ['w', 'h']) # TODO: rename to Size
 
 
 class Pos(namedtuple('Pos', ['x', 'y'])):

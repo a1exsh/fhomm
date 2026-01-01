@@ -12,10 +12,11 @@ class WindowManager(fhomm.ui.Container):
 
     _SHADOW_OFFSET = Pos(16, 16)
 
-    def __init__(self, screen, palette, main_handler):
+    def __init__(self, screen, palette, main_handler, fps_limit=30):
         super().__init__()
         self.screen = screen
         self.palette = palette
+        self.fps_limit = fps_limit
 
         self.screen_ctx = fhomm.render.Context(screen)
         self.bg_captures = []
@@ -83,7 +84,10 @@ class WindowManager(fhomm.ui.Container):
                 return fhomm.handler.CMD_TOGGLE_FULLSCREEN
 
             elif event.key == pygame.K_F1:
-                return fhomm.handler.CMD_TOGGLE_DEBUG_UI
+                return fhomm.handler.CMD_TOGGLE_DEBUG_UI_RENDER
+
+            elif event.key == pygame.K_F2:
+                return fhomm.handler.CMD_TOGGLE_DEBUG_UI_EVENTS
 
         cmd = self.handle_by_child(self.active_child(), event)
         if cmd is not None:
@@ -118,7 +122,8 @@ class WindowManager(fhomm.ui.Container):
                     # print("flippin")
                     pygame.display.flip()
 
-                dt = clock.tick(60)
+                dt = clock.tick(self.fps_limit)
+
                 # TODO: for now no way to move it to on_event, as a child
                 # handling on tick will prevent palette from cycling a way to
                 # solve it may be by re-thinking the short-circuit on first
@@ -155,9 +160,12 @@ class WindowManager(fhomm.ui.Container):
         elif command.code == fhomm.handler.TOGGLE_FULLSCREEN:
             pygame.display.toggle_fullscreen()
 
-        elif command.code == fhomm.handler.TOGGLE_DEBUG_UI:
-            fhomm.ui.DEBUG = not fhomm.ui.DEBUG
+        elif command.code == fhomm.handler.TOGGLE_DEBUG_UI_RENDER:
+            fhomm.ui.DEBUG_RENDER = not fhomm.ui.DEBUG_RENDER
             self.active_child().element.dirty()
+
+        elif command.code == fhomm.handler.TOGGLE_DEBUG_UI_EVENTS:
+            fhomm.ui.DEBUG_EVENTS = not fhomm.ui.DEBUG_EVENTS
 
         elif command.code == fhomm.handler.SHOW:
             self.show(**command.kwargs)

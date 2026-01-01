@@ -2,10 +2,12 @@ from collections import namedtuple
 
 import pygame
 
-import fhomm.render
 from fhomm.render import Pos, Dim, Rect
+import fhomm.handler
+import fhomm.render
 
-DEBUG = False
+DEBUG_RENDER = False
+DEBUG_EVENTS = False
 
 
 def is_mouse_event(event):
@@ -66,7 +68,7 @@ class Element(object):
             # print(f"needs render: {self}")
             self.on_render(ctx)
 
-            if DEBUG and self.hovered:
+            if DEBUG_RENDER and self.hovered:
                 ctx.draw_rect(228, self.rect, 1)
 
             return True         # rendered, tell to update the screen
@@ -80,6 +82,9 @@ class Element(object):
         pass
 
     def handle(self, event):
+        if DEBUG_EVENTS and event.type != fhomm.handler.EVENT_TICK:
+            print(f"{self}.handle: {event}")
+
         return self.on_event(event)
 
     # on_event is low level, better define one of the more specific on_XXX
@@ -107,7 +112,7 @@ class Element(object):
         if event.type == pygame.MOUSEMOTION:
             old, self.hovered = self.hovered, self.rect.contains(pos)
             if old != self.hovered:
-                if DEBUG:
+                if DEBUG_RENDER:
                     self.dirty()
 
                 if self.hovered:
@@ -169,7 +174,7 @@ class Element(object):
         pass
 
     def on_quit(self):
-        pass
+        return fhomm.handler.CMD_IGNORE
 
 
 class Container(Element):
@@ -378,6 +383,10 @@ class ImgList(Element):
             (dim.h - self.items_per_page*(item_dim.h + item_pad)) // 2,
         )
 
+        self.tick = 0
+        self.key_hold_ticks = 50
+        self.key_hold_scroll_delta = None
+
     def on_render(self, ctx):
         for i in range(min(len(self.items), self.items_per_page)):
             img_item = self.items[self.scroll_idx + i].img
@@ -389,9 +398,43 @@ class ImgList(Element):
                 )
             )
 
-    def on_mouse_wheel(self, pos, dx, dy):
+    def scroll(self, delta):
         max_scroll_idx = len(self.items) - self.items_per_page
-        new = max(0, min(self.scroll_idx + dy, max_scroll_idx))
+        new = max(0, min(self.scroll_idx + delta, max_scroll_idx))
         old, self.scroll_idx = self.scroll_idx, new
         if old != self.scroll_idx:
             self.dirty()
+
+    def on_mouse_wheel(self, pos, dx, dy):
+        self.scroll(dy)
+
+    def on_key_down(self, key):
+        delta = None
+
+        if key == pygame.K_DOWN:
+            delta = 1
+
+        elif key == pygame.K_UP:
+            delta = -1
+
+        if key == pygame.K_PAGEDOWN:
+            delta = self.items_per_page
+
+        elif key == pygame.K_PAGEUP:
+            delta = -self.items_per_page
+
+        if delta is not None and self.key_hold_scroll_delta is None:
+            self.scroll(delta)
+            self.ticks = 0
+            self.key_hold_scroll_delta = delta
+
+    def on_key_up(self, key):
+        if key in [pygame.K_DOWN, pygame.K_UP, pygame.K_PAGEDOWN, pygame.K_PAGEUP]:
+            self.key_hold_scroll_delta = None
+
+    def on_tick(self, dt):
+        if self.key_hold_scroll_delta is not None:
+            self.tick += dt
+            while self.tick >= self.key_hold_ticks:
+                self.scroll(self.key_hold_scroll_delta)
+                self.tick -= self.key_hold_ticks

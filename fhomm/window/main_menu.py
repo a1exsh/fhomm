@@ -58,3 +58,6 @@ class Handler(fhomm.ui.Window):
 
     def cmd_quit(self):
         return fhomm.handler.CMD_QUIT
+
+    def on_quit(self):
+        return fhomm.handler.CMD_QUIT
