@@ -407,15 +407,21 @@ class ImgList(Element):
             )
             self.font.draw_text(ctx, item.text, text_pos)
 
-    def scroll(self, delta):
-        max_scroll_idx = len(self.items) - self.items_per_page
-        new = max(0, min(self.scroll_idx + delta, max_scroll_idx))
-        old, self.scroll_idx = self.scroll_idx, new
+    def set_scroll_idx(self, idx):
+        old, self.scroll_idx = self.scroll_idx, idx
         if old != self.scroll_idx:
             self.dirty()
 
+    def get_max_scroll_idx(self):
+        return len(self.items) - self.items_per_page
+
+    def scroll_by(self, delta):
+        self.set_scroll_idx(
+            max(0, min(self.scroll_idx + delta, self.get_max_scroll_idx()))
+        )
+
     def on_mouse_wheel(self, pos, dx, dy):
-        self.scroll(dy)
+        self.scroll_by(dy)
 
     def on_key_down(self, key):
         delta = None
@@ -432,9 +438,15 @@ class ImgList(Element):
         elif key == pygame.K_PAGEUP:
             delta = -self.items_per_page
 
+        elif key == pygame.K_HOME:
+            self.set_scroll_idx(0)
+
+        elif key == pygame.K_END:
+            self.set_scroll_idx(self.get_max_scroll_idx())
+
         if delta is not None and self.key_hold_scroll_delta is None:
-            self.scroll(delta)
-            self.ticks = 0
+            self.scroll_by(delta)
+            self.tick = -250    # start repeating after a short delay 
             self.key_hold_scroll_delta = delta
 
     def on_key_up(self, key):
@@ -445,5 +457,5 @@ class ImgList(Element):
         if self.key_hold_scroll_delta is not None:
             self.tick += dt
             while self.tick >= self.key_hold_ticks:
-                self.scroll(self.key_hold_scroll_delta)
+                self.scroll_by(self.key_hold_scroll_delta)
                 self.tick -= self.key_hold_ticks
