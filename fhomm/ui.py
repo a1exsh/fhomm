@@ -37,7 +37,6 @@ class Element(object):
         self.parent = None
 
         self.hovered = False
-        # self._first_render = True
         self._dirty = False
 
     def measure(self, dim):
@@ -55,17 +54,11 @@ class Element(object):
         self._dirty = True
 
     def render(self, ctx, force=False):
-        # if self._first_render:
-        #     self.on_first_render(ctx)
-        #     self._first_render = False
-        #     force = True
-
         if self._dirty:
             self._dirty = False
             force = True
 
         if force:
-            # print(f"needs render: {self}")
             self.on_render(ctx)
 
             if DEBUG_RENDER and self.hovered:
@@ -74,9 +67,6 @@ class Element(object):
             return True         # rendered, tell to update the screen
 
         return False
-
-    # def on_first_render(self, ctx):
-    #     pass
 
     def on_render(self, ctx):
         pass
@@ -261,20 +251,6 @@ class Container(Element):
             return child.element.handle(event)
 
 
-# class BackgroundCapturingElement(Element):
-#     def on_first_render(self, ctx):
-#         self.capture_background(ctx)
-
-#     def capture_background(self, ctx, rect=None):
-#         # TODO: assert before first render?
-#         if rect is None:
-#             rect = self.rect
-#         self._bg_captured = ctx.capture(rect)
-
-#     def restore_background(self, ctx, pos=Pos(0, 0)):
-#         self._bg_captured.render(ctx, pos)
-
-
 class Window(Container):
 
     def __init__(self, border_width=25):
@@ -367,36 +343,52 @@ class ImgList(Element):
 
     Item = namedtuple('Item', ['img', 'text'])
 
-    def __init__(self, dim, items, item_dim, item_pad=1):
+    def __init__(self, dim, font, items, item_dim, item_vpad=1, text_hpad=4):
         super().__init__()
         self.measure(dim)
+
+        self.font = font
+
         self.item_dim = item_dim
-        self.item_pad = item_pad
+        self.item_vpad = item_vpad
+        self.text_hpad = text_hpad
+        self.text_vpad = (item_dim.h - font.get_height()) // 2
+        # print(f"text_vpad: {self.text_vpad}")
 
         self.items = items
 
         self.scroll_idx = 0
-        self.items_per_page = dim.h // (item_dim.h + item_pad)
-        # TODO: allow for space between items?..
+        self.items_per_page = dim.h // (item_dim.h + item_vpad)
+
         self.list_pad = Dim(
             3,
-            (dim.h - self.items_per_page*(item_dim.h + item_pad)) // 2,
+            (dim.h - self.items_per_page*(item_dim.h + item_vpad)) // 2,
         )
+
+        self._bg_capture = None
 
         self.tick = 0
         self.key_hold_ticks = 50
         self.key_hold_scroll_delta = None
 
     def on_render(self, ctx):
+        if self._bg_capture is None:
+            self._bg_capture = ctx.capture(self.rect)
+        else:
+            self._bg_capture.render(ctx)
+
         for i in range(min(len(self.items), self.items_per_page)):
-            img_item = self.items[self.scroll_idx + i].img
-            img_item.render(
-                ctx,
-                Pos(
-                    self.list_pad.w,
-                    self.list_pad.h + (self.item_dim.h + self.item_pad)*i,
-                )
+            item = self.items[self.scroll_idx + i]
+            img_pos = Pos(
+                self.list_pad.w,
+                self.list_pad.h + (self.item_dim.h + self.item_vpad)*i,
             )
+            item.img.render(ctx, img_pos)
+
+            text_pos = img_pos.offset(
+                Pos(self.item_dim.w + self.text_hpad, self.text_vpad)
+            )
+            self.font.draw_text(ctx, item.text, text_pos)
 
     def scroll(self, delta):
         max_scroll_idx = len(self.items) - self.items_per_page

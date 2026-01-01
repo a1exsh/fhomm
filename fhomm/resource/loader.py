@@ -4,6 +4,14 @@ import fhomm.resource.bmp
 import fhomm.resource.icn
 
 
+def get_icn_class(name):
+    if name in ["font.icn", "smalfont.icn"]:
+        return fhomm.resource.icn.ALL_MONO
+
+    else:
+        return fhomm.resource.icn.ALL_COLOR
+
+
 class AggResourceLoader(object):
     def __init__(self, agg):
         self.agg = agg
@@ -21,7 +29,10 @@ class AggResourceLoader(object):
 
     def load_icn(self, name):
         self.seek_to(name)
-        return fhomm.resource.icn.read_icn_sprites(self.agg.f)
+        return fhomm.resource.icn.read_icn_sprites(
+            self.agg.f,
+            get_icn_class(name),
+        )
 
     def seek_to(self, name):
         self.agg.f.seek(self.agg.entries[name].offset, os.SEEK_SET)

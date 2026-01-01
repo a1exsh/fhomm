@@ -182,20 +182,37 @@ class RestrictingContext(Context):
 
 
 class Font(object):
-    def __init__(self, sprites):
+    def __init__(self, sprites, width):
         if len(sprites) != 96:
             raise Exception("The font ICN file must have 96 sprites in it.")
 
         self.sprites = sprites
+        self.width = width
+        self.height = max(s.dim.h for s in sprites)
 
+    def get_width(self):
+        return self.width
+
+    def get_height(self):
+        return self.height
+
+    # TODO: color!
     def draw_text(self, ctx, text, pos=Pos(0, 0)):
-        for c in text:
-            sprite = self.sprite[self.get_sprite_idx(c) or 0]
-            sprite.render(ctx, pos)
+        # input pos is the top-left corner, but each sprite is offset to make
+        # the bottom line align
+        pos = pos.offset(Pos(0, self.height))
 
-            pos = pos.offset(Pos(sprite.dim.w, 0))
+        for c in text:
+            if c == ' ':
+                pos = pos.offset(Pos(self.width, 0))
+
+            else:
+                sprite = self.sprites[self.get_sprite_idx(c) or 0]
+                sprite.render(ctx, pos)
+
+                pos = pos.offset(Pos(sprite.dim.w, 0))
 
     def get_sprite_idx(self, c):
-        i = int(c)
-        if int('A') <= i and i <= int('Z'):
-            return 33 + (i - int('A'))
+        i = ord(c)
+        if 0x20 < i and i <= 0x7f:
+            return i - 0x20

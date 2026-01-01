@@ -11,7 +11,12 @@ class Handler(fhomm.ui.Window):
         self.bg_image = loader.load_image('request.bmp')
         self.measure(self.bg_image.dim)
 
-        img_list = fhomm.ui.ImgList(Dim(206, 198), items, item_dim)
+        img_list = fhomm.ui.ImgList(
+            Dim(206, 198),
+            loader.get_small_font(),
+            items,
+            item_dim,
+        )
         self.attach(img_list, Pos(40, 27))
 
         # OKAY

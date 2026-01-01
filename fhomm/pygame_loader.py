@@ -9,8 +9,20 @@ class PygameLoader(object):
         self.loader = loader
         self.palette = self.load_palette(pal_name)
 
-        # self.big_font = fhomm.render.Font(self.load_all_sprites('font.icn'))
-        # self.small_font = fhomm.render.Font(self.load_all_sprites('smalfont.icn'))
+        self.big_font = None
+        self.small_font = None
+
+    def get_big_font(self):
+        if self.big_font is None:
+            self.big_font = self.load_font('font.icn', 10)
+
+        return self.big_font
+
+    def get_small_font(self):
+        if self.small_font is None:
+            self.small_font = self.load_font('smalfont.icn', 5)
+
+        return self.small_font
 
     def load_palette(self, pal_name):
         pal = self.loader.load_pal(pal_name)
@@ -41,3 +53,6 @@ class PygameLoader(object):
             )
             for icn_sprite in self.loader.load_icn(icn_name)
         ]
+
+    def load_font(self, icn_name, width):
+        return fhomm.render.Font(self.load_all_sprites(icn_name), width)

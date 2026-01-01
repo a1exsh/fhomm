@@ -11,7 +11,7 @@ class Handler(fhomm.window.selector.Handler):
         items = [
             fhomm.ui.ImgList.Item(
                 loader.load_sprite('miniport.icn', i),
-                "%04d".format(i),
+                "Miniport: %04d" % i,
             )
             for i in range(36)
         ]
