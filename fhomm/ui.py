@@ -271,10 +271,10 @@ class Window(Container):
 
 
 class ImgButton(Element):
-    def __init__(self, img, command, hotkey=None):
+    def __init__(self, img, action, hotkey=None):
         super().__init__()
         self.img = img
-        self.command = command
+        self.action = action
         self.hotkey = hotkey
 
         self.is_pressed = False
@@ -296,10 +296,11 @@ class ImgButton(Element):
         if self.set_pressed():
             self.dirty()
 
-    def release(self):
+    def release(self, action=True):
         if self.set_released():
             self.dirty()
-            return self.command()
+            if action:
+                return self.action()
 
     def on_key_down(self, key):
         if key == self.hotkey:
@@ -308,6 +309,9 @@ class ImgButton(Element):
     def on_key_up(self, key):
         if key == self.hotkey:
             return self.release()
+
+    def on_mouse_leave(self):
+        self.release(action=False)
 
     def on_mouse_down(self, pos, button):
         # print(f"{self} mouse down: {pos} {button}")
@@ -320,10 +324,10 @@ class ImgButton(Element):
 
 
 class IcnButton(ImgButton): #BackgroundCapturingElement
-    def __init__(self, loader, icn_name, base_idx, command, hotkey=None):
+    def __init__(self, loader, icn_name, base_idx, action, hotkey=None):
         super().__init__(
             loader.load_sprite(icn_name, base_idx),
-            command,
+            action,
             hotkey=hotkey
         )
         self.img_pressed = loader.load_sprite(icn_name, base_idx + 1)
