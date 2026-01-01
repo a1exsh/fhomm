@@ -272,6 +272,23 @@ class Window(Container):
         )
 
 
+class Label(Element):
+    def __init__(self, dim, font, text):
+        super().__init__()
+        self.measure(dim)
+        self.font = font
+        self.text = text
+
+        text_dim = font.measure_text(text)
+        self.text_pos = Pos(
+            (dim.w - text_dim.w) // 2,
+            (dim.h - text_dim.h) // 2,
+        )
+
+    def on_render(self, ctx):
+        self.font.draw_text(ctx, self.text, self.text_pos)
+
+
 class ImgButton(Element):
     def __init__(self, img, action, hotkey=None):
         super().__init__()

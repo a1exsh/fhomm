@@ -181,6 +181,23 @@ class RestrictingContext(Context):
         return super().restrict(rect.offset(self._restriction.pos))
 
 
+class NoopContext(Context):
+    def __init__(self):
+        super().__init__(None)
+
+    def draw_rect(self, *args, **kwargs):
+        pass
+
+    def blit(self, *args, **kwargs):
+        pass
+
+    def capture(self):
+        return self.make_image(Dim(0, 0))
+
+    def restrict(self, *args, **kwargs):
+        return self
+
+
 class Font(object):
     def __init__(self, sprites, width):
         if len(sprites) != 96:
@@ -196,11 +213,14 @@ class Font(object):
     def get_height(self):
         return self.height
 
+    def measure_text(self, text):
+        return self.draw_text(NoopContext(), text)
+
     # TODO: color!
-    def draw_text(self, ctx, text, pos=Pos(0, 0)):
+    def draw_text(self, ctx, text, top_left=Pos(0, 0)):
         # input pos is the top-left corner, but each sprite is offset to make
         # the bottom line align
-        pos = pos.offset(Pos(0, self.height))
+        pos = top_left.offset(Pos(0, self.height))
 
         for c in text:
             if c == ' ':
@@ -211,6 +231,8 @@ class Font(object):
                 sprite.render(ctx, pos)
 
                 pos = pos.offset(Pos(sprite.dim.w, 0))
+
+        return Dim(pos.x - top_left.x, self.height)
 
     def get_sprite_idx(self, c):
         i = ord(c)

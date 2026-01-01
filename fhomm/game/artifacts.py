@@ -1,0 +1,46 @@
+from collections import namedtuple
+
+# List of artifacts in the order of resources: 0-37
+Artifact = namedtuple('Artifact', ['name'], module='fhomm.game')
+
+# TODO: support translations!
+ARTIFACTS = [
+    Artifact("The Ultimate Book of Knowledge"),
+    Artifact("The Ultimate Sword of Dominion"),
+    Artifact("The Ultimate ??? Protection"),
+    Artifact("The Ultimate Staff of Power?"),
+    Artifact("Necklace of Power"),
+    Artifact("Bracelet of Power"),
+    Artifact("Magic Ring"),
+    Artifact("Broach of Magic"),
+    Artifact("Medal of Courage?"),
+    Artifact("Medal of Honor"),
+    Artifact("?"),
+    Artifact("?"),
+    Artifact("Fizbin of Misfortune"),
+    Artifact(""),
+    Artifact("Gauntlet of Protection?"),
+    Artifact(""),
+    Artifact("Flail?"),
+    Artifact("Ballista of Quickness"),
+    Artifact("Shield?"),
+    Artifact("Sword of Dominion"),
+    Artifact("?"),
+    Artifact("Breastplate of Rizz"),
+    Artifact("Minor Scroll of Knowledge"),
+    Artifact("? Scroll of Knowledge"),
+    Artifact("? Scroll of Knowledge"),
+    Artifact("? Scroll of Knowledge"),
+    Artifact("Endless Sack of Gold"),
+    Artifact("Endless Bag of Gold"),
+    Artifact("Endless ? of Gold"),
+    Artifact("Boots of Mobility"),
+    Artifact("Traveler's Boots of ?"),
+    Artifact("Rabbit's Foot"),
+    Artifact("Golden Horseshoe"),
+    Artifact("Gambler's Coin"),
+    Artifact("Lucky Clover"),
+    Artifact("True Compass of Mobility"),
+    Artifact("Astrola-la-la"),
+    Artifact("Magic Book"),
+]
