@@ -13,7 +13,7 @@ class Handler(fhomm.ui.Window):
 
         img_list = fhomm.ui.ImgList(
             Dim(206, 198),
-            loader.get_small_font(),
+            loader.get_big_font(),
             items,
             item_dim,
         )

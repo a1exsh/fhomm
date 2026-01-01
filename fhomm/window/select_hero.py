@@ -1,9 +1,10 @@
 import pygame
 
-import fhomm.ui
-import fhomm.handler
-import fhomm.window.selector
 from fhomm.render import Pos, Dim
+import fhomm.game.heroes
+import fhomm.handler
+import fhomm.ui
+import fhomm.window.selector
 
 
 class Handler(fhomm.window.selector.Handler):
@@ -11,9 +12,9 @@ class Handler(fhomm.window.selector.Handler):
         items = [
             fhomm.ui.ImgList.Item(
                 loader.load_sprite('miniport.icn', i),
-                "Miniport: %04d" % i,
+                hero.name,
             )
-            for i in range(36)
+            for i, hero in enumerate(fhomm.game.heroes.HEROES)
         ]
         # loader.load_sprite('locators.icn', 21),
         super().__init__(loader, items, items[0].img.dim)
