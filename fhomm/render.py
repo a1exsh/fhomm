@@ -220,19 +220,47 @@ class Font(object):
     def draw_text(self, ctx, text, top_left=Pos(0, 0)):
         # input pos is the top-left corner, but each sprite is offset to make
         # the bottom line align
-        pos = top_left.offset(Pos(0, self.height))
+        pos = Pos(top_left.x, top_left.y + self.height)
 
         for c in text:
             if c == ' ':
-                pos = pos.offset(Pos(self.width, 0))
+                pos = Pos(pos.x + self.width, pos.y)
 
             else:
                 sprite = self.sprites[self.get_sprite_idx(c) or 0]
                 sprite.render(ctx, pos)
 
-                pos = pos.offset(Pos(sprite.dim.w, 0))
+                pos = Pos(pos.x + sprite.dim.w, pos.y)
 
         return Dim(pos.x - top_left.x, self.height)
+
+    def measure_multiline_text(self, text, rect):
+        return self.draw_multiline_text(NoopContext(), text, rect)
+
+    # TOOD: line spacing
+    def draw_multiline_text(self, ctx, text, rect):
+        maxx = rect.x
+        maxy = rect.y
+        pos = rect.pos
+
+        words = text.split(' ')
+        for i, word in enumerate(words):
+            word_dim = self.measure_text(word)
+            if i > 0:
+                pos = Pos(pos.x + self.width, pos.y) # space
+
+                if pos.x + word_dim.w > rect.right: # line break
+                    pos = Pos(rect.x, pos.y + self.height)
+                    if pos.y > maxy:
+                        maxy = pos.y
+
+            self.draw_text(ctx, word, pos)
+
+            pos = Pos(pos.x + word_dim.w, pos.y)
+            if pos.x > maxx:
+                maxx = pos.x
+
+        return Dim(maxx - rect.x, maxy - rect.y + self.height)
 
     def get_sprite_idx(self, c):
         i = ord(c)

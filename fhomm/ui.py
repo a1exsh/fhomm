@@ -369,8 +369,6 @@ class ImgList(Element):
         self.item_dim = item_dim
         self.item_vpad = item_vpad
         self.text_hpad = text_hpad
-        self.text_vpad = (item_dim.h - font.get_height()) // 2
-        # print(f"text_vpad: {self.text_vpad}")
 
         self.items = items
 
@@ -402,10 +400,25 @@ class ImgList(Element):
             )
             item.img.render(ctx, img_pos)
 
-            text_pos = img_pos.offset(
-                Pos(self.item_dim.w + self.text_hpad, self.text_vpad)
+            text_pos = Pos(
+                img_pos.x + self.item_dim.w + self.text_hpad,
+                img_pos.y,
             )
-            self.font.draw_text(ctx, item.text, text_pos)
+            bound_rect = Rect(
+                Dim(self.rect.right - text_pos.x, self.item_dim.h),
+                text_pos,
+            )
+            text_dim = self.font.measure_multiline_text(item.text, bound_rect)
+
+            # center vertically before actually drawing the item text
+            text_rect = Rect(
+                text_dim,
+                Pos(
+                    text_pos.x,
+                    text_pos.y + (self.item_dim.h - text_dim.h) // 2,
+                ),
+            )
+            self.font.draw_multiline_text(ctx, item.text, text_rect)
 
     def set_scroll_idx(self, idx):
         old, self.scroll_idx = self.scroll_idx, idx
