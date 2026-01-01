@@ -1,3 +1,6 @@
+from contextlib import contextmanager
+import traceback
+
 import pygame
 
 from fhomm.render import Pos, Dim, Rect
@@ -101,28 +104,42 @@ class WindowManager(fhomm.ui.Container):
         # render_palette(SCREEN, 8, 258, 8)
         # render_fps(SCREEN, PALETTE_CYCLE_TICK)
 
+        self.last_exception = None
+
         self.running = True
         while self.running:
-            for event in pygame.event.get():
-                command = self.handle(event)
-                if command is not None:
-                    self.run_command(command)
+            with self.logging_just_once():
+                for event in pygame.event.get():
+                    command = self.handle(event)
+                    if command is not None:
+                        self.run_command(command)
 
-            if self.render(self.screen_ctx):
-                # print("flippin")
-                pygame.display.flip()
+                if self.render(self.screen_ctx):
+                    # print("flippin")
+                    pygame.display.flip()
 
-            dt = clock.tick(60)
+                dt = clock.tick(60)
+                # TODO: for now no way to move it to on_event, as a child
+                # handling on tick will prevent palette from cycling a way to
+                # solve it may be by re-thinking the short-circuit on first
+                # returned command
+                if self.palette.update_tick(dt):
+                    self.screen.set_palette(self.palette.palette)
 
-            # TODO: for now no way to move it to on_event, as a child handling
-            # on tick will prevent palette from cycling a way to solve it may
-            # be by re-thinking the short-circuit on first returned command
-            if self.palette.update_tick(dt):
-                self.screen.set_palette(self.palette.palette)
-
-            self.post_tick(dt)
+                self.post_tick(dt)
 
         pygame.quit()
+
+    @contextmanager
+    def logging_just_once(self):
+        try:
+            yield
+            self.last_exception = None
+        except Exception as e:
+            if self.last_exception is None:
+                traceback.print_exc()
+
+            self.last_exception = e
 
     def post_tick(self, dt):
         pygame.event.post(pygame.event.Event(fhomm.handler.EVENT_TICK, dt=dt))
