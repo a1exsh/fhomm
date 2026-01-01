@@ -4,6 +4,8 @@ from contextlib import AbstractContextManager
 import pygame
 
 import fhomm.palette
+import fhomm.resource.bmp
+import fhomm.resource.icn
 
 Dim = namedtuple('Dim', ['w', 'h']) # TODO: rename to Size
 
@@ -73,6 +75,16 @@ class Image(object):
         self._img = img
         self.dim = Dim(img.get_width(), img.get_height())
 
+    @classmethod
+    def from_bmp(cls, bmp, palette):
+        return cls(cls.make_surface(bmp.data, bmp.width, bmp.height, palette))
+
+    @classmethod
+    def make_surface(cls, data, width, height, palette):
+        img = pygame.image.frombuffer(data, (width, height), 'P')
+        img.set_palette(palette)
+        return img
+
     def get_context(self):
         return Context(self._img)
 
@@ -84,6 +96,17 @@ class Sprite(Image):
     def __init__(self, img, offset):
         super().__init__(img)
         self._offset = offset
+
+    @classmethod
+    def from_icn_sprite(cls, icn_sprite, palette):
+        img = Image.make_surface(
+            icn_sprite.data,
+            icn_sprite.width,
+            icn_sprite.height,
+            palette,
+        )
+        img.set_colorkey(0)
+        return cls(img, Pos(icn_sprite.offx, icn_sprite.offy))
 
     def render(self, ctx, pos=Pos(0, 0)):
         super().render(ctx, Pos(pos.x + self._offset.x, pos.y + self._offset.y))
@@ -156,3 +179,23 @@ class RestrictingContext(Context):
     def restrict(self, rect):
         # TODO: should also restrict width and height
         return super().restrict(rect.offset(self._restriction.pos))
+
+
+class Font(object):
+    def __init__(self, sprites):
+        if len(sprites) != 96:
+            raise Exception("The font ICN file must have 96 sprites in it.")
+
+        self.sprites = sprites
+
+    def draw_text(self, ctx, text, pos=Pos(0, 0)):
+        for c in text:
+            sprite = self.sprite[self.get_sprite_idx(c) or 0]
+            sprite.render(ctx, pos)
+
+            pos = pos.offset(Pos(sprite.dim.w, 0))
+
+    def get_sprite_idx(self, c):
+        i = int(c)
+        if int('A') <= i and i <= int('Z'):
+            return 33 + (i - int('A'))

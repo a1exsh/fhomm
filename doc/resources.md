@@ -84,7 +84,7 @@
 ## Fonts
 
 - `font.icn`: MONO icons for the big font symbols
-- `smallfont.icn`: MONO icons for the small font symbols
+- `smalfont.icn`: MONO icons for the small font symbols
 
 ## Misc
 

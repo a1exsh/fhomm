@@ -9,6 +9,9 @@ class PygameLoader(object):
         self.loader = loader
         self.palette = self.load_palette(pal_name)
 
+        # self.big_font = fhomm.render.Font(self.load_all_sprites('font.icn'))
+        # self.small_font = fhomm.render.Font(self.load_all_sprites('smalfont.icn'))
+
     def load_palette(self, pal_name):
         pal = self.loader.load_pal(pal_name)
         return [
@@ -22,16 +25,19 @@ class PygameLoader(object):
 
     def load_image(self, bmp_name):
         bmp = self.loader.load_bmp(bmp_name)
-        img = self.make_image(bmp.data, bmp.width, bmp.height)
-        return fhomm.render.Image(img)
+        return fhomm.render.Image.from_bmp(bmp, self.palette)
 
     def load_sprite(self, icn_name, idx):
-        s = self.loader.load_icn(icn_name)[idx]
-        img = self.make_image(s.data, s.width, s.height)
-        img.set_colorkey(0)
-        return fhomm.render.Sprite(img, Pos(s.offx, s.offy))
+        return fhomm.render.Sprite.from_icn_sprite(
+            self.loader.load_icn(icn_name)[idx],
+            self.palette,
+        )
 
-    def make_image(self, data, width, height):
-        img = pygame.image.frombuffer(data, (width, height), 'P')
-        img.set_palette(self.palette)
-        return img
+    def load_all_sprites(self, icn_name):
+        return [
+            fhomm.render.Sprite.from_icn_sprite(
+                icn_sprite,
+                self.palette,
+            )
+            for icn_sprite in self.loader.load_icn(icn_name)
+        ]
