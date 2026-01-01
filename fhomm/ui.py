@@ -8,6 +8,28 @@ from fhomm.render import Pos, Dim, Rect
 DEBUG = False
 
 
+def is_mouse_event(event):
+    return event.type in [
+        pygame.MOUSEMOTION,
+        pygame.MOUSEBUTTONDOWN,
+        pygame.MOUSEBUTTONUP,
+        pygame.MOUSEWHEEL,
+    ]
+
+
+def translate_mouse_event(event, child_pos):
+    return pygame.event.Event(
+        event.type,
+        {
+            **event.__dict__,
+            'pos': (
+                event.pos[0] - child_pos.x,
+                event.pos[1] - child_pos.y,
+            ),
+        },
+    )
+
+
 class Element(object):
     def __init__(self):
         self.parent = None
@@ -211,28 +233,6 @@ class Container(Element):
 
         else:
             return child.element.handle(event)
-
-
-def is_mouse_event(event):
-    return event.type in [
-        pygame.MOUSEMOTION,
-        pygame.MOUSEBUTTONDOWN,
-        pygame.MOUSEBUTTONUP,
-        pygame.MOUSEWHEEL,
-    ]
-
-
-def translate_mouse_event(event, child_pos):
-    return pygame.event.Event(
-        event.type,
-        {
-            **event.__dict__,
-            'pos': (
-                event.pos[0] - child_pos.x,
-                event.pos[1] - child_pos.y,
-            ),
-        },
-    )
 
 
 # class BackgroundCapturingElement(Element):
