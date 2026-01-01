@@ -10,10 +10,9 @@ class Handler(fhomm.window.selector.Handler):
     def __init__(self, loader):
         items = [
             fhomm.ui.ImgList.Item(
-                loader.load_sprite('miniport.icn', i),
-                "%04d".format(i),
+                loader.load_sprite('artfx.icn', i),
+                "%02d".format(i),
             )
-            for i in range(36)
+            for i in range(38)
         ]
-        # loader.load_sprite('locators.icn', 21),
         super().__init__(loader, items, items[0].img.dim)

@@ -39,7 +39,7 @@ class Element(object):
         self._dirty = False
 
     def measure(self, dim):
-        print(f"{self} measured at {dim}")
+        #print(f"{self} measured at {dim}")
         self.dim = dim
         self.rect = Rect(dim)
 
@@ -102,10 +102,10 @@ class Element(object):
             return self.on_quit()
 
     def handle_mouse_event(self, event):
-        mouse_pos = Pos(event.pos[0], event.pos[1])
+        pos = Pos(event.pos[0], event.pos[1])
 
         if event.type == pygame.MOUSEMOTION:
-            old, self.hovered = self.hovered, self.rect.contains(mouse_pos)
+            old, self.hovered = self.hovered, self.rect.contains(pos)
             if old != self.hovered:
                 if DEBUG:
                     self.dirty()
@@ -115,13 +115,31 @@ class Element(object):
                 else:
                     self.on_mouse_leave()
 
-            return self.on_mouse_move(mouse_pos)
+            relpos = Pos(event.rel[0], event.rel[1])
+            return self.on_mouse_move(pos, relpos)
 
         elif event.type == pygame.MOUSEBUTTONDOWN:
-            return self.on_mouse_down(mouse_pos, event.button)
+            #print(f"mousedown: {event}")
+            if event.button == 4 or event.button == 5:
+                pass
+
+            else:
+                return self.on_mouse_down(pos, event.button)
 
         elif event.type == pygame.MOUSEBUTTONUP:
-            return self.on_mouse_up(mouse_pos, event.button)
+            #print(f"mouseup: {event}")
+            if event.button == 4:
+                return self.on_mouse_wheel(pos, 0, -1)
+
+            elif event.button == 5:
+                return self.on_mouse_wheel(pos, 0, 1)
+
+            else:
+                return self.on_mouse_up(pos, event.button)
+
+        elif event.type == pygame.MOUSEWHEEL:
+            print(f"mousewheel: {event}")
+            return self.on_mouse_wheel(mouse_pos, event.x, event.y)
 
     def on_tick(self, dt):
         pass
@@ -132,13 +150,16 @@ class Element(object):
     def on_mouse_leave(self):
         pass
 
-    def on_mouse_move(self, pos):
+    def on_mouse_move(self, pos, relpos):
         pass
 
     def on_mouse_down(self, pos, button):
         pass
 
     def on_mouse_up(self, pos, button):
+        pass
+
+    def on_mouse_wheel(self, pos, dx, dy):
         pass
 
     def on_key_down(self, key):
@@ -341,12 +362,36 @@ class ImgList(Element):
 
     Item = namedtuple('Item', ['img', 'text'])
 
-    def __init__(self, items, bg_item):
+    def __init__(self, dim, items, item_dim, item_pad=1):
         super().__init__()
+        self.measure(dim)
+        self.item_dim = item_dim
+        self.item_pad = item_pad
+
         self.items = items
-        self.bg_item = bg_item
+
+        self.scroll_idx = 0
+        self.items_per_page = dim.h // (item_dim.h + item_pad)
+        # TODO: allow for space between items?..
+        self.list_pad = Dim(
+            3,
+            (dim.h - self.items_per_page*(item_dim.h + item_pad)) // 2,
+        )
 
     def on_render(self, ctx):
-        for i in range(6):
-            self.bg_item.render(ctx, Pos(3, 8 + 30*i))
-            self.items[i][0].render(ctx, Pos(7, 12 + 30*i))
+        for i in range(min(len(self.items), self.items_per_page)):
+            img_item = self.items[self.scroll_idx + i].img
+            img_item.render(
+                ctx,
+                Pos(
+                    self.list_pad.w,
+                    self.list_pad.h + (self.item_dim.h + self.item_pad)*i,
+                )
+            )
+
+    def on_mouse_wheel(self, pos, dx, dy):
+        max_scroll_idx = len(self.items) - self.items_per_page
+        new = max(0, min(self.scroll_idx + dy, max_scroll_idx))
+        old, self.scroll_idx = self.scroll_idx, new
+        if old != self.scroll_idx:
+            self.dirty()

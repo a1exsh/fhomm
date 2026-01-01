@@ -3,6 +3,7 @@ import pygame
 from fhomm.render import Pos
 import fhomm.handler
 import fhomm.ui
+import fhomm.window.select_artifact
 import fhomm.window.select_hero
 
 
@@ -31,6 +32,15 @@ class Handler(fhomm.ui.Window):
             Pos(315, 40),
         )
 
+        self.attach(
+            fhomm.ui.ImgButton(
+                self.loader.load_sprite('artfx.icn', 37),
+                self.cmd_select_artifact,
+                hotkey=pygame.K_d, # defender
+            ),
+            Pos(72, 190),
+        )
+
         # EXIT
         self.attach(
             fhomm.ui.IcnButton(
@@ -56,6 +66,12 @@ class Handler(fhomm.ui.Window):
         return fhomm.handler.cmd_show(
             fhomm.window.select_hero.Handler(self.loader),
             Pos(320, 74),
+        )
+
+    def cmd_select_artifact(self):
+        return fhomm.handler.cmd_show(
+            fhomm.window.select_artifact.Handler(self.loader),
+            Pos(0, 74),
         )
 
     def cmd_cancel(self):
