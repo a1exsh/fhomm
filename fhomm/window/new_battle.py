@@ -16,12 +16,22 @@ class Handler(fhomm.ui.Window):
         self.attach(
             fhomm.ui.ImgButton(
                 self.loader.load_sprite('port0000.icn', 0),
-                self.cmd_open_hero_selector,
-                hotkey=pygame.K_l, # left
+                self.cmd_select_attacker,
+                hotkey=pygame.K_a, # attacker
             ),
             Pos(24, 40),
         )
 
+        self.attach(
+            fhomm.ui.ImgButton(
+                self.loader.load_sprite('port0035.icn', 0),
+                self.cmd_select_defender,
+                hotkey=pygame.K_d, # defender
+            ),
+            Pos(315, 40),
+        )
+
+        # EXIT
         self.attach(
             fhomm.ui.IcnButton(
                 self.loader,
@@ -36,10 +46,16 @@ class Handler(fhomm.ui.Window):
     def on_render(self, ctx):
         self.bg_image.render(ctx)
 
-    def cmd_open_hero_selector(self):
+    def cmd_select_attacker(self):
         return fhomm.handler.cmd_show(
             fhomm.window.select_hero.Handler(self.loader),
-            Pos(0, 0),
+            Pos(0, 74),
+        )
+
+    def cmd_select_defender(self):
+        return fhomm.handler.cmd_show(
+            fhomm.window.select_hero.Handler(self.loader),
+            Pos(320, 74),
         )
 
     def cmd_cancel(self):

@@ -341,10 +341,12 @@ class ImgList(Element):
 
     Item = namedtuple('Item', ['img', 'text'])
 
-    def __init__(self, items):
+    def __init__(self, items, bg_item):
         super().__init__()
         self.items = items
+        self.bg_item = bg_item
 
     def on_render(self, ctx):
-        for i in range(7):
-            self.items[i][0].render(ctx, Pos(3, 3 + 28*i))
+        for i in range(6):
+            self.bg_item.render(ctx, Pos(3, 8 + 30*i))
+            self.items[i][0].render(ctx, Pos(7, 12 + 30*i))
