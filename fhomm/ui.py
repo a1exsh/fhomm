@@ -527,7 +527,7 @@ class ImgList(Element):
                 self.scroll_idx + self.items_per_page,
                 len(self.items),
             )
-            if item_idx < last_visible_idx:
+            if item_idx in range(last_visible_idx):
                 self.set_selected_idx(item_idx)
 
     def on_mouse_wheel(self, pos, dx, dy):
