@@ -422,6 +422,8 @@ class ImgList(Element):
                 Dim(self.rect.right - text_pos.x, self.item_dim.h),
                 text_pos,
             )
+            if DEBUG_RENDER:
+                ctx.draw_rect(240, bound_rect, width=1)
 
             font = self.hl_font if item_idx == self.selected_idx else self.font
             text_dim = font.measure_multiline_text(item.text, bound_rect)
@@ -434,6 +436,9 @@ class ImgList(Element):
                     text_pos.y + (self.item_dim.h - text_dim.h) // 2,
                 ),
             )
+            if DEBUG_RENDER:
+                ctx.draw_rect(224, text_rect, width=1)
+
             font.draw_multiline_text(ctx, item.text, text_rect)
 
     def set_scroll_idx(self, idx):
@@ -449,13 +454,6 @@ class ImgList(Element):
             max(0, min(self.scroll_idx + delta, self.get_max_scroll_idx()))
         )
 
-    def is_selected_item_visible(self):
-        if self.selected_idx is None:
-            return False
-
-        return self.scroll_idx <= self.selected_idx and \
-            self.selected_idx < self.scroll_idx + self.items_per_page
-
     def set_selected_idx(self, idx):
         old, self.selected_idx = self.selected_idx, idx
         if old != self.selected_idx:
@@ -465,11 +463,11 @@ class ImgList(Element):
         self.set_selected_idx(
             max(0, min(self.selected_idx + delta, len(self.items) - 1))
         )
-        if not self.is_selected_item_visible():
-            self.scroll_by(delta)
+        if self.selected_idx < self.scroll_idx:
+            self.set_scroll_idx(self.selected_idx)
 
-    def on_mouse_wheel(self, pos, dx, dy):
-        self.scroll_by(dy)
+        elif self.selected_idx >= self.scroll_idx + self.items_per_page:
+            self.set_scroll_idx(self.selected_idx - self.items_per_page + 1)
 
     def on_key_down(self, key):
         if not self.items:      # no selection in an empty list
@@ -516,3 +514,21 @@ class ImgList(Element):
             while self.tick >= self.key_hold_ticks:
                 self.move_selection_by(self.key_hold_delta)
                 self.tick -= self.key_hold_ticks
+
+    def on_mouse_down(self, pos, button):
+        if button == 1:
+            visible_idx = (
+                (pos.y - self.list_pad.h)
+                //
+                (self.item_dim.h + self.item_vpad)
+            )
+            item_idx = self.scroll_idx + visible_idx
+            last_visible_idx = min(
+                self.scroll_idx + self.items_per_page,
+                len(self.items),
+            )
+            if item_idx < last_visible_idx:
+                self.set_selected_idx(item_idx)
+
+    def on_mouse_wheel(self, pos, dx, dy):
+        self.scroll_by(dy)
