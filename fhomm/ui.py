@@ -39,6 +39,7 @@ class Element(object):
         self.hovered = False
         self._dirty = False
 
+    # TODO: could we simply require size in ctor?
     def measure(self, size):
         #print(f"{self} measured at {size}")
         self.size = size
@@ -447,7 +448,7 @@ class ImgList(Element):
             self.dirty()
 
     def get_max_scroll_idx(self):
-        return len(self.items) - self.items_per_page
+        return max(0, len(self.items) - self.items_per_page)
 
     def scroll_by(self, delta):
         self.set_scroll_idx(
