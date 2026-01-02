@@ -53,10 +53,10 @@ class WindowManager(fhomm.ui.Container):
                 element.size.w + WindowManager._SHADOW_OFFSET.x,
                 element.size.h + WindowManager._SHADOW_OFFSET.y,
             )
-            bg_rect = Rect(capture_size, screen_pos)
+            bg_rect = Rect.of(capture_size, screen_pos)
         else:
             shadow = False
-            bg_rect = Rect(element.size, screen_pos)
+            bg_rect = Rect.of(element.size, screen_pos)
 
         background = self.screen_ctx.capture(bg_rect)
         self.bg_captures.append(background)

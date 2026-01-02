@@ -42,7 +42,7 @@ class Element(object):
     def measure(self, size):
         #print(f"{self} measured at {size}")
         self.size = size
-        self.rect = Rect(size)
+        self.rect = Rect.of(size)
 
     def on_attach(self, parent):
         pass
@@ -174,7 +174,7 @@ class Container(Element):
 
         @property
         def relrect(self):
-            return Rect(self.element.size, self.relpos)
+            return Rect.of(self.element.size, self.relpos)
 
     def __init__(self):
         super().__init__()
@@ -212,7 +212,7 @@ class Container(Element):
         return update
 
     def render_child(self, child, ctx, force=False):
-        child_rect = child.relrect.offset(self.rect.pos)
+        child_rect = child.relrect.offset(self.rect.pos) # isn't pos 0,0?
         with ctx.restrict(child_rect) as child_ctx:
             return child.element.render(child_ctx, force)
 
@@ -418,7 +418,7 @@ class ImgList(Element):
                 img_pos.x + self.item_size.w + self.text_hpad,
                 img_pos.y,
             )
-            bound_rect = Rect(
+            bound_rect = Rect.of(
                 Size(self.rect.right - text_pos.x, self.item_size.h),
                 text_pos,
             )
@@ -429,7 +429,7 @@ class ImgList(Element):
             text_size = font.measure_multiline_text(item.text, bound_rect)
 
             # center vertically before actually drawing the item text
-            text_rect = Rect(
+            text_rect = Rect.of(
                 text_size,
                 Pos(
                     text_pos.x,

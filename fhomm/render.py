@@ -6,6 +6,7 @@ import fhomm.palette
 import fhomm.resource.bmp
 import fhomm.resource.icn
 
+# module=
 Size = namedtuple('Size', ['w', 'h'])
 
 
@@ -16,56 +17,45 @@ class Pos(namedtuple('Pos', ['x', 'y'])):
         return Pos(self.x + relpos.x, self.y + relpos.y)
 
 
-# TODO: go back to (x, y, w, h), compatible with pygame's representation
-class Rect(namedtuple('Rect', ['size', 'pos'], defaults=[Pos(0, 0)])):
+class Rect(namedtuple('Rect', ['x', 'y', 'w', 'h'])):
     __slots__ = ()
 
     @classmethod
-    def of(cls, x, y, w, h):
-        return cls(Size(w, h), Pos(x, y))
-
-    def to_pygame(self):
-        return (self.x, self.y, self.w, self.h)
+    def of(cls, size, pos=Pos(0, 0)):
+        return cls(pos.x, pos.y, size.w, size.h)
 
     @property
-    def x(self):
-        return self.pos.x
+    def pos(self):
+        return Pos(self.x, self.y)
 
     @property
-    def y(self):
-        return self.pos.y
-
-    @property
-    def w(self):
-        return self.size.w
-
-    @property
-    def h(self):
-        return self.size.h
+    def size(self):
+        return Size(self.w, self.h)
 
     @property
     def top(self):
-        return self.pos.y
+        return self.y
 
     @property
     def left(self):
-        return self.pos.x
+        return self.x
 
     @property
     def bottom(self):
-        return self.pos.y + self.size.h
+        return self.y + self.h
 
     @property
     def right(self):
-        return self.pos.x + self.size.w
+        return self.x + self.w
 
     def offset(self, relpos):
-        return Rect(self.size, self.pos.offset(relpos))
+        return Rect(self.x + relpos.x, self.y + relpos.y, self.w, self.h)
 
+    # TODO: __contains__
     def contains(self, pos):
         return (
-            self.left <= pos.x and pos.x <= self.right and
-            self.top  <= pos.y and pos.y <= self.bottom
+            pos.x in range(self.left, self.right) and
+            pos.y in range(self.top, self.bottom)
         )
 
 
@@ -134,14 +124,10 @@ class Context(object):
         return Image(img)
 
     def draw_rect(self, color, rect, width=0):
-        pygame.draw.rect(self._image, color, rect.to_pygame(), width)
+        pygame.draw.rect(self._image, color, rect, width)
 
     def blit(self, source, pos=Pos(0, 0), rect=None):
-        self._image.blit(
-            source._img,
-            pos,
-            area=(None if rect is None else rect.to_pygame()),
-        )
+        self._image.blit(source._img, pos, area=rect)
 
     def capture(self, rect):
         img = self.make_image(rect.size)
@@ -160,7 +146,7 @@ class RestrictingContext(Context):
 
     def __enter__(self):
         self._old_clip = self._image.get_clip()
-        self._image.set_clip(self._restriction.to_pygame())
+        self._image.set_clip(self._restriction)
         return self
 
     def __exit__(self, *args, **kwargs):
