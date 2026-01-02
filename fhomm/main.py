@@ -28,21 +28,18 @@ pygame.init()
 SCREEN = pygame.display.set_mode((640, 480), depth=8)
 SCREEN.set_palette(PYGAME_LOADER.palette)
 
-FONT = pygame.font.SysFont('Mono', 16)
-FPS_COLOR = pygame.color.Color('white')
+FONT = PYGAME_LOADER.get_font()
 
 # DEBUG
-# def render_fps(screen, dt):
-#     fps = 0 if dt == 0 else 1000 // dt
-#     s = FONT.render(str(fps), False, FPS_COLOR)
-#     screen.blit(s, (0,0))       # screen.get_width() - s.get_width()
-
-
 # def render_palette(screen, size, offx, offy):
 #     for y in range(16):
 #         for x in range(16):
 #             screen.fill((y << 4) | x, (offx + x*size, offy + y*size, size, size))
 
-
-window_manager = WindowManager(SCREEN, PALETTE, TitleScreen(PYGAME_LOADER))
+window_manager = WindowManager(
+    SCREEN,
+    PALETTE,
+    FONT,
+    TitleScreen(PYGAME_LOADER)
+)
 threading.Thread(target=window_manager).start()

@@ -12,15 +12,19 @@ class WindowManager(fhomm.ui.Container):
 
     _SHADOW_OFFSET = Pos(16, 16)
 
-    def __init__(self, screen, palette, main_handler, fps_limit=30):
+    def __init__(self, screen, palette, font, main_handler, fps_limit=30):
         super().__init__()
         self.screen = screen
         self.palette = palette
+        self.font = font
         self.fps_limit = fps_limit
 
         self.screen_ctx = fhomm.render.Context(screen)
         self.bg_captures = []
         self.running = False
+
+        self.show_fps = False
+        self._bg_fps = None
 
         self.measure(Size(screen.get_width(), screen.get_height()))
 
@@ -77,17 +81,33 @@ class WindowManager(fhomm.ui.Container):
     def render(self, ctx, force=False):
         return self.render_child(self.active_child(), ctx, force)
 
+    def render_fps(self, ctx, dt):
+        fps = 0 if dt == 0 else 1000 // dt
+        fps_text = str(fps)
+        pos = Pos(0, 0)
+        size = self.font.measure_text(fps_text)
+
+        if self._bg_fps is None:
+            self._bg_fps = ctx.capture(Rect.of(size, pos))
+        else:
+            self._bg_fps.render(ctx, pos)
+
+        self.font.draw_text(ctx, fps_text, pos)
+
     def handle(self, event):
         # kind of has to be here to always react
         if event.type == pygame.KEYUP:
-            if event.key == pygame.K_F4:
-                return fhomm.handler.CMD_TOGGLE_FULLSCREEN
-
-            elif event.key == pygame.K_F1:
+            if event.key == pygame.K_F1:
                 return fhomm.handler.CMD_TOGGLE_DEBUG_UI_RENDER
 
             elif event.key == pygame.K_F2:
                 return fhomm.handler.CMD_TOGGLE_DEBUG_UI_EVENTS
+
+            elif event.key == pygame.K_F3:
+                return fhomm.handler.CMD_TOGGLE_FPS
+
+            elif event.key == pygame.K_F4:
+                return fhomm.handler.CMD_TOGGLE_FULLSCREEN
 
         cmd = self.handle_by_child(self.active_child(), event)
         if cmd is not None:
@@ -105,9 +125,6 @@ class WindowManager(fhomm.ui.Container):
     def run_event_loop(self):
         clock = pygame.time.Clock()
 
-        # render_palette(SCREEN, 8, 258, 8)
-        # render_fps(SCREEN, PALETTE_CYCLE_TICK)
-
         self.last_exception = None
 
         self.running = True
@@ -123,6 +140,9 @@ class WindowManager(fhomm.ui.Container):
                     pygame.display.flip()
 
                 dt = clock.tick(self.fps_limit)
+
+                if self.show_fps:
+                    self.render_fps(self.screen_ctx, dt)
 
                 # TODO: for now no way to move it to on_event, as a child
                 # handling on tick will prevent palette from cycling a way to
@@ -157,15 +177,18 @@ class WindowManager(fhomm.ui.Container):
         elif command.code == fhomm.handler.IGNORE:
             pass
 
-        elif command.code == fhomm.handler.TOGGLE_FULLSCREEN:
-            pygame.display.toggle_fullscreen()
-
         elif command.code == fhomm.handler.TOGGLE_DEBUG_UI_RENDER:
             fhomm.ui.DEBUG_RENDER = not fhomm.ui.DEBUG_RENDER
             self.active_child().element.dirty()
 
         elif command.code == fhomm.handler.TOGGLE_DEBUG_UI_EVENTS:
             fhomm.ui.DEBUG_EVENTS = not fhomm.ui.DEBUG_EVENTS
+
+        elif command.code == fhomm.handler.TOGGLE_FPS:
+            self.show_fps = not self.show_fps
+
+        elif command.code == fhomm.handler.TOGGLE_FULLSCREEN:
+            pygame.display.toggle_fullscreen()
 
         elif command.code == fhomm.handler.SHOW:
             self.show(**command.kwargs)
