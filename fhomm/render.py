@@ -234,7 +234,11 @@ class Font(object):
 
                 pos = Pos(pos.x + sprite.dim.w + 1, pos.y)
 
-        return Dim(pos.x - top_left.x, self.baseline)
+        width = pos.x - top_left.x
+        if len(text) > 0:
+            width -= 1          # account for space between glyphs
+
+        return Dim(width, self.baseline)
 
     def measure_multiline_text(self, text, rect):
         return self.draw_multiline_text(NoopContext(), text, rect)

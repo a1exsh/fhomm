@@ -19,6 +19,7 @@ class Handler(fhomm.ui.Window):
             Pos(50, 16),
         )
 
+        # TODO: the two fonts could come from some form of a higher level UI toolkit
         img_list = fhomm.ui.ImgList(
             Dim(206, 198),
             font,
