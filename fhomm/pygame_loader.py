@@ -15,19 +15,19 @@ class PygameLoader(object):
 
     def get_font(self):
         if self.font is None:
-            self.font = self.load_font('font.icn', 10)
+            self.font = self.load_font('font.icn', 6)
 
         return self.font
 
     def get_hl_font(self):
         if self.hl_font is None:
-            self.hl_font = self.load_font('font.icn', 10, color=232)
+            self.hl_font = self.load_font('font.icn', 6, color=232)
 
         return self.hl_font
 
     def get_small_font(self):
         if self.small_font is None:
-            self.small_font = self.load_font('smalfont.icn', 5)
+            self.small_font = self.load_font('smalfont.icn', 4)
 
         return self.small_font
 
