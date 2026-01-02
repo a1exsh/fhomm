@@ -252,15 +252,17 @@ class Container(Element):
 
 
 class Window(Container):
-
-    def __init__(self, border_width=25):
+    def __init__(self, border_width):
         super().__init__()
         self.border_width = border_width
         self.container = Container()
         super().attach(self.container, Pos(border_width, border_width))
 
     def attach(self, element, relpos):
-        self.container.attach(element, relpos)
+        self.container.attach(
+            element,
+            relpos.offset(Pos(-self.border_width, -self.border_width)),
+        )
 
     def measure(self, dim):
         super().measure(dim)

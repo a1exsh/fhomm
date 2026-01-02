@@ -16,7 +16,7 @@ class Handler(fhomm.ui.Window):
 
         self.attach(
             fhomm.ui.Label(Dim(219, 20), font, title),
-            Pos(34, 0),
+            Pos(50, 16),
         )
 
         img_list = fhomm.ui.ImgList(
@@ -26,7 +26,7 @@ class Handler(fhomm.ui.Window):
             items,
             item_dim,
         )
-        self.attach(img_list, Pos(40, 27))
+        self.attach(img_list, Pos(56, 43))
 
         # OKAY
         self.attach(
@@ -37,7 +37,7 @@ class Handler(fhomm.ui.Window):
                 self.cmd_cancel,
                 pygame.K_RETURN,
             ),
-            Pos(20, 264),
+            Pos(36, 280),
         )
 
         # CANCEL
@@ -49,7 +49,7 @@ class Handler(fhomm.ui.Window):
                 self.cmd_cancel,
                 pygame.K_ESCAPE,
             ),
-            Pos(173, 264),
+            Pos(189, 280),
         )
 
     def on_render(self, ctx):

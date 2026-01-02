@@ -21,7 +21,7 @@ class Handler(fhomm.ui.Window):
                 self.cmd_select_attacker,
                 hotkey=pygame.K_a, # attacker
             ),
-            Pos(24, 40),
+            Pos(28, 44),
         )
 
         self.attach(
@@ -30,7 +30,7 @@ class Handler(fhomm.ui.Window):
                 self.cmd_select_defender,
                 hotkey=pygame.K_d, # defender
             ),
-            Pos(315, 40),
+            Pos(319, 44),
         )
 
         self.attach(
@@ -38,7 +38,7 @@ class Handler(fhomm.ui.Window):
                 self.loader.load_sprite('mons32.icn', 23),
                 self.cmd_select_army,
             ),
-            Pos(20, 144),
+            Pos(24, 148),
         )
 
         self.attach(
@@ -46,7 +46,7 @@ class Handler(fhomm.ui.Window):
                 self.loader.load_sprite('artfx.icn', 37),
                 self.cmd_select_artifact,
             ),
-            Pos(72, 190),
+            Pos(76, 194),
         )
 
         # EXIT
@@ -58,7 +58,7 @@ class Handler(fhomm.ui.Window):
                 self.cmd_cancel,
                 pygame.K_ESCAPE,
             ),
-            Pos(180, 409),
+            Pos(184, 413),
         )
 
     def on_render(self, ctx):
@@ -68,7 +68,7 @@ class Handler(fhomm.ui.Window):
         return fhomm.handler.cmd_show(
             fhomm.window.select_hero.Handler(
                 self.loader,
-                "Select Attacking Hero",
+                "Select Attacking Hero:",
             ),
             Pos(0, 74),
         )
@@ -77,7 +77,7 @@ class Handler(fhomm.ui.Window):
         return fhomm.handler.cmd_show(
             fhomm.window.select_hero.Handler(
                 self.loader,
-                "Select Defending Hero",
+                "Select Defending Hero:",
             ),
             Pos(320, 74),
         )

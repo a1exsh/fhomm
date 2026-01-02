@@ -16,4 +16,4 @@ class Handler(fhomm.window.selector.Handler):
             )
             for i, monster in enumerate(fhomm.game.monsters.MONSTERS)
         ]
-        super().__init__(loader, "Select Army", items, Dim(32, 32))
+        super().__init__(loader, "Select Army:", items, Dim(32, 32))

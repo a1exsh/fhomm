@@ -11,7 +11,7 @@ from fhomm.render import Pos
 
 class Handler(fhomm.ui.Window):
     def __init__(self, loader):
-        super().__init__()
+        super().__init__(border_width=25)
         self.loader = loader
         self.bg_image = loader.load_image('redback.bmp')
         self.measure(self.bg_image.dim)
@@ -26,7 +26,7 @@ class Handler(fhomm.ui.Window):
         for i, (base_idx, key, cmd) in enumerate(buttons):
             self.attach(
                 fhomm.ui.IcnButton(loader, 'btnmain.icn', base_idx, cmd, key),
-                Pos(8, 20 + 66*i),
+                Pos(33, 45 + 66*i),
             )
 
     def on_render(self, ctx):
