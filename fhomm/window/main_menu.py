@@ -32,6 +32,10 @@ class Handler(fhomm.ui.Window):
     def on_render(self, ctx):
         self.bg_image.render(ctx)
 
+    def on_key_up(self, key):
+        if key == pygame.K_ESCAPE:
+            return fhomm.handler.CMD_QUIT
+
     def cmd_new_game(self):
         return fhomm.handler.cmd_show(
             fhomm.window.new_game.Handler(self.loader),
