@@ -3,7 +3,7 @@ import traceback
 
 import pygame
 
-from fhomm.render import Pos, Dim, Rect
+from fhomm.render import Pos, Size, Rect
 import fhomm.handler
 import fhomm.ui
 
@@ -22,7 +22,7 @@ class WindowManager(fhomm.ui.Container):
         self.bg_captures = []
         self.running = False
 
-        self.measure(Dim(screen.get_width(), screen.get_height()))
+        self.measure(Size(screen.get_width(), screen.get_height()))
 
         self.show(main_handler, Pos(0, 0))
 
@@ -46,17 +46,17 @@ class WindowManager(fhomm.ui.Container):
         self.bg_captures.pop().render(self.screen_ctx, child.relpos)
 
     def _capture_background(self, element, screen_pos):
-        if element.dim.w < self.screen.get_width() or \
-           element.dim.h < self.screen.get_height():
+        if element.size.w < self.screen.get_width() or \
+           element.size.h < self.screen.get_height():
             shadow = True
-            capture_dim = Dim(
-                element.dim.w + WindowManager._SHADOW_OFFSET.x,
-                element.dim.h + WindowManager._SHADOW_OFFSET.y,
+            capture_size = Size(
+                element.size.w + WindowManager._SHADOW_OFFSET.x,
+                element.size.h + WindowManager._SHADOW_OFFSET.y,
             )
-            bg_rect = Rect(capture_dim, screen_pos)
+            bg_rect = Rect(capture_size, screen_pos)
         else:
             shadow = False
-            bg_rect = Rect(element.dim, screen_pos)
+            bg_rect = Rect(element.size, screen_pos)
 
         background = self.screen_ctx.capture(bg_rect)
         self.bg_captures.append(background)
@@ -65,7 +65,7 @@ class WindowManager(fhomm.ui.Container):
             self._cast_shadow(background, bg_rect)
 
     def _cast_shadow(self, background, rect):
-        img_shadow = fhomm.render.Context.make_shadow_image(rect.dim)
+        img_shadow = fhomm.render.Context.make_shadow_image(rect.size)
 
         bg_copy = self.screen_ctx.copy_image_for_shadow(background)
         img_shadow.render(bg_copy.get_context(), WindowManager._SHADOW_OFFSET)

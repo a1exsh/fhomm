@@ -9,7 +9,7 @@ class TitleScreen(fhomm.ui.Element): # Screen
         super().__init__()
         self.loader = loader
         self.bg_image = self.loader.load_image('heroes.bmp')
-        self.measure(self.bg_image.dim)
+        self.measure(self.bg_image.size)
 
         self.main_menu = None
 

@@ -1,6 +1,6 @@
 import pygame
 
-from fhomm.render import Pos, Dim
+from fhomm.render import Size
 import fhomm.game.monsters
 import fhomm.handler
 import fhomm.ui
@@ -16,4 +16,4 @@ class Handler(fhomm.window.selector.Handler):
             )
             for i, monster in enumerate(fhomm.game.monsters.MONSTERS)
         ]
-        super().__init__(loader, "Select Army:", items, Dim(32, 32))
+        super().__init__(loader, "Select Army:", items, Size(32, 32))

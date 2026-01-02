@@ -1,6 +1,5 @@
 import pygame
 
-from fhomm.render import Pos, Dim
 import fhomm.game.heroes
 import fhomm.handler
 import fhomm.ui
@@ -17,4 +16,4 @@ class Handler(fhomm.window.selector.Handler):
             for i, hero in enumerate(fhomm.game.heroes.HEROES)
         ]
         # loader.load_sprite('locators.icn', 21),
-        super().__init__(loader, title, items, items[0].img.dim)
+        super().__init__(loader, title, items, items[0].img.size)

@@ -14,7 +14,7 @@ class Handler(fhomm.ui.Window):
         super().__init__(border_width=25)
         self.loader = loader
         self.bg_image = loader.load_image('redback.bmp')
-        self.measure(self.bg_image.dim)
+        self.measure(self.bg_image.size)
 
         buttons = [
             (2, pygame.K_n, self.cmd_new_game),

@@ -2,30 +2,30 @@ import pygame
 
 import fhomm.ui
 import fhomm.handler
-from fhomm.render import Pos, Dim
+from fhomm.render import Pos, Size
 
 
 class Handler(fhomm.ui.Window):
-    def __init__(self, loader, title, items, item_dim):
+    def __init__(self, loader, title, items, item_size):
         super().__init__(border_width=16)
 
         font = loader.get_font()
         hl_font = loader.get_hl_font()
         self.bg_image = loader.load_image('request.bmp')
-        self.measure(self.bg_image.dim)
+        self.measure(self.bg_image.size)
 
         self.attach(
-            fhomm.ui.Label(Dim(219, 20), font, title),
+            fhomm.ui.Label(Size(219, 20), font, title),
             Pos(50, 16),
         )
 
         # TODO: the two fonts could come from some form of a higher level UI toolkit
         img_list = fhomm.ui.ImgList(
-            Dim(206, 198),
+            Size(206, 198),
             font,
             hl_font,
             items,
-            item_dim,
+            item_size,
         )
         self.attach(img_list, Pos(56, 43))
 

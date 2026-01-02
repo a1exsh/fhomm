@@ -13,7 +13,7 @@ class Handler(fhomm.ui.Window):
         super().__init__(border_width=4)
         self.loader = loader
         self.bg_image = loader.load_image('swapwin.bmp')
-        self.measure(self.bg_image.dim)
+        self.measure(self.bg_image.size)
 
         self.attach(
             fhomm.ui.ImgButton(

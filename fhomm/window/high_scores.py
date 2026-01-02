@@ -8,7 +8,7 @@ class Handler(fhomm.ui.Window):
     def __init__(self, loader):
         super().__init__(border_width=0)
         self.image = loader.load_image('hiscore.bmp')
-        self.measure(self.image.dim)
+        self.measure(self.image.size)
 
     def on_render(self, ctx):
         self.image.render(ctx)

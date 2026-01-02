@@ -1,6 +1,5 @@
 import pygame
 
-from fhomm.render import Pos, Dim
 import fhomm.game.artifacts
 import fhomm.handler
 import fhomm.ui
@@ -16,4 +15,4 @@ class Handler(fhomm.window.selector.Handler):
             )
             for i, artifact in enumerate(fhomm.game.artifacts.ARTIFACTS)
         ]
-        super().__init__(loader, "Select Artifact:", items, items[0].img.dim)
+        super().__init__(loader, "Select Artifact:", items, items[0].img.size)

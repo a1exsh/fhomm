@@ -1,5 +1,4 @@
 from collections import namedtuple
-from contextlib import AbstractContextManager
 
 import pygame
 
@@ -7,7 +6,7 @@ import fhomm.palette
 import fhomm.resource.bmp
 import fhomm.resource.icn
 
-Dim = namedtuple('Dim', ['w', 'h']) # TODO: rename to Size
+Size = namedtuple('Size', ['w', 'h'])
 
 
 class Pos(namedtuple('Pos', ['x', 'y'])):
@@ -18,12 +17,12 @@ class Pos(namedtuple('Pos', ['x', 'y'])):
 
 
 # TODO: go back to (x, y, w, h), compatible with pygame's representation
-class Rect(namedtuple('Rect', ['dim', 'pos'], defaults=[Pos(0, 0)])):
+class Rect(namedtuple('Rect', ['size', 'pos'], defaults=[Pos(0, 0)])):
     __slots__ = ()
 
     @classmethod
     def of(cls, x, y, w, h):
-        return cls(Dim(w, h), Pos(x, y))
+        return cls(Size(w, h), Pos(x, y))
 
     def to_pygame(self):
         return (self.x, self.y, self.w, self.h)
@@ -38,11 +37,11 @@ class Rect(namedtuple('Rect', ['dim', 'pos'], defaults=[Pos(0, 0)])):
 
     @property
     def w(self):
-        return self.dim.w
+        return self.size.w
 
     @property
     def h(self):
-        return self.dim.h
+        return self.size.h
 
     @property
     def top(self):
@@ -54,14 +53,14 @@ class Rect(namedtuple('Rect', ['dim', 'pos'], defaults=[Pos(0, 0)])):
 
     @property
     def bottom(self):
-        return self.pos.y + self.dim.h
+        return self.pos.y + self.size.h
 
     @property
     def right(self):
-        return self.pos.x + self.dim.w
+        return self.pos.x + self.size.w
 
     def offset(self, relpos):
-        return Rect(self.dim, self.pos.offset(relpos))
+        return Rect(self.size, self.pos.offset(relpos))
 
     def contains(self, pos):
         return (
@@ -73,7 +72,7 @@ class Rect(namedtuple('Rect', ['dim', 'pos'], defaults=[Pos(0, 0)])):
 class Image(object):
     def __init__(self, img):
         self._img = img
-        self.dim = Dim(img.get_width(), img.get_height())
+        self.size = Size(img.get_width(), img.get_height())
 
     @classmethod
     def from_bmp(cls, bmp, palette):
@@ -116,21 +115,21 @@ class Context(object):
     def __init__(self, img):
         self._image = img
 
-    def make_image(self, dim):
-        img = pygame.Surface(dim, depth=8)
+    def make_image(self, size):
+        img = pygame.Surface(size, depth=8)
         img.set_palette(self._image.get_palette())
         return Image(img)
 
     def copy_image_for_shadow(self, source):
-        img = pygame.Surface(source.dim, depth=8)
+        img = pygame.Surface(source.size, depth=8)
         # TODO: get the pre-made shadow-safe palette from the Palette object
         img.set_palette(fhomm.palette.make_safe_for_shadow(self._image.get_palette()))
         img.blit(source._img, (0, 0)) # area?
         return Image(img)
 
     @classmethod
-    def make_shadow_image(cls, dim):
-        img = pygame.Surface(dim)
+    def make_shadow_image(cls, size):
+        img = pygame.Surface(size)
         img.set_alpha(96)
         return Image(img)
 
@@ -145,7 +144,7 @@ class Context(object):
         )
 
     def capture(self, rect):
-        img = self.make_image(rect.dim)
+        img = self.make_image(rect.size)
         img.get_context().blit(Image(self._image), (0, 0), rect)
         return img
 
@@ -192,7 +191,7 @@ class NoopContext(Context):
         pass
 
     def capture(self):
-        return self.make_image(Dim(0, 0))
+        return self.make_image(Size(0, 0))
 
     def restrict(self, *args, **kwargs):
         return self
@@ -207,7 +206,7 @@ class Font(object):
         self.width = width
 
         self.baseline = max(-s.offset.y for s in sprites)
-        self.height = self.baseline + max(s.offset.y + s.dim.h for s in sprites)
+        self.height = self.baseline + max(s.offset.y + s.size.h for s in sprites)
 
     def get_width(self):
         return self.width
@@ -232,13 +231,13 @@ class Font(object):
                 sprite = self.sprites[self.get_sprite_idx(c) or 0]
                 sprite.render(ctx, pos)
 
-                pos = Pos(pos.x + sprite.dim.w + 1, pos.y)
+                pos = Pos(pos.x + sprite.size.w + 1, pos.y)
 
         width = pos.x - top_left.x
         if len(text) > 0:
             width -= 1          # account for space between glyphs
 
-        return Dim(width, self.baseline)
+        return Size(width, self.baseline)
 
     def measure_multiline_text(self, text, rect):
         return self.draw_multiline_text(NoopContext(), text, rect)
@@ -251,22 +250,22 @@ class Font(object):
 
         words = text.split(' ')
         for i, word in enumerate(words):
-            word_dim = self.measure_text(word)
+            word_size = self.measure_text(word)
             if i > 0:
                 pos = Pos(pos.x + self.width, pos.y) # space
 
-                if pos.x + word_dim.w > rect.right: # line break
+                if pos.x + word_size.w > rect.right: # line break
                     pos = Pos(rect.x, pos.y + self.height)
                     if pos.y > maxy:
                         maxy = pos.y
 
             self.draw_text(ctx, word, pos)
 
-            pos = Pos(pos.x + word_dim.w, pos.y)
+            pos = Pos(pos.x + word_size.w, pos.y)
             if pos.x > maxx:
                 maxx = pos.x
 
-        return Dim(maxx - rect.x, maxy - rect.y + self.baseline)
+        return Size(maxx - rect.x, maxy - rect.y + self.baseline)
 
     def get_sprite_idx(self, c):
         i = ord(c)

@@ -2,7 +2,7 @@ from collections import namedtuple
 
 import pygame
 
-from fhomm.render import Pos, Dim, Rect
+from fhomm.render import Pos, Size, Rect
 import fhomm.handler
 import fhomm.render
 
@@ -39,10 +39,10 @@ class Element(object):
         self.hovered = False
         self._dirty = False
 
-    def measure(self, dim):
-        #print(f"{self} measured at {dim}")
-        self.dim = dim
-        self.rect = Rect(dim)
+    def measure(self, size):
+        #print(f"{self} measured at {size}")
+        self.size = size
+        self.rect = Rect(size)
 
     def on_attach(self, parent):
         pass
@@ -174,7 +174,7 @@ class Container(Element):
 
         @property
         def relrect(self):
-            return Rect(self.element.dim, self.relpos)
+            return Rect(self.element.size, self.relpos)
 
     def __init__(self):
         super().__init__()
@@ -264,27 +264,27 @@ class Window(Container):
             relpos.offset(Pos(-self.border_width, -self.border_width)),
         )
 
-    def measure(self, dim):
-        super().measure(dim)
+    def measure(self, size):
+        super().measure(size)
         self.container.measure(
-            Dim(
-                self.dim.w - 2*self.border_width,
-                self.dim.h - 2*self.border_width,
+            Size(
+                self.size.w - 2*self.border_width,
+                self.size.h - 2*self.border_width,
             )
         )
 
 
 class Label(Element):
-    def __init__(self, dim, font, text):
+    def __init__(self, size, font, text):
         super().__init__()
-        self.measure(dim)
+        self.measure(size)
         self.font = font
         self.text = text
 
-        text_dim = font.measure_text(text)
+        text_size = font.measure_text(text)
         self.text_pos = Pos(
-            (dim.w - text_dim.w) // 2,
-            (dim.h - text_dim.h) // 2,
+            (size.w - text_size.w) // 2,
+            (size.h - text_size.h) // 2,
         )
 
     def on_render(self, ctx):
@@ -300,7 +300,7 @@ class ImgButton(Element):
 
         self.is_pressed = False
 
-        self.measure(self.img.dim)
+        self.measure(self.img.size)
 
     def on_render(self, ctx):
         self.img.render(ctx)
@@ -364,21 +364,21 @@ class ImgList(Element):
 
     def __init__(
             self,
-            dim,
+            size,
             font,
             hl_font,
             items,
-            item_dim,
+            item_size,
             item_vpad=1,
             text_hpad=4
     ):
         super().__init__()
-        self.measure(dim)
+        self.measure(size)
 
         self.font = font
         self.hl_font = hl_font
 
-        self.item_dim = item_dim
+        self.item_size = item_size
         self.item_vpad = item_vpad
         self.text_hpad = text_hpad
 
@@ -386,11 +386,11 @@ class ImgList(Element):
 
         self.selected_idx = None
         self.scroll_idx = 0
-        self.items_per_page = dim.h // (item_dim.h + item_vpad)
+        self.items_per_page = size.h // (item_size.h + item_vpad)
 
-        self.list_pad = Dim(
+        self.list_pad = Size(
             3,
-            (dim.h - self.items_per_page*(item_dim.h + item_vpad)) // 2,
+            (size.h - self.items_per_page*(item_size.h + item_vpad)) // 2,
         )
 
         self._bg_capture = None
@@ -410,30 +410,30 @@ class ImgList(Element):
             item = self.items[item_idx]
             img_pos = Pos(
                 self.list_pad.w,
-                self.list_pad.h + (self.item_dim.h + self.item_vpad)*i,
+                self.list_pad.h + (self.item_size.h + self.item_vpad)*i,
             )
             item.img.render(ctx, img_pos)
 
             text_pos = Pos(
-                img_pos.x + self.item_dim.w + self.text_hpad,
+                img_pos.x + self.item_size.w + self.text_hpad,
                 img_pos.y,
             )
             bound_rect = Rect(
-                Dim(self.rect.right - text_pos.x, self.item_dim.h),
+                Size(self.rect.right - text_pos.x, self.item_size.h),
                 text_pos,
             )
             if DEBUG_RENDER:
                 ctx.draw_rect(240, bound_rect, width=1)
 
             font = self.hl_font if item_idx == self.selected_idx else self.font
-            text_dim = font.measure_multiline_text(item.text, bound_rect)
+            text_size = font.measure_multiline_text(item.text, bound_rect)
 
             # center vertically before actually drawing the item text
             text_rect = Rect(
-                text_dim,
+                text_size,
                 Pos(
                     text_pos.x,
-                    text_pos.y + (self.item_dim.h - text_dim.h) // 2,
+                    text_pos.y + (self.item_size.h - text_size.h) // 2,
                 ),
             )
             if DEBUG_RENDER:
@@ -520,7 +520,7 @@ class ImgList(Element):
             visible_idx = (
                 (pos.y - self.list_pad.h)
                 //
-                (self.item_dim.h + self.item_vpad)
+                (self.item_size.h + self.item_vpad)
             )
             item_idx = self.scroll_idx + visible_idx
             last_visible_idx = min(

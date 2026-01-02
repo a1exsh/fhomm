@@ -8,7 +8,7 @@ class Handler(fhomm.ui.Element): #ShadowCastingWindow
     def __init__(self, loader):
         super().__init__()
         self.image = loader.load_image('credits.bmp')
-        self.measure(self.image.dim)
+        self.measure(self.image.size)
 
     def on_render(self, ctx):
         self.image.render(ctx)
