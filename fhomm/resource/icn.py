@@ -109,3 +109,13 @@ def read_mono_sprite_data(f, h):
                 # print(f"transparency => filling {skip}")
                 data.write(b'\x00'*skip)
                 x += skip
+
+
+def recolor_sprite(sprite, colors_from, colors_to):
+    return Sprite(
+        sprite.offx,
+        sprite.offy,
+        sprite.width,
+        sprite.height,
+        sprite.data.translate(bytes.maketrans(colors_from, colors_to)),
+    )

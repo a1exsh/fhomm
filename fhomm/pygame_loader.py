@@ -9,14 +9,21 @@ class PygameLoader(object):
         self.loader = loader
         self.palette = self.load_palette(pal_name)
 
-        self.big_font = None
+        self.font = None
+        self.hl_font = None
         self.small_font = None
 
-    def get_big_font(self):
-        if self.big_font is None:
-            self.big_font = self.load_font('font.icn', 10)
+    def get_font(self):
+        if self.font is None:
+            self.font = self.load_font('font.icn', 10)
 
-        return self.big_font
+        return self.font
+
+    def get_hl_font(self):
+        if self.hl_font is None:
+            self.hl_font = self.load_font('font.icn', 10, color=232)
+
+        return self.hl_font
 
     def get_small_font(self):
         if self.small_font is None:
@@ -54,5 +61,19 @@ class PygameLoader(object):
             for icn_sprite in self.loader.load_icn(icn_name)
         ]
 
-    def load_font(self, icn_name, width):
-        return fhomm.render.Font(self.load_all_sprites(icn_name), width)
+    def load_font(self, icn_name, width, color=None):
+        icns = self.loader.load_icn(icn_name)
+        if color is not None:
+            icns = [
+                fhomm.resource.icn.recolor_sprite(
+                    icn,
+                    b'\xff',
+                    bytes.fromhex('%02x' % color),
+                )
+                for icn in icns
+            ]
+        sprites = [
+            fhomm.render.Sprite.from_icn_sprite(icn, self.palette)
+            for icn in icns
+        ]
+        return fhomm.render.Font(sprites, width)
