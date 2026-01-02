@@ -95,7 +95,7 @@ class Image(object):
 class Sprite(Image):
     def __init__(self, img, offset):
         super().__init__(img)
-        self._offset = offset
+        self.offset = offset
 
     @classmethod
     def from_icn_sprite(cls, icn_sprite, palette):
@@ -109,7 +109,7 @@ class Sprite(Image):
         return cls(img, Pos(icn_sprite.offx, icn_sprite.offy))
 
     def render(self, ctx, pos=Pos(0, 0)):
-        super().render(ctx, Pos(pos.x + self._offset.x, pos.y + self._offset.y))
+        super().render(ctx, Pos(pos.x + self.offset.x, pos.y + self.offset.y))
 
 
 class Context(object):
@@ -205,7 +205,9 @@ class Font(object):
 
         self.sprites = sprites
         self.width = width
-        self.height = max(s.dim.h for s in sprites)
+
+        self.baseline = max(-s.offset.y for s in sprites)
+        self.height = self.baseline + max(s.offset.y + s.dim.h for s in sprites)
 
     def get_width(self):
         return self.width
@@ -218,9 +220,9 @@ class Font(object):
 
     # TODO: color!
     def draw_text(self, ctx, text, top_left=Pos(0, 0)):
-        # input pos is the top-left corner, but each sprite is offset to make
-        # the bottom line align
-        pos = Pos(top_left.x, top_left.y + self.height)
+        # input pos is the top-left corner, but each sprite has an offset to
+        # make glyphs align on the the baseline
+        pos = Pos(top_left.x, top_left.y + self.baseline)
 
         for c in text:
             if c == ' ':
@@ -230,9 +232,9 @@ class Font(object):
                 sprite = self.sprites[self.get_sprite_idx(c) or 0]
                 sprite.render(ctx, pos)
 
-                pos = Pos(pos.x + sprite.dim.w, pos.y)
+                pos = Pos(pos.x + sprite.dim.w + 1, pos.y)
 
-        return Dim(pos.x - top_left.x, self.height)
+        return Dim(pos.x - top_left.x, self.baseline)
 
     def measure_multiline_text(self, text, rect):
         return self.draw_multiline_text(NoopContext(), text, rect)
@@ -260,7 +262,7 @@ class Font(object):
             if pos.x > maxx:
                 maxx = pos.x
 
-        return Dim(maxx - rect.x, maxy - rect.y + self.height)
+        return Dim(maxx - rect.x, maxy - rect.y + self.baseline)
 
     def get_sprite_idx(self, c):
         i = ord(c)
