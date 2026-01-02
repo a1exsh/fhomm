@@ -360,11 +360,21 @@ class ImgList(Element):
 
     Item = namedtuple('Item', ['img', 'text'])
 
-    def __init__(self, dim, font, items, item_dim, item_vpad=1, text_hpad=4):
+    def __init__(
+            self,
+            dim,
+            font,
+            hl_font,
+            items,
+            item_dim,
+            item_vpad=1,
+            text_hpad=4
+    ):
         super().__init__()
         self.measure(dim)
 
         self.font = font
+        self.hl_font = hl_font
 
         self.item_dim = item_dim
         self.item_vpad = item_vpad
@@ -372,6 +382,7 @@ class ImgList(Element):
 
         self.items = items
 
+        self.selected_idx = None
         self.scroll_idx = 0
         self.items_per_page = dim.h // (item_dim.h + item_vpad)
 
@@ -384,7 +395,7 @@ class ImgList(Element):
 
         self.tick = 0
         self.key_hold_ticks = 50
-        self.key_hold_scroll_delta = None
+        self.key_hold_delta = None
 
     def on_render(self, ctx):
         if self._bg_capture is None:
@@ -393,7 +404,8 @@ class ImgList(Element):
             self._bg_capture.render(ctx)
 
         for i in range(min(len(self.items), self.items_per_page)):
-            item = self.items[self.scroll_idx + i]
+            item_idx = self.scroll_idx + i
+            item = self.items[item_idx]
             img_pos = Pos(
                 self.list_pad.w,
                 self.list_pad.h + (self.item_dim.h + self.item_vpad)*i,
@@ -408,7 +420,9 @@ class ImgList(Element):
                 Dim(self.rect.right - text_pos.x, self.item_dim.h),
                 text_pos,
             )
-            text_dim = self.font.measure_multiline_text(item.text, bound_rect)
+
+            font = self.hl_font if item_idx == self.selected_idx else self.font
+            text_dim = font.measure_multiline_text(item.text, bound_rect)
 
             # center vertically before actually drawing the item text
             text_rect = Rect(
@@ -418,7 +432,7 @@ class ImgList(Element):
                     text_pos.y + (self.item_dim.h - text_dim.h) // 2,
                 ),
             )
-            self.font.draw_multiline_text(ctx, item.text, text_rect)
+            font.draw_multiline_text(ctx, item.text, text_rect)
 
     def set_scroll_idx(self, idx):
         old, self.scroll_idx = self.scroll_idx, idx
@@ -433,42 +447,70 @@ class ImgList(Element):
             max(0, min(self.scroll_idx + delta, self.get_max_scroll_idx()))
         )
 
+    def is_selected_item_visible(self):
+        if self.selected_idx is None:
+            return False
+
+        return self.scroll_idx <= self.selected_idx and \
+            self.selected_idx < self.scroll_idx + self.items_per_page
+
+    def set_selected_idx(self, idx):
+        old, self.selected_idx = self.selected_idx, idx
+        if old != self.selected_idx:
+            self.dirty()
+
+    def move_selection_by(self, delta):
+        self.set_selected_idx(
+            max(0, min(self.selected_idx + delta, len(self.items) - 1))
+        )
+        if not self.is_selected_item_visible():
+            self.scroll_by(delta)
+
     def on_mouse_wheel(self, pos, dx, dy):
         self.scroll_by(dy)
 
     def on_key_down(self, key):
+        if not self.items:      # no selection in an empty list
+            return
+
         delta = None
 
-        if key == pygame.K_DOWN:
-            delta = 1
-
-        elif key == pygame.K_UP:
+        if key == pygame.K_UP:
             delta = -1
 
-        if key == pygame.K_PAGEDOWN:
-            delta = self.items_per_page
+        elif key == pygame.K_DOWN:
+            delta = 1
 
         elif key == pygame.K_PAGEUP:
             delta = -self.items_per_page
 
+        elif key == pygame.K_PAGEDOWN:
+            delta = self.items_per_page
+
         elif key == pygame.K_HOME:
+            self.set_selected_idx(0)
             self.set_scroll_idx(0)
 
         elif key == pygame.K_END:
+            self.set_selected_idx(len(self.items) - 1)
             self.set_scroll_idx(self.get_max_scroll_idx())
 
-        if delta is not None and self.key_hold_scroll_delta is None:
-            self.scroll_by(delta)
+        if delta is not None and self.key_hold_delta is None:
+            if self.selected_idx is None:
+                self.set_selected_idx(0)
+            else:
+                self.move_selection_by(delta)
+
             self.tick = -250    # start repeating after a short delay 
-            self.key_hold_scroll_delta = delta
+            self.key_hold_delta = delta
 
     def on_key_up(self, key):
         if key in [pygame.K_DOWN, pygame.K_UP, pygame.K_PAGEDOWN, pygame.K_PAGEUP]:
-            self.key_hold_scroll_delta = None
+            self.key_hold_delta = None
 
     def on_tick(self, dt):
-        if self.key_hold_scroll_delta is not None:
+        if self.key_hold_delta is not None:
             self.tick += dt
             while self.tick >= self.key_hold_ticks:
-                self.scroll_by(self.key_hold_scroll_delta)
+                self.move_selection_by(self.key_hold_delta)
                 self.tick -= self.key_hold_ticks

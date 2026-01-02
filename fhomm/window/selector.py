@@ -9,18 +9,20 @@ class Handler(fhomm.ui.Window):
     def __init__(self, loader, title, items, item_dim):
         super().__init__(border_width=16)
 
-        self.font = loader.get_big_font()
+        font = loader.get_font()
+        hl_font = loader.get_hl_font()
         self.bg_image = loader.load_image('request.bmp')
         self.measure(self.bg_image.dim)
 
         self.attach(
-            fhomm.ui.Label(Dim(219, 20), self.font, title),
+            fhomm.ui.Label(Dim(219, 20), font, title),
             Pos(34, 0),
         )
 
         img_list = fhomm.ui.ImgList(
             Dim(206, 198),
-            loader.get_big_font(),
+            font,
+            hl_font,
             items,
             item_dim,
         )
