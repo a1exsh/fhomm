@@ -161,7 +161,7 @@ class Container(Element):
         __slots__ = ()
 
         @property
-        def relrect(self):
+        def rect(self):
             return Rect.of(self.element.size, self.relpos)
 
     def __init__(self):
@@ -200,8 +200,7 @@ class Container(Element):
         return update
 
     def render_child(self, child, ctx, force=False):
-        child_rect = child.relrect.offset(self.rect.pos) # isn't pos 0,0?
-        with ctx.restrict(child_rect) as child_ctx:
+        with ctx.restrict(child.rect) as child_ctx:
             return child.element.render(child_ctx, force)
 
     def handle(self, event):
@@ -228,9 +227,8 @@ class Container(Element):
             else:
                 old_pos = None
 
-            child_rect = child.relrect.offset(self.rect.pos)
-            if child_rect.contains(cur_pos) or \
-               (old_pos is not None and child_rect.contains(old_pos)):
+            if child.rect.contains(cur_pos) or \
+               (old_pos is not None and child.rect.contains(old_pos)):
                 return child.element.handle(
                     Container.translate_mouse_event(event, child.relpos),
                 )
