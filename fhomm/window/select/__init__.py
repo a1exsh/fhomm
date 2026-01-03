@@ -1,12 +1,12 @@
 import pygame
 
 from fhomm.render import Pos, Size
-import fhomm.ui
 import fhomm.handler
+import fhomm.ui
 
 
 class ItemSelectorWindow(fhomm.ui.Window):
-    def __init__(self, toolkit, title, items, item_size):
+    def __init__(self, toolkit, title, items, img_size):
         super().__init__(border_width=16)
 
         font = toolkit.get_font()
@@ -14,19 +14,9 @@ class ItemSelectorWindow(fhomm.ui.Window):
         self.bg_image = toolkit.load_image('request.bmp')
         self.measure(self.bg_image.size)
 
-        self.attach(
-            fhomm.ui.Label(Size(219, 20), font, title),
-            Pos(50, 16),
-        )
+        self.attach(toolkit.label(Size(219, 20), title), Pos(50, 16))
 
-        # TODO: the two fonts could come from some form of a higher level UI toolkit
-        img_list = fhomm.ui.ImgList(
-            Size(206, 198),
-            font,
-            hl_font,
-            items,
-            item_size,
-        )
+        img_list = toolkit.list(Size(206, 198), items, img_size)
         self.attach(img_list, Pos(56, 43))
 
         # OKAY

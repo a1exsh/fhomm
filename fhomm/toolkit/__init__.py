@@ -1,5 +1,5 @@
 import fhomm.render
-import fhomm.ui
+import fhomm.ui.element
 
 
 class Toolkit(object):
@@ -89,12 +89,23 @@ class Toolkit(object):
         ]
         return fhomm.render.Font(sprites, **kwargs)
 
+    def label(self, size, text):
+        return fhomm.ui.element.Label(size, self.get_font(), text)
+
     def icon(self, icn_name, idx, **kwargs):
-        return fhomm.ui.ActiveIcon(self.load_sprite(icn_name, idx), **kwargs)
+        return fhomm.ui.element.ActiveIcon(
+            self.load_sprite(icn_name, idx),
+            **kwargs,
+        )
 
     def button(self, icn_name, base_idx, **kwargs):
-        return fhomm.ui.Button(
+        return fhomm.ui.element.Button(
             self.load_sprite(icn_name, base_idx),
             self.load_sprite(icn_name, base_idx + 1),
             **kwargs,
+        )
+
+    def list(self, size, items, img_size, **kwargs):
+        return fhomm.ui.list.List(
+            size, self.get_font(), self.get_hl_font(), items, img_size, **kwargs,
         )

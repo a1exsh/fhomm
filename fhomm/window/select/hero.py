@@ -3,13 +3,13 @@ import pygame
 from fhomm.window.select import ItemSelectorWindow
 import fhomm.game.heroes
 import fhomm.handler
-import fhomm.ui
+import fhomm.ui.list
 
 
 class HeroSelectorWindow(ItemSelectorWindow):
     def __init__(self, toolkit, title):
         items = [
-            fhomm.ui.ImgList.Item(
+            fhomm.ui.list.Item(
                 toolkit.load_sprite('miniport.icn', i),
                 hero.name,
             )

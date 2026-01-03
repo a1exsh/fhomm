@@ -7,9 +7,10 @@ from fhomm.window.select.hero import HeroSelectorWindow
 import fhomm.handler
 import fhomm.toolkit
 import fhomm.ui
+import fhomm.ui.element
 
 
-class SmallArmyIcon(fhomm.ui.ActiveArea):
+class SmallArmyIcon(fhomm.ui.element.ActiveArea):
     def __init__(self, toolkit, monster=None, count=None, **kwargs):
         super().__init__(**kwargs)
         self.toolkit = toolkit

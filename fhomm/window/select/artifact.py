@@ -2,13 +2,13 @@ import pygame
 
 from fhomm.window.select import ItemSelectorWindow
 import fhomm.game.artifacts
-import fhomm.ui
+import fhomm.ui.list
 
 
 class ArtifactSelectorWindow(ItemSelectorWindow):
     def __init__(self, loader):
         items = [
-            fhomm.ui.ImgList.Item(
+            fhomm.ui.list.Item(
                 loader.load_sprite('artfx.icn', i),
                 artifact.name,
             )
