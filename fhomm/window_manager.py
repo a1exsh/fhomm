@@ -13,7 +13,8 @@ class WindowManager(fhomm.ui.Container):
     _SHADOW_OFFSET = Pos(16, 16)
 
     def __init__(self, screen, palette, toolkit, main_handler, fps_limit=30):
-        super().__init__()
+        super().__init__(Size(screen.get_width(), screen.get_height()))
+
         self.screen = screen
         self.palette = palette
         self.toolkit = toolkit
@@ -26,8 +27,6 @@ class WindowManager(fhomm.ui.Container):
 
         self.show_fps = False
         self._bg_fps = None
-
-        self.measure(Size(screen.get_width(), screen.get_height()))
 
         self.show(main_handler, Pos(0, 0))
 

@@ -7,12 +7,10 @@ import fhomm.ui
 
 class ItemSelectorWindow(fhomm.ui.Window):
     def __init__(self, toolkit, title, items, img_size):
-        super().__init__(border_width=16)
+        super().__init__(toolkit.load_image('request.bmp'), border_width=16)
 
         font = toolkit.get_font()
         hl_font = toolkit.get_hl_font()
-        self.bg_image = toolkit.load_image('request.bmp')
-        self.measure(self.bg_image.size)
 
         self.attach(toolkit.label(Size(219, 20), title), Pos(50, 16))
 
@@ -40,9 +38,6 @@ class ItemSelectorWindow(fhomm.ui.Window):
             ),
             Pos(189, 280),
         )
-
-    def on_render(self, ctx):
-        self.bg_image.render(ctx)
 
     def cmd_cancel(self):
         return fhomm.handler.CMD_CLOSE

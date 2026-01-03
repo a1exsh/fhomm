@@ -4,8 +4,7 @@ import fhomm.ui
 
 class Label(fhomm.ui.Element):
     def __init__(self, size, font, text):
-        super().__init__()
-        self.measure(size)
+        super().__init__(size)
         self.font = font
         self.text = text
 
@@ -20,8 +19,8 @@ class Label(fhomm.ui.Element):
 
 
 class ActiveArea(fhomm.ui.Element):
-    def __init__(self, action, hotkey=None):
-        super().__init__()
+    def __init__(self, size, action, hotkey=None):
+        super().__init__(size)
         self.action = action
         self.hotkey = hotkey
 
@@ -69,9 +68,8 @@ class ActiveArea(fhomm.ui.Element):
 
 class ActiveIcon(ActiveArea):
     def __init__(self, img, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(img.size, **kwargs)
         self.img = img
-        self.measure(self.img.size)
 
     def on_render(self, ctx):
         self.img.render(ctx)

@@ -12,13 +12,12 @@ import fhomm.ui.element
 
 class SmallArmyIcon(fhomm.ui.element.ActiveArea):
     def __init__(self, toolkit, monster=None, count=None, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(Size(34, 44), **kwargs)
         self.toolkit = toolkit
         self.monster = monster
         self.count = count
 
         self._bg_capture = None
-        self.measure(Size(34, 44))
 
     def on_render(self, ctx):
         if self._bg_capture is None:
@@ -41,10 +40,8 @@ class SmallArmyIcon(fhomm.ui.element.ActiveArea):
 
 class NewBattleWindow(fhomm.ui.Window):
     def __init__(self, toolkit):
-        super().__init__(border_width=4)
+        super().__init__(toolkit.load_image('swapwin.bmp'), border_width=4)
         self.toolkit = toolkit
-        self.bg_image = toolkit.load_image('swapwin.bmp')
-        self.measure(self.bg_image.size)
 
         self.attach(
             self.toolkit.icon(
@@ -93,9 +90,6 @@ class NewBattleWindow(fhomm.ui.Window):
             ),
             Pos(184, 413),
         )
-
-    def on_render(self, ctx):
-        self.bg_image.render(ctx)
 
     def cmd_select_attacker(self):
         return fhomm.handler.cmd_show(

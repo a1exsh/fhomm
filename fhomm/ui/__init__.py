@@ -11,17 +11,16 @@ DEBUG_EVENTS = False
 
 
 class Element(object):
-    def __init__(self):
+    def __init__(self, size):
+        self.size = size
         self.parent = None
 
         self.hovered = False
         self._dirty = False
 
-    # TODO: could we simply require size in ctor?
-    def measure(self, size):
-        #print(f"{self} measured at {size}")
-        self.size = size
-        self.rect = Rect.of(size)
+    @property
+    def rect(self):
+        return Rect.of(self.size)
 
     def on_attach(self, parent):
         pass
@@ -164,8 +163,8 @@ class Container(Element):
         def rect(self):
             return Rect.of(self.element.size, self.relpos)
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, size):
+        super().__init__(size)
         self.child_slots = []
 
     def attach(self, element, relpos):
@@ -251,10 +250,17 @@ class Container(Element):
 
 
 class Window(Container):
-    def __init__(self, border_width):
-        super().__init__()
+    def __init__(self, bg_image, border_width):
+        super().__init__(bg_image.size)
+        self.bg_image = bg_image
         self.border_width = border_width
-        self.container = Container()
+
+        self.container = Container(
+            Size(
+                self.size.w - 2*border_width,
+                self.size.h - 2*border_width,
+            )
+        )
         super().attach(self.container, Pos(border_width, border_width))
 
     def attach(self, element, relpos):
@@ -263,11 +269,5 @@ class Window(Container):
             relpos.offset(Pos(-self.border_width, -self.border_width)),
         )
 
-    def measure(self, size):
-        super().measure(size)
-        self.container.measure(
-            Size(
-                self.size.w - 2*self.border_width,
-                self.size.h - 2*self.border_width,
-            )
-        )
+    def on_render(self, ctx):
+        self.bg_image.render(ctx)

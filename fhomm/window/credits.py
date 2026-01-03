@@ -1,18 +1,12 @@
 import pygame
 
-import fhomm.ui
 import fhomm.handler
+import fhomm.ui
 
 
-# could also be done as a window for than default higher resolutions
-class CreditsScreen(fhomm.ui.Element):
+class CreditsScreen(fhomm.ui.Window):
     def __init__(self, toolkit):
-        super().__init__()
-        self.image = toolkit.load_image('credits.bmp')
-        self.measure(self.image.size)
-
-    def on_render(self, ctx):
-        self.image.render(ctx)
+        super().__init__(toolkit.load_image('credits.bmp'), border_width=0)
 
     def on_mouse_up(self, pos, button):
         return fhomm.handler.CMD_CLOSE

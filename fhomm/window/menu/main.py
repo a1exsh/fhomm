@@ -11,10 +11,8 @@ import fhomm.ui
 
 class MainMenu(fhomm.ui.Window):
     def __init__(self, toolkit):
-        super().__init__(border_width=25)
+        super().__init__(toolkit.load_image('redback.bmp'), border_width=25)
         self.toolkit = toolkit
-        self.bg_image = toolkit.load_image('redback.bmp')
-        self.measure(self.bg_image.size)
 
         buttons = [
             (2, pygame.K_n, self.cmd_new_game),

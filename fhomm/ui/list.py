@@ -20,8 +20,7 @@ class List(fhomm.ui.Element):
             item_vpad=1,
             text_hpad=4
     ):
-        super().__init__()
-        self.measure(size)
+        super().__init__(size)
 
         self.font = font
         self.hl_font = hl_font
