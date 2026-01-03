@@ -1,34 +1,30 @@
 import os
-import sys
 import threading
 
 import pygame
 
+from fhomm.window.title_screen import TitleScreen
+from fhomm.window_manager import WindowManager
+import fhomm.palette
 import fhomm.resource.agg
 import fhomm.resource.loader
-import fhomm.palette
-from fhomm.pygame_loader import PygameLoader
-from fhomm.window_manager import WindowManager
-from fhomm.window.title_screen import TitleScreen
+import fhomm.toolkit
 
 
 HEROES_AGG_PATH = os.path.join(os.getenv('FHOMM_DATA'), 'HEROES.AGG')
 HEROES_AGG = fhomm.resource.agg.open_file(HEROES_AGG_PATH)
 
-PYGAME_LOADER = PygameLoader(
-    fhomm.resource.loader.CachingLoader(
-        fhomm.resource.loader.AggResourceLoader(HEROES_AGG),
-    ),
-    'kb.pal',
+RESOURCE_LOADER = fhomm.resource.loader.CachingLoader(
+    fhomm.resource.loader.AggResourceLoader(HEROES_AGG),
 )
-PALETTE = fhomm.palette.Palette(PYGAME_LOADER.palette)
+
+TOOLKIT = fhomm.toolkit.Toolkit(RESOURCE_LOADER, 'kb.pal')
+PALETTE = fhomm.palette.Palette(TOOLKIT.get_palette())
 
 # pygame setup
 pygame.init()
 SCREEN = pygame.display.set_mode((640, 480), depth=8)
-SCREEN.set_palette(PYGAME_LOADER.palette)
-
-FONT = PYGAME_LOADER.get_font()
+SCREEN.set_palette(TOOLKIT.get_palette())
 
 # DEBUG
 # def render_palette(screen, size, offx, offy):
@@ -36,10 +32,10 @@ FONT = PYGAME_LOADER.get_font()
 #         for x in range(16):
 #             screen.fill((y << 4) | x, (offx + x*size, offy + y*size, size, size))
 
-window_manager = WindowManager(
+WINDOW_MANAGER = WindowManager(
     SCREEN,
     PALETTE,
-    FONT,
-    TitleScreen(PYGAME_LOADER)
+    TOOLKIT,
+    TitleScreen(TOOLKIT)
 )
-threading.Thread(target=window_manager).start()
+threading.Thread(target=WINDOW_MANAGER).start()

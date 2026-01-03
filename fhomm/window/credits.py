@@ -4,10 +4,11 @@ import fhomm.ui
 import fhomm.handler
 
 
-class Handler(fhomm.ui.Element): #ShadowCastingWindow
-    def __init__(self, loader):
+# could also be done as a window for than default higher resolutions
+class CreditsScreen(fhomm.ui.Element):
+    def __init__(self, toolkit):
         super().__init__()
-        self.image = loader.load_image('credits.bmp')
+        self.image = toolkit.load_image('credits.bmp')
         self.measure(self.image.size)
 
     def on_render(self, ctx):

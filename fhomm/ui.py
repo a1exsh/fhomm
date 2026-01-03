@@ -292,19 +292,13 @@ class Label(Element):
         self.font.draw_text(ctx, self.text, self.text_pos)
 
 
-class ImgButton(Element):
-    def __init__(self, img, action, hotkey=None):
+class ActiveArea(Element):
+    def __init__(self, action, hotkey=None):
         super().__init__()
-        self.img = img
         self.action = action
         self.hotkey = hotkey
 
         self.is_pressed = False
-
-        self.measure(self.img.size)
-
-    def on_render(self, ctx):
-        self.img.render(ctx)
 
     def set_pressed(self):
         old, self.is_pressed = self.is_pressed, True
@@ -333,6 +327,7 @@ class ImgButton(Element):
             return self.release()
 
     def on_mouse_leave(self):
+        # FIXME: hold the hotkey, enter mouse, then leave => released
         self.release(action=False)
 
     def on_mouse_down(self, pos, button):
@@ -345,20 +340,27 @@ class ImgButton(Element):
             return self.release()
 
 
-class IcnButton(ImgButton): #BackgroundCapturingElement
-    def __init__(self, loader, icn_name, base_idx, action, hotkey=None):
-        super().__init__(
-            loader.load_sprite(icn_name, base_idx),
-            action,
-            hotkey=hotkey
-        )
-        self.img_pressed = loader.load_sprite(icn_name, base_idx + 1)
+class ActiveIcon(ActiveArea):
+    def __init__(self, img, **kwargs):
+        super().__init__(**kwargs)
+        self.img = img
+        self.measure(self.img.size)
+
+    def on_render(self, ctx):
+        self.img.render(ctx)
+
+
+class Button(ActiveIcon):
+    def __init__(self, img, img_pressed, **kwargs):
+        super().__init__(img, **kwargs)
+        self.img_pressed = img_pressed
 
     def on_render(self, ctx):
         img = self.img_pressed if self.is_pressed else self.img
         img.render(ctx)
 
 
+# TODO: rename to ItemList
 class ImgList(Element):
 
     Item = namedtuple('Item', ['img', 'text'])

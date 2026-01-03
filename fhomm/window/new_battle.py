@@ -1,62 +1,94 @@
 import pygame
 
-from fhomm.render import Pos
+from fhomm.render import Pos, Size
+from fhomm.window.select.army import ArmySelectorWindow
+from fhomm.window.select.artifact import ArtifactSelectorWindow
+from fhomm.window.select.hero import HeroSelectorWindow
 import fhomm.handler
+import fhomm.toolkit
 import fhomm.ui
-import fhomm.window.select_army
-import fhomm.window.select_artifact
-import fhomm.window.select_hero
 
 
-class Handler(fhomm.ui.Window):
-    def __init__(self, loader):
+class SmallArmyIcon(fhomm.ui.ActiveArea):
+    def __init__(self, toolkit, monster=None, count=None, **kwargs):
+        super().__init__(**kwargs)
+        self.toolkit = toolkit
+        self.monster = monster
+        self.count = count
+
+        self._bg_capture = None
+        self.measure(Size(34, 44))
+
+    def on_render(self, ctx):
+        if self._bg_capture is None:
+            self._bg_capture = ctx.capture(self.rect)
+        else:
+            self._bg_capture.render(ctx)
+
+        if self.monster is not None:
+            img = self.toolkit.load_sprite('mons32.icn', self.monster)
+            img.render(ctx, Pos(1, 1))
+
+        if self.count is not None:
+            text = str(self.count)
+
+            font = self.toolkit.get_small_font()
+            text_size = font.measure_text(text)
+            # the count goes centered under the icon
+            font.draw_text(ctx, text, Pos((self.size.w - text_size.w) // 2, 37))
+
+
+class NewBattleWindow(fhomm.ui.Window):
+    def __init__(self, toolkit):
         super().__init__(border_width=4)
-        self.loader = loader
-        self.bg_image = loader.load_image('swapwin.bmp')
+        self.toolkit = toolkit
+        self.bg_image = toolkit.load_image('swapwin.bmp')
         self.measure(self.bg_image.size)
 
         self.attach(
-            fhomm.ui.ImgButton(
-                self.loader.load_sprite('port0000.icn', 0),
-                self.cmd_select_attacker,
+            self.toolkit.icon(
+                'port0000.icn',
+                0,
+                action=self.cmd_select_attacker,
                 hotkey=pygame.K_a, # attacker
             ),
             Pos(28, 44),
         )
 
         self.attach(
-            fhomm.ui.ImgButton(
-                self.loader.load_sprite('port0035.icn', 0),
-                self.cmd_select_defender,
+            self.toolkit.icon(
+                'port0035.icn',
+                0,
+                action=self.cmd_select_defender,
                 hotkey=pygame.K_d, # defender
             ),
             Pos(319, 44),
         )
 
+        # army selectors
         self.attach(
-            fhomm.ui.ImgButton(
-                self.loader.load_sprite('mons32.icn', 23),
-                self.cmd_select_army,
+            SmallArmyIcon(
+                self.toolkit,
+                monster=23,
+                count=666,
+                action=self.cmd_select_army,
             ),
-            Pos(24, 148),
+            Pos(23, 147),
         )
 
+        # artifact selectors
         self.attach(
-            fhomm.ui.ImgButton(
-                self.loader.load_sprite('artfx.icn', 37),
-                self.cmd_select_artifact,
-            ),
+            self.toolkit.icon('artfx.icn', 37, action=self.cmd_select_artifact),
             Pos(76, 194),
         )
 
         # EXIT
         self.attach(
-            fhomm.ui.IcnButton(
-                self.loader,
+            self.toolkit.button(
                 'swapbtn.icn',
                 0,
-                self.cmd_cancel,
-                pygame.K_ESCAPE,
+                action=self.cmd_cancel,
+                hotkey=pygame.K_ESCAPE,
             ),
             Pos(184, 413),
         )
@@ -66,31 +98,25 @@ class Handler(fhomm.ui.Window):
 
     def cmd_select_attacker(self):
         return fhomm.handler.cmd_show(
-            fhomm.window.select_hero.Handler(
-                self.loader,
-                "Select Attacking Hero:",
-            ),
+            HeroSelectorWindow(self.toolkit, "Select Attacking Hero:"),
             Pos(0, 74),
         )
 
     def cmd_select_defender(self):
         return fhomm.handler.cmd_show(
-            fhomm.window.select_hero.Handler(
-                self.loader,
-                "Select Defending Hero:",
-            ),
+            HeroSelectorWindow(self.toolkit, "Select Defending Hero:"),
             Pos(320, 74),
         )
 
     def cmd_select_army(self):
         return fhomm.handler.cmd_show(
-            fhomm.window.select_army.Handler(self.loader),
+            ArmySelectorWindow(self.toolkit),
             Pos(0, 74),
         )
 
     def cmd_select_artifact(self):
         return fhomm.handler.cmd_show(
-            fhomm.window.select_artifact.Handler(self.loader),
+            ArtifactSelectorWindow(self.toolkit),
             Pos(0, 74),
         )
 

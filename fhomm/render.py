@@ -184,26 +184,25 @@ class NoopContext(Context):
 
 
 class Font(object):
-    def __init__(self, sprites, width):
+    def __init__(self, sprites, baseline, space_width):
         if len(sprites) != 96:
             raise Exception("The font ICN file must have 96 sprites in it.")
 
         self.sprites = sprites
-        self.width = width
+        self.baseline = baseline
+        self.space_width = space_width
 
-        self.baseline = max(-s.offset.y for s in sprites)
         self.height = self.baseline + max(s.offset.y + s.size.h for s in sprites)
-
-    def get_width(self):
-        return self.width
 
     def get_height(self):
         return self.height
 
+    # TODO:
+    # layout -> measure
+    # layout -> draw
     def measure_text(self, text):
         return self.draw_text(NoopContext(), text)
 
-    # TODO: color!
     def draw_text(self, ctx, text, top_left=Pos(0, 0)):
         # input pos is the top-left corner, but each sprite has an offset to
         # make glyphs align on the the baseline
@@ -211,7 +210,7 @@ class Font(object):
 
         for c in text:
             if c == ' ':
-                pos = Pos(pos.x + self.width, pos.y)
+                pos = Pos(pos.x + self.space_width, pos.y)
 
             else:
                 sprite = self.sprites[self.get_sprite_idx(c) or 0]
@@ -238,7 +237,7 @@ class Font(object):
         for i, word in enumerate(words):
             word_size = self.measure_text(word)
             if i > 0:
-                pos = Pos(pos.x + self.width, pos.y) # space
+                pos = Pos(pos.x + self.space_width, pos.y)
 
                 if pos.x + word_size.w > rect.right: # line break
                     pos = Pos(rect.x, pos.y + self.height)

@@ -1,19 +1,19 @@
 import pygame
 
-import fhomm.ui
-import fhomm.handler
-import fhomm.window.new_game
-import fhomm.window.load_game
-import fhomm.window.credits
-import fhomm.window.high_scores
+from fhomm.window.credits import CreditsScreen
+from fhomm.window.high_scores import HighScoresWindow
+from fhomm.window.menu.new_game import NewGameMenu
+from fhomm.window.menu.load_game import LoadGameMenu
 from fhomm.render import Pos
+import fhomm.handler
+import fhomm.ui
 
 
-class Handler(fhomm.ui.Window):
-    def __init__(self, loader):
+class MainMenu(fhomm.ui.Window):
+    def __init__(self, toolkit):
         super().__init__(border_width=25)
-        self.loader = loader
-        self.bg_image = loader.load_image('redback.bmp')
+        self.toolkit = toolkit
+        self.bg_image = toolkit.load_image('redback.bmp')
         self.measure(self.bg_image.size)
 
         buttons = [
@@ -25,7 +25,7 @@ class Handler(fhomm.ui.Window):
         ]
         for i, (base_idx, key, cmd) in enumerate(buttons):
             self.attach(
-                fhomm.ui.IcnButton(loader, 'btnmain.icn', base_idx, cmd, key),
+                toolkit.button('btnmain.icn', base_idx, action=cmd, hotkey=key),
                 Pos(33, 45 + 66*i),
             )
 
@@ -37,28 +37,19 @@ class Handler(fhomm.ui.Window):
             return fhomm.handler.CMD_QUIT
 
     def cmd_new_game(self):
-        return fhomm.handler.cmd_show(
-            fhomm.window.new_game.Handler(self.loader),
-            Pos(401, 35),
-        )
+        return fhomm.handler.cmd_show(NewGameMenu(self.toolkit), Pos(401, 35))
 
     def cmd_load_game(self):
-        return fhomm.handler.cmd_show(
-            fhomm.window.load_game.Handler(self.loader),
-            Pos(311, 14),
-        )
+        return fhomm.handler.cmd_show(LoadGameMenu(self.toolkit), Pos(311, 14))
 
     def cmd_high_scores(self):
         return fhomm.handler.cmd_show(
-            fhomm.window.high_scores.Handler(self.loader),
+            HighScoresWindow(self.toolkit),
             Pos(0, 0),
         )
 
     def cmd_credits(self):
-        return fhomm.handler.cmd_show(
-            fhomm.window.credits.Handler(self.loader),
-            Pos(0, 0),
-        )
+        return fhomm.handler.cmd_show(CreditsScreen(self.toolkit), Pos(0, 0))
 
     def cmd_quit(self):
         return fhomm.handler.CMD_QUIT

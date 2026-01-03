@@ -12,16 +12,17 @@ class WindowManager(fhomm.ui.Container):
 
     _SHADOW_OFFSET = Pos(16, 16)
 
-    def __init__(self, screen, palette, font, main_handler, fps_limit=30):
+    def __init__(self, screen, palette, toolkit, main_handler, fps_limit=30):
         super().__init__()
         self.screen = screen
         self.palette = palette
-        self.font = font
+        self.toolkit = toolkit
         self.fps_limit = fps_limit
 
         self.screen_ctx = fhomm.render.Context(screen)
         self.bg_captures = []
         self.running = False
+        self.last_exception = None
 
         self.show_fps = False
         self._bg_fps = None
@@ -84,15 +85,17 @@ class WindowManager(fhomm.ui.Container):
     def render_fps(self, ctx, dt):
         fps = 0 if dt == 0 else 1000 // dt
         fps_text = str(fps)
+
+        font = self.toolkit.get_font()
+        size = font.measure_text(fps_text)
         pos = Pos(0, 0)
-        size = self.font.measure_text(fps_text)
 
         if self._bg_fps is None:
             self._bg_fps = ctx.capture(Rect.of(size, pos))
         else:
             self._bg_fps.render(ctx, pos)
 
-        self.font.draw_text(ctx, fps_text, pos)
+        font.draw_text(ctx, fps_text, pos)
 
     def handle(self, event):
         # kind of has to be here to always react
@@ -108,6 +111,9 @@ class WindowManager(fhomm.ui.Container):
 
             elif event.key == pygame.K_F4:
                 return fhomm.handler.CMD_TOGGLE_FULLSCREEN
+
+            elif event.key == pygame.K_q and event.mod & pygame.KMOD_CTRL:
+                return fhomm.handler.CMD_QUIT # DEBUG: fast quit
 
         cmd = self.handle_by_child(self.active_child(), event)
         if cmd is not None:

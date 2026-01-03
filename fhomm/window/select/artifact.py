@@ -1,12 +1,11 @@
 import pygame
 
+from fhomm.window.select import ItemSelectorWindow
 import fhomm.game.artifacts
-import fhomm.handler
 import fhomm.ui
-import fhomm.window.selector
 
 
-class Handler(fhomm.window.selector.Handler):
+class ArtifactSelectorWindow(ItemSelectorWindow):
     def __init__(self, loader):
         items = [
             fhomm.ui.ImgList.Item(

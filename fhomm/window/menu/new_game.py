@@ -1,16 +1,16 @@
 import pygame
 
-import fhomm.ui
-import fhomm.handler
 from fhomm.render import Pos
-import fhomm.window.new_battle
+from fhomm.window.new_battle import NewBattleWindow
+import fhomm.handler
+import fhomm.ui
 
 
-class Handler(fhomm.ui.Window):
-    def __init__(self, loader):
+class NewGameMenu(fhomm.ui.Window):
+    def __init__(self, toolkit):
         super().__init__(border_width=25)
-        self.loader = loader
-        self.bg_image = loader.load_image('redback.bmp')
+        self.toolkit = toolkit
+        self.bg_image = toolkit.load_image('redback.bmp')
         self.measure(self.bg_image.size)
 
         buttons = [
@@ -22,7 +22,7 @@ class Handler(fhomm.ui.Window):
         ]
         for i, (base_idx, key, cmd) in enumerate(buttons):
             self.attach(
-                fhomm.ui.IcnButton(loader, 'btnnewgm.icn', base_idx, cmd, key),
+                toolkit.button('btnnewgm.icn', base_idx, action=cmd, hotkey=key),
                 Pos(33, 45 + 66*i),
             )
 
@@ -31,28 +31,28 @@ class Handler(fhomm.ui.Window):
 
     def cmd_standard_game(self):
         # return fhomm.handler.cmd_show(
-        #     fhomm.window.new_game.Handler(self.loader),
+        #     fhomm.window.new_game.Handler(self.toolkit),
         #     Pos(311, 14),
         # )
         pass
 
     def cmd_campaign_game(self):
         # return fhomm.handler.cmd_show(
-        #     fhomm.window.load_game.Handler(self.loader),
+        #     fhomm.window.load_game.Handler(self.toolkit),
         #     Pos(311, 14),
         # )
         pass
 
     def cmd_multiplayer_game(self):
         # return fhomm.handler.cmd_show(
-        #     fhomm.window.high_scores.Handler(self.loader),
+        #     fhomm.window.high_scores.Handler(self.toolkit),
         #     Pos(0, 0),
         # )
         pass
 
     def cmd_battle(self):
         return fhomm.handler.cmd_show(
-            fhomm.window.new_battle.Handler(self.loader),
+            NewBattleWindow(self.toolkit),
             Pos((640 - 448)//2, (480 - 448)//2), # TODO: ask WindowManager to center
         )
 

@@ -1,10 +1,11 @@
 import pygame
 
-import fhomm.ui
 import fhomm.handler
+import fhomm.ui
 
 
-class Handler(fhomm.ui.Window):
+class LoadGameMenu(fhomm.ui.Window):
+    # standard, campaign, multiplayer
     def __init__(self, loader):
         super().__init__(border_width=16)
         self.bg_image = loader.load_image('request.bmp')
