@@ -1,4 +1,5 @@
 import fhomm.render
+from fhomm.toolkit.button_font import ButtonFont
 import fhomm.ui.element
 
 
@@ -10,6 +11,7 @@ class Toolkit(object):
         self.font = None
         self.hl_font = None
         self.small_font = None
+        self.button_font = None
 
     def get_palette(self):
         return self.palette
@@ -41,6 +43,12 @@ class Toolkit(object):
                 space_width=4,
             )
         return self.small_font
+
+    def get_button_font(self):
+        if self.button_font is None:
+            self.button_font = ButtonFont(self)
+
+        return self.button_font
 
     def load_palette(self, pal_name):
         pal = self.loader.load_pal(pal_name)

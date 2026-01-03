@@ -24,6 +24,10 @@ class Rect(namedtuple('Rect', ['x', 'y', 'w', 'h'])):
     def of(cls, size, pos=Pos(0, 0)):
         return cls(pos.x, pos.y, size.w, size.h)
 
+    @classmethod
+    def ltrb(cls, left, top, right, bottom):
+        return cls(left, top, right - left + 1, bottom - top + 1)
+
     @property
     def pos(self):
         return Pos(self.x, self.y)
@@ -42,11 +46,11 @@ class Rect(namedtuple('Rect', ['x', 'y', 'w', 'h'])):
 
     @property
     def bottom(self):
-        return self.y + self.h
+        return self.y + self.h - 1
 
     @property
     def right(self):
-        return self.x + self.w
+        return self.x + self.w - 1
 
     def offset(self, relpos):
         return Rect(self.x + relpos.x, self.y + relpos.y, self.w, self.h)
@@ -60,79 +64,101 @@ class Rect(namedtuple('Rect', ['x', 'y', 'w', 'h'])):
 
 
 class Image(object):
-    def __init__(self, img):
-        self._img = img
-        self.size = Size(img.get_width(), img.get_height())
+
+    def __init__(self, surface):
+        self._surface = surface
+        self.size = Size(surface.get_width(), surface.get_height())
+
+    @classmethod
+    def make_surface(cls, data, width, height, palette):
+        surface = pygame.image.frombuffer(data, (width, height), 'P')
+        surface.set_palette(palette)
+        return surface
 
     @classmethod
     def from_bmp(cls, bmp, palette):
         return cls(cls.make_surface(bmp.data, bmp.width, bmp.height, palette))
 
     @classmethod
-    def make_surface(cls, data, width, height, palette):
-        img = pygame.image.frombuffer(data, (width, height), 'P')
-        img.set_palette(palette)
-        return img
+    def make_empty(cls):
+        return Image(pygame.Surface((1, 1), depth=8))
+
+    def make_copy(self):
+        return Image(self._surface.copy())
 
     def get_context(self):
-        return Context(self._img)
+        return Context(self._surface)
 
     def render(self, ctx, pos=Pos(0, 0)):
         ctx.blit(self, pos)
 
 
 class Sprite(Image):
-    def __init__(self, img, offset):
-        super().__init__(img)
+
+    def __init__(self, surface, offset):
+        super().__init__(surface)
         self.offset = offset
 
     @classmethod
     def from_icn_sprite(cls, icn_sprite, palette):
-        img = Image.make_surface(
+        surface = Image.make_surface(
             icn_sprite.data,
             icn_sprite.width,
             icn_sprite.height,
             palette,
         )
-        img.set_colorkey(0)
-        return cls(img, Pos(icn_sprite.offx, icn_sprite.offy))
+        surface.set_colorkey(0)
+        return cls(surface, Pos(icn_sprite.offx, icn_sprite.offy))
+
+    @classmethod
+    def from_image(cls, image, offset):
+        return Sprite(image._surface, offset)
+
+    @classmethod
+    def make_empty(cls):
+        surface = Image.make_empty()
+        surface.set_colorkey(0)
+        return Sprite(surface, Pos(0, 0))
+
+    def make_copy(self):
+        return Sprite(self._surface.copy(), self.offset)
 
     def render(self, ctx, pos=Pos(0, 0)):
         super().render(ctx, Pos(pos.x + self.offset.x, pos.y + self.offset.y))
 
 
 class Context(object):
-    def __init__(self, img):
-        self._image = img
+    def __init__(self, surface):
+        self._surface = surface
 
     def make_image(self, size):
-        img = pygame.Surface(size, depth=8)
-        img.set_palette(self._image.get_palette())
-        return Image(img)
+        surface = pygame.Surface(size, depth=8)
+        surface.set_palette(self._surface.get_palette())
+        return Image(surface)
 
     def copy_image_for_shadow(self, source):
-        img = pygame.Surface(source.size, depth=8)
+        surface = pygame.Surface(source.size, depth=8)
         # TODO: get the pre-made shadow-safe palette from the Palette object
-        img.set_palette(fhomm.palette.make_safe_for_shadow(self._image.get_palette()))
-        img.blit(source._img, (0, 0)) # area?
-        return Image(img)
+        surface.set_palette(fhomm.palette.make_safe_for_shadow(self._surface.get_palette()))
+        surface.blit(source._surface, (0, 0)) # area?
+        return Image(surface)
 
     @classmethod
     def make_shadow_image(cls, size):
-        img = pygame.Surface(size)
-        img.set_alpha(96)
-        return Image(img)
+        surface = pygame.Surface(size)
+        surface.set_alpha(96)
+        return Image(surface)
 
     def draw_rect(self, color, rect, width=0):
-        pygame.draw.rect(self._image, color, rect, width)
+        pygame.draw.rect(self._surface, color, rect, width)
 
     def blit(self, source, pos=Pos(0, 0), rect=None):
-        self._image.blit(source._img, pos, area=rect)
+        self._surface.blit(source._surface, pos, area=rect)
 
     def capture(self, rect):
-        img = self.make_image(rect.size)
-        img.get_context().blit(Image(self._image), (0, 0), rect)
-        return img
+        image = self.make_image(rect.size)
+        image.get_context().blit(Image(self._surface), (0, 0), rect)
+        return image
 
     def restrict(self, rect):
         # print(f"restricting to {rect}")
@@ -141,16 +167,16 @@ class Context(object):
 
 class RestrictingContext(Context):
     def __init__(self, ctx, rect):
-        super().__init__(ctx._image)
+        super().__init__(ctx._surface)
         self._restriction = rect
 
     def __enter__(self):
-        self._old_clip = self._image.get_clip()
-        self._image.set_clip(self._restriction)
+        self._old_clip = self._surface.get_clip()
+        self._surface.set_clip(self._restriction)
         return self
 
     def __exit__(self, *args, **kwargs):
-        self._image.set_clip(self._old_clip)
+        self._surface.set_clip(self._old_clip)
 
     def draw_rect(self, color, rect, width=0):
         super().draw_rect(color, rect.offset(self._restriction.pos), width)
@@ -177,7 +203,7 @@ class NoopContext(Context):
         pass
 
     def capture(self):
-        return self.make_image(Size(0, 0))
+        return self.make_empty_image()
 
     def restrict(self, *args, **kwargs):
         return self
@@ -213,7 +239,7 @@ class Font(object):
                 pos = Pos(pos.x + self.space_width, pos.y)
 
             else:
-                sprite = self.sprites[self.get_sprite_idx(c) or 0]
+                sprite = self.sprites[Font.get_sprite_idx(c) or 0]
                 sprite.render(ctx, pos)
 
                 pos = Pos(pos.x + sprite.size.w + 1, pos.y)
@@ -252,6 +278,7 @@ class Font(object):
 
         return Size(maxx - rect.x, maxy - rect.y + self.baseline)
 
+    @classmethod
     def get_sprite_idx(self, c):
         i = ord(c)
         if 0x20 < i and i <= 0x7f:
