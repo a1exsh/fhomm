@@ -27,8 +27,9 @@ class NewGameMenu(fhomm.ui.Window):
             )
 
         self.attach(
-            fhomm.ui.element.ActiveIcon(
-                NewGameMenu.get_battle_button(toolkit),
+            fhomm.ui.element.Button(
+                NewGameMenu.get_battle_button(toolkit, is_pressed=False),
+                NewGameMenu.get_battle_button(toolkit, is_pressed=True),
                 action=self.cmd_battle,
                 hotkey=pygame.K_b,
             ),
@@ -36,15 +37,26 @@ class NewGameMenu(fhomm.ui.Window):
         )
 
     @classmethod
-    def get_battle_button(cls, toolkit):
-        img = toolkit.load_sprite('btnnewgm.icn', 6).make_copy()
+    def get_battle_button(cls, toolkit, is_pressed):
+        icn_idx = 6
+        color_bg = 126
+        clear_rect = Rect.ltrb(25, 21, 104, 34)
+        text_rect = Rect.ltrb(12, 12, 114, 43)
+        font = toolkit.get_button_font()
+
+        if is_pressed:
+            icn_idx += 1
+            color_bg = 128
+            clear_rect = clear_rect.offset(Pos(-2, 2))
+            text_rect = text_rect.offset(Pos(-2, 2))
+            font = toolkit.get_pressed_button_font()
+
+        # CANCEL
+        img = toolkit.load_sprite('btnnewgm.icn', icn_idx).make_copy()
         ctx = img.get_context()
-        ctx.draw_rect(126, Rect.ltrb(25, 21, 104, 34)) # clear
-        toolkit.get_button_font().draw_multiline_text(
-            ctx,
-            "BATTLE ONLY",
-            Rect.ltrb(12, 12, 114, 43),
-        )
+        ctx.draw_rect(color_bg, clear_rect)
+        font.draw_multiline_text(ctx, "BATTLE ONLY", text_rect,)
+
         return img
 
     def on_render(self, ctx):
