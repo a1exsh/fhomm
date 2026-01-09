@@ -1,10 +1,11 @@
 import pygame
 
-from fhomm.render import Pos, Size
+from fhomm.render import Pos, Size, Rect
 from fhomm.window.select.army import ArmySelectorWindow
 from fhomm.window.select.artifact import ArtifactSelectorWindow
 from fhomm.window.select.hero import HeroSelectorWindow
 import fhomm.handler
+import fhomm.render
 import fhomm.toolkit
 import fhomm.ui
 import fhomm.ui.element
@@ -30,12 +31,12 @@ class SmallArmyIcon(fhomm.ui.element.ActiveArea):
             img.render(ctx, Pos(1, 1))
 
         if self.count is not None:
-            text = str(self.count)
-
-            font = self.toolkit.get_small_font()
-            text_size = font.measure_text(text)
-            # the count goes centered under the icon
-            font.draw_text(ctx, text, Pos((self.size.w - text_size.w) // 2, 37))
+            self.toolkit.get_small_font().draw_text(
+                ctx,
+                str(self.count),
+                Rect.ltrb(0, 37, self.size.w, self.size.h),
+                halign=fhomm.render.CENTER,
+            )
 
 
 class NewBattleWindow(fhomm.ui.Window):
@@ -68,7 +69,7 @@ class NewBattleWindow(fhomm.ui.Window):
             SmallArmyIcon(
                 self.toolkit,
                 monster=23,
-                count=666,
+                count=1,
                 action=self.cmd_select_army,
             ),
             Pos(23, 147),

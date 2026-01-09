@@ -1,4 +1,5 @@
 from fhomm.render import Pos
+import fhomm.render
 import fhomm.ui
 
 
@@ -8,14 +9,14 @@ class Label(fhomm.ui.Element):
         self.font = font
         self.text = text
 
-        text_size = font.measure_text(text)
-        self.text_pos = Pos(
-            (size.w - text_size.w) // 2,
-            (size.h - text_size.h) // 2,
-        )
-
     def on_render(self, ctx):
-        self.font.draw_text(ctx, self.text, self.text_pos)
+        self.font.draw_text(
+            ctx,
+            self.text,
+            self.rect,
+            halign=fhomm.render.CENTER,
+            valign=fhomm.render.CENTER,
+        )
 
 
 class ActiveArea(fhomm.ui.Element):

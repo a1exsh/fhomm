@@ -76,28 +76,24 @@ class List(fhomm.ui.Element):
                 )
 
     def render_item_text(self, ctx, text, text_pos, is_selected):
-        bound_rect = Rect.of(
-            Size(self.rect.right - text_pos.x, self.img_size.h),
+        text_rect = Rect.of(
+            Size(self.rect.right - text_pos.x + 1, self.img_size.h),
             text_pos,
         )
         if fhomm.ui.DEBUG_RENDER:
-            ctx.draw_rect(240, bound_rect, width=1)
+            ctx.draw_rect(240, text_rect, width=1)
 
         font = self.hl_font if is_selected else self.font
-        text_size = font.measure_multiline_text(text, bound_rect)
 
-        # center vertically before actually drawing the item text
-        text_rect = Rect.of(
-            text_size,
-            Pos(
-                text_pos.x,
-                text_pos.y + (self.img_size.h - text_size.h) // 2,
-            ),
+        # if fhomm.ui.DEBUG_RENDER:
+        #     ctx.draw_rect(224, text_rect, width=1)
+
+        font.draw_multiline_text(
+            ctx,
+            text,
+            text_rect,
+            valign=fhomm.render.CENTER,
         )
-        if fhomm.ui.DEBUG_RENDER:
-            ctx.draw_rect(224, text_rect, width=1)
-
-        font.draw_multiline_text(ctx, text, text_rect)
 
     def set_scroll_idx(self, idx):
         old, self.scroll_idx = self.scroll_idx, idx

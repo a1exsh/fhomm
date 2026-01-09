@@ -90,7 +90,7 @@ class ButtonFont(fhomm.render.Font):
             ctx = toolkit.load_sprite(icn_name, base_idx).get_context()
             for char, rect in char_to_rect.items():
                 if is_pressed:
-                    rect = rect.offset(Pos(-2, 2))
+                    rect = rect.moved_by(Pos(-2, 2))
                 img[cls.get_sprite_idx(char)] = ctx.capture(rect)
 
         # putting "B" together from "R" and "D"

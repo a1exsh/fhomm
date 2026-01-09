@@ -46,14 +46,14 @@ class Toolkit(object):
         return self.small_font
 
     def get_button_font(self):
-        # if self.button_font is None:
-        self.button_font = ButtonFont(self, is_pressed=False)
+        if self.button_font is None:
+            self.button_font = ButtonFont(self, is_pressed=False)
 
         return self.button_font
 
     def get_pressed_button_font(self):
-        # if self.pressed_button_font is None:
-        self.pressed_button_font = ButtonFont(self, is_pressed=True)
+        if self.pressed_button_font is None:
+            self.pressed_button_font = ButtonFont(self, is_pressed=True)
 
         return self.pressed_button_font
 

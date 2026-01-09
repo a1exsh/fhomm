@@ -266,7 +266,7 @@ class Window(Container):
     def attach(self, element, relpos):
         self.container.attach(
             element,
-            relpos.offset(Pos(-self.border_width, -self.border_width)),
+            relpos.moved_by(Pos(-self.border_width, -self.border_width)),
         )
 
     def on_render(self, ctx):

@@ -86,7 +86,8 @@ class WindowManager(fhomm.ui.Container):
         fps_text = str(fps)
 
         font = self.toolkit.get_font()
-        size = font.measure_text(fps_text)
+        layout = font.layout_text(fps_text)
+        size = font.measure_layout(layout)
         pos = Pos(0, 0)
 
         if self._bg_fps is None:
@@ -94,7 +95,7 @@ class WindowManager(fhomm.ui.Container):
         else:
             self._bg_fps.render(ctx, pos)
 
-        font.draw_text(ctx, fps_text, pos)
+        font.draw_layout(ctx, layout, pos)
 
     def handle(self, event):
         # kind of has to be here to always react
@@ -132,6 +133,7 @@ class WindowManager(fhomm.ui.Container):
 
         self.last_exception = None
 
+        # TODO: extract to a func to help autoreload
         self.running = True
         while self.running:
             with self.logging_just_once():

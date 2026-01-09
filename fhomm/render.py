@@ -13,7 +13,7 @@ Size = namedtuple('Size', ['w', 'h'])
 class Pos(namedtuple('Pos', ['x', 'y'])):
     __slots__ = ()
 
-    def offset(self, relpos):
+    def moved_by(self, relpos):
         return Pos(self.x + relpos.x, self.y + relpos.y)
 
 
@@ -52,7 +52,7 @@ class Rect(namedtuple('Rect', ['x', 'y', 'w', 'h'])):
     def right(self):
         return self.x + self.w - 1
 
-    def offset(self, relpos):
+    def moved_by(self, relpos):
         return Rect(self.x + relpos.x, self.y + relpos.y, self.w, self.h)
 
     # TODO: __contains__
@@ -123,10 +123,14 @@ class Sprite(Image):
     def make_copy(self):
         return Sprite(self._surface.copy(), self.offset)
 
+    def moved_by(self, relpos):
+        return Sprite(self._surface, self.offset.moved_by(relpos))
+
     def render(self, ctx, pos=Pos(0, 0)):
         super().render(ctx, Pos(pos.x + self.offset.x, pos.y + self.offset.y))
 
 
+# TODO: with context(): => lock/release surface
 class Context(object):
     def __init__(self, surface):
         self._surface = surface
@@ -179,35 +183,43 @@ class RestrictingContext(Context):
         self._surface.set_clip(self._old_clip)
 
     def draw_rect(self, color, rect, width=0):
-        super().draw_rect(color, rect.offset(self._restriction.pos), width)
+        super().draw_rect(color, rect.moved_by(self._restriction.pos), width)
 
     def blit(self, source, pos=Pos(0, 0), rect=None):
-        super().blit(source, pos.offset(self._restriction.pos), rect=rect)
+        super().blit(source, pos.moved_by(self._restriction.pos), rect=rect)
 
     def capture(self, rect):
-        return super().capture(rect.offset(self._restriction.pos))
+        return super().capture(rect.moved_by(self._restriction.pos))
 
     def restrict(self, rect):
         # TODO: should also restrict width and height
-        return super().restrict(rect.offset(self._restriction.pos))
+        return super().restrict(rect.moved_by(self._restriction.pos))
 
 
-class NoopContext(Context):
-    def __init__(self):
-        super().__init__(None)
+# class NoopContext(Context):
+#     def __init__(self):
+#         super().__init__(None)
 
-    def draw_rect(self, *args, **kwargs):
-        pass
+#     def draw_rect(self, *args, **kwargs):
+#         pass
 
-    def blit(self, *args, **kwargs):
-        pass
+#     def blit(self, *args, **kwargs):
+#         pass
 
-    def capture(self):
-        return self.make_empty_image()
+#     def capture(self):
+#         return self.make_empty_image()
 
-    def restrict(self, *args, **kwargs):
-        return self
+#     def restrict(self, *args, **kwargs):
+#         return self
 
+# halign values
+LEFT = 0
+CENTER = 1
+RIGHT = 2
+# valign values
+TOP = 3
+# CENTER
+BOTTOM = 4
 
 class Font(object):
     def __init__(self, sprites, baseline, space_width):
@@ -223,16 +235,75 @@ class Font(object):
     def get_height(self):
         return self.height
 
-    # TODO:
-    # layout -> measure
-    # layout -> draw
-    def measure_text(self, text):
-        return self.draw_text(NoopContext(), text)
+    @classmethod
+    def align_vertically(cls, rect, height, align):
+        if align == CENTER:
+            return rect.y + max(0, (rect.h - height) // 2)
 
-    def draw_text(self, ctx, text, top_left=Pos(0, 0)):
-        # input pos is the top-left corner, but each sprite has an offset to
+        elif align == BOTTOM:
+            return rect.bottom - min(height, rect.h)
+
+        else:
+            # FIXME: log warn if != TOP
+            return rect.y
+
+    @classmethod
+    def align_horizontally(cls, rect, width, align):
+        if align == CENTER:
+            return rect.x + max(0, (rect.w - width) // 2)
+
+        elif align == RIGHT:
+            return rect.right - min(width, rect.w)
+
+        else:
+            # FIXME: log warn if != LEFT
+            return rect.x
+
+    def draw_text(self, ctx, text, rect, halign=LEFT, valign=TOP):
+        layout = self.layout_text(text)
+        size = self.measure_layout(layout)
+        self.draw_layout(
+            ctx,
+            layout,
+            Pos(
+                Font.align_horizontally(rect, size.w, halign),
+                Font.align_vertically(rect, size.h, valign),
+            ),
+        )
+
+    def draw_layout(self, ctx, layout, pos=Pos(0, 0)):
+        for sprite in layout:
+            sprite.render(ctx, pos)
+
+    def draw_multiline_text(
+            self, ctx, text, rect,
+            halign=LEFT, valign=TOP, line_space=0
+    ):
+        lines = self.layout_multiline_text(text, rect)
+        total_height = (self.height + line_space)*(len(lines) - 1) + self.baseline
+
+        pos = Pos(rect.x, Font.align_vertically(rect, total_height, valign))
+
+        for line in lines:
+            word_sizes = [self.measure_layout(word) for word in line]
+            total_width = sum(
+                size.w
+                for size in word_sizes
+            ) + self.space_width*(len(line) - 1)
+
+            pos = Pos(Font.align_horizontally(rect, total_width, halign), pos.y)
+
+            for word, size in zip(line, word_sizes):
+                self.draw_layout(ctx, word, pos)
+                pos = Pos(pos.x + size.w + self.space_width, pos.y)
+
+            pos = Pos(rect.x, pos.y + self.height + line_space)
+
+    def layout_text(self, text):
+        glyphs = []
+
         # make glyphs align on the the baseline
-        pos = Pos(top_left.x, top_left.y + self.baseline)
+        pos = Pos(0, self.baseline - 1)
 
         for c in text:
             if c == ' ':
@@ -240,43 +311,51 @@ class Font(object):
 
             else:
                 sprite = self.sprites[Font.get_sprite_idx(c) or 0]
-                sprite.render(ctx, pos)
+                glyphs.append(sprite.moved_by(pos))
 
                 pos = Pos(pos.x + sprite.size.w + 1, pos.y)
 
-        width = pos.x - top_left.x
-        if len(text) > 0:
-            width -= 1          # account for space between glyphs
+        # width = pos.x - top_left.x
+        # if len(text) > 0:
+        #     width -= 1          # account for extra space after the last glyph
+
+        return glyphs
+
+    def measure_layout(self, layout):
+        if len(layout) > 0:
+            rightmost_sprite = layout[-1]
+            width = rightmost_sprite.offset.x + rightmost_sprite.size.w
+        else:
+            width = 0
 
         return Size(width, self.baseline)
 
-    def measure_multiline_text(self, text, rect):
-        return self.draw_multiline_text(NoopContext(), text, rect)
+    def layout_multiline_text(self, text, rect):
+        lines = []              # each line is a list of words (layouts)
+        current_line = None
 
-    # TOOD: line spacing
-    def draw_multiline_text(self, ctx, text, rect):
-        maxx = rect.x
-        maxy = rect.y
-        pos = rect.pos
+        posx = rect.pos.x
 
         words = text.split(' ')
         for i, word in enumerate(words):
-            word_size = self.measure_text(word)
+            word_layout = self.layout_text(word)
+            word_size = self.measure_layout(word_layout)
             if i > 0:
-                pos = Pos(pos.x + self.space_width, pos.y)
+                posx += self.space_width
+                if posx + word_size.w > rect.right: # line break
+                    posx = rect.pos.x
+                    current_line = []
+                    lines.append(current_line)
 
-                if pos.x + word_size.w > rect.right: # line break
-                    pos = Pos(rect.x, pos.y + self.height)
-                    if pos.y > maxy:
-                        maxy = pos.y
+            else:
+                current_line = []
+                lines.append(current_line)
 
-            self.draw_text(ctx, word, pos)
+            current_line.append(word_layout)
 
-            pos = Pos(pos.x + word_size.w, pos.y)
-            if pos.x > maxx:
-                maxx = pos.x
+            posx += word_size.w
 
-        return Size(maxx - rect.x, maxy - rect.y + self.baseline)
+        return lines
 
     @classmethod
     def get_sprite_idx(self, c):
