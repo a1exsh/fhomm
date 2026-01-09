@@ -102,7 +102,7 @@ class Toolkit(object):
             fhomm.render.Sprite.from_icn_sprite(icn, self.palette)
             for icn in icns
         ]
-        return fhomm.render.Font(sprites, **kwargs)
+        return fhomm.render.font.Font(sprites, **kwargs)
 
     def label(self, size, text):
         return fhomm.ui.element.Label(size, self.get_font(), text)

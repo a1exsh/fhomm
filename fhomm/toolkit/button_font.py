@@ -1,7 +1,9 @@
 from fhomm.render import Pos, Size, Rect
 import fhomm.render
+import fhomm.render.font
 
-class ButtonFont(fhomm.render.Font):
+
+class ButtonFont(fhomm.render.font.Font):
 
     BASELINE = 12
 
