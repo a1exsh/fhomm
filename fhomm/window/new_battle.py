@@ -52,6 +52,7 @@ class NewBattleWindow(fhomm.ui.Window):
                 hotkey=pygame.K_a, # attacker
             ),
             Pos(28, 44),
+            'select_attacker',
         )
 
         self.attach(
@@ -62,6 +63,7 @@ class NewBattleWindow(fhomm.ui.Window):
                 hotkey=pygame.K_d, # defender
             ),
             Pos(319, 44),
+            'select_defender',
         )
 
         # army selectors
@@ -90,6 +92,7 @@ class NewBattleWindow(fhomm.ui.Window):
                 hotkey=pygame.K_ESCAPE,
             ),
             Pos(184, 413),
+            'btn_exit',
         )
 
     def cmd_select_attacker(self):

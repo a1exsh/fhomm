@@ -14,16 +14,17 @@ class NewGameMenu(fhomm.ui.Window):
         self.toolkit = toolkit
 
         buttons = [
-            (0, 0, pygame.K_s, self.cmd_standard_game),
-            (1, 2, pygame.K_c, self.cmd_campaign_game),
-            (2, 4, pygame.K_m, self.cmd_multiplayer_game),
+            (0, 0, pygame.K_s, self.cmd_standard_game, 'standard'),
+            (1, 2, pygame.K_c, self.cmd_campaign_game, 'campaign'),
+            (2, 4, pygame.K_m, self.cmd_multiplayer_game, 'multiplayer'),
             # skip for battle
-            (4, 6, pygame.K_ESCAPE, self.cmd_cancel),
+            (4, 6, pygame.K_ESCAPE, self.cmd_cancel, 'cancel'),
         ]
-        for i, base_idx, key, cmd in buttons:
+        for i, base_idx, key, cmd, name in buttons:
             self.attach(
                 toolkit.button('btnnewgm.icn', base_idx, action=cmd, hotkey=key),
                 Pos(33, 45 + 66*i),
+                key=f"btn_{name}",
             )
 
         self.attach(
@@ -34,6 +35,7 @@ class NewGameMenu(fhomm.ui.Window):
                 hotkey=pygame.K_b,
             ),
             Pos(33, 45 + 66*3),
+            'btn_battle',
         )
 
     # TODO: memoize

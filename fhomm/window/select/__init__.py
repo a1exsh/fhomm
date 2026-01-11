@@ -26,6 +26,7 @@ class ItemSelectorWindow(fhomm.ui.Window):
                 hotkey=pygame.K_RETURN,
             ),
             Pos(36, 280),
+            'btn_okay',
         )
 
         # CANCEL
@@ -37,6 +38,7 @@ class ItemSelectorWindow(fhomm.ui.Window):
                 hotkey=pygame.K_ESCAPE,
             ),
             Pos(189, 280),
+            'btn_cancel',
         )
 
     def cmd_cancel(self):
