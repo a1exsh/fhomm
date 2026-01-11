@@ -11,10 +11,14 @@ DEBUG_EVENTS = False
 
 
 class Element(object):
-    def __init__(self, size):
-        self.size = size
-        self.parent = None
 
+    NoState = namedtuple('NoState', [])
+
+    def __init__(self, size, make_state=NoState):
+        self.size = size
+        self.make_state = make_state
+
+        self.parent = None
         self.hovered = False
         self._dirty = False
 
@@ -31,13 +35,13 @@ class Element(object):
     def dirty(self):
         self._dirty = True
 
-    def render(self, ctx, force=False):
+    def render(self, ctx, state, force=False):
         if self._dirty:
             self._dirty = False
             force = True
 
         if force:
-            self.on_render(ctx)
+            self.on_render(ctx, state)
 
             if DEBUG_RENDER and self.hovered:
                 ctx.draw_rect(228, self.rect, 1)
@@ -46,7 +50,7 @@ class Element(object):
 
         return False
 
-    def on_render(self, ctx):
+    def on_render(self, ctx, state):
         pass
 
     def handle(self, event):
@@ -54,6 +58,9 @@ class Element(object):
             print(f"{self}.handle: {event}")
 
         return self.on_event(event)
+
+    # def post_command(self, cmd):
+    #     pygame.event.post(pygame.event.Event(fhomm.handle.EVENT_COMMAND, cmd=cmd))
 
     @classmethod
     def is_mouse_event(cls, event):
@@ -83,6 +90,9 @@ class Element(object):
         elif event.type == pygame.QUIT:
             return self.on_quit()
 
+        elif event.type == fhomm.handler.EVENT_WINDOW_CLOSED:
+            return self.on_window_closed()
+
     def handle_mouse_event(self, event):
         pos = Pos(event.pos[0], event.pos[1])
 
@@ -93,9 +103,9 @@ class Element(object):
                     self.dirty()
 
                 if self.hovered:
-                    self.on_mouse_enter() # no way to issue cmd for now
+                    return self.on_mouse_enter()
                 else:
-                    self.on_mouse_leave()
+                    return self.on_mouse_leave()
 
             relpos = Pos(event.rel[0], event.rel[1])
             return self.on_mouse_move(pos, relpos)
@@ -120,7 +130,7 @@ class Element(object):
                 return self.on_mouse_up(pos, event.button)
 
         elif event.type == pygame.MOUSEWHEEL:
-            print(f"mousewheel: {event}")
+            # print(f"mousewheel: {event}")
             return self.on_mouse_wheel(mouse_pos, event.x, event.y)
 
     def on_tick(self, dt):
@@ -151,29 +161,40 @@ class Element(object):
         pass
 
     def on_quit(self):
-        return fhomm.handler.CMD_IGNORE
+        #return fhomm.handler.CMD_IGNORE
+        pass
+
+    def on_window_closed(self):
+        pass
 
 
 class Container(Element):
 
-    class ChildSlot(namedtuple('ChildSlot', ['element', 'relpos'])):
-        __slots__ = ()
+    class ChildSlot(object):
+        def __init__(self, element, relpos, state):
+            self.element = element
+            self.relpos = relpos
+            self.state = state
 
         @property
         def rect(self):
             return Rect.of(self.element.size, self.relpos)
 
-    def __init__(self, size):
-        super().__init__(size)
+    def __init__(self, size, make_state=Element.NoState):
+        super().__init__(size, make_state)
         self.child_slots = []
 
-    def attach(self, element, relpos):
+    def attach(self, element, relpos, state=None):
         if element.parent is not None:
             raise Exception(f"The UI element {element} is already attached to {parent}!")
 
         element.parent = self
         element.on_attach(self)
-        self.child_slots.append(Container.ChildSlot(element, relpos))
+
+        if state is None:
+            state = element.make_state()
+
+        self.child_slots.append(Container.ChildSlot(element, relpos, state))
 
     def detach(self, element):
         if self is not element.parent:
@@ -187,8 +208,8 @@ class Container(Element):
         element.on_detach()
         element.parent = None
 
-    def render(self, ctx, force=False):
-        update = super().render(ctx, force)
+    def render(self, ctx, state, force=False):
+        update = super().render(ctx, state, force)
         if update:
             force = True
 
@@ -200,7 +221,7 @@ class Container(Element):
 
     def render_child(self, child, ctx, force=False):
         with ctx.restrict(child.rect) as child_ctx:
-            return child.element.render(child_ctx, force)
+            return child.element.render(child_ctx, child.state, force)
 
     def handle(self, event):
 #        print(f"{self}.handle: {event}")
@@ -210,10 +231,26 @@ class Container(Element):
         if cmd is not None:
             return cmd
 
+        commands = []
+
         for child in self.child_slots:
             cmd = self.handle_by_child(child, event)
-            if cmd is not None:
-                return cmd
+            if cmd:
+                if isinstance(cmd, fhomm.handler.Command):
+                    cmd = self.run_cmd(child, cmd)
+                    if cmd:
+                        commands.append(cmd)
+                else:
+                    cmd = [self.run_cmd(child, c) for c in cmd]
+                    commands.extend(c for c in cmd if c)
+
+        return commands
+
+    def run_cmd(self, child, cmd):
+        if cmd.code == fhomm.handler.UPDATE:
+            child.state = cmd.kwargs['fn'](child.state)
+        else:
+            return cmd
 
     def handle_by_child(self, child, event):
         if Element.is_mouse_event(event):
@@ -269,5 +306,5 @@ class Window(Container):
             relpos.moved_by(Pos(-self.border_width, -self.border_width)),
         )
 
-    def on_render(self, ctx):
+    def on_render(self, ctx, _):
         self.bg_image.render(ctx)

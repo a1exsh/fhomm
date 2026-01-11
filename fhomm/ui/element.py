@@ -1,4 +1,7 @@
+from collections import namedtuple
+
 from fhomm.render import Pos
+import fhomm.handler
 import fhomm.render
 import fhomm.ui
 
@@ -9,7 +12,7 @@ class Label(fhomm.ui.Element):
         self.font = font
         self.text = text
 
-    def on_render(self, ctx):
+    def on_render(self, ctx, _):
         self.font.draw_text(
             ctx,
             self.text,
@@ -20,51 +23,46 @@ class Label(fhomm.ui.Element):
 
 
 class ActiveArea(fhomm.ui.Element):
+
+    State = namedtuple('ActiveAreaState', ['is_pressed'], defaults=[False])
+
     def __init__(self, size, action, hotkey=None):
-        super().__init__(size)
+        super().__init__(size, ActiveArea.State)
         self.action = action
         self.hotkey = hotkey
+        self.cmd_press = fhomm.handler.cmd_update(ActiveArea.set_pressed)
+        self.cmd_release = fhomm.handler.cmd_update(ActiveArea.set_released)
 
-        self.is_pressed = False
+    @classmethod
+    def set_pressed(cls, _):
+        return ActiveArea.State(True)
 
-    def set_pressed(self):
-        old, self.is_pressed = self.is_pressed, True
-        return old != self.is_pressed
-
-    def set_released(self):
-        old, self.is_pressed = self.is_pressed, False
-        return old != self.is_pressed
-
-    def press(self):
-        if self.set_pressed():
-            self.dirty()
-
-    def release(self, action=True):
-        if self.set_released():
-            self.dirty()
-            if action:
-                return self.action()
+    @classmethod
+    def set_released(cls, _):
+        return ActiveArea.State(False)
 
     def on_key_down(self, key):
         if key == self.hotkey:
-            return self.press()
+            return self.cmd_press
 
     def on_key_up(self, key):
         if key == self.hotkey:
-            return self.release()
-
-    def on_mouse_leave(self):
-        # FIXME: hold the hotkey, enter mouse, then leave => released
-        self.release(action=False)
+            return self.cmd_release, self.action()
 
     def on_mouse_down(self, pos, button):
-        # print(f"{self} mouse down: {pos} {button}")
         if button == 1:         # TODO: are there consts for this?
-            return self.press()
+            return self.cmd_press
 
     def on_mouse_up(self, pos, button):
         if button == 1:
-            return self.release()
+            return self.cmd_release, self.action()
+
+    def on_mouse_leave(self):
+        # FIXME: hold the hotkey, enter mouse, then leave => released
+        return self.cmd_release
+
+    # def on_window_closed(self):
+    #     return self.cmd_release
 
 
 class ActiveIcon(ActiveArea):
@@ -72,7 +70,7 @@ class ActiveIcon(ActiveArea):
         super().__init__(img.size, **kwargs)
         self.img = img
 
-    def on_render(self, ctx):
+    def on_render(self, ctx, _):
         self.img.render(ctx)
 
 
@@ -81,6 +79,6 @@ class Button(ActiveIcon):
         super().__init__(img, **kwargs)
         self.img_pressed = img_pressed
 
-    def on_render(self, ctx):
-        img = self.img_pressed if self.is_pressed else self.img
+    def on_render(self, ctx, state):
+        img = self.img_pressed if state.is_pressed else self.img
         img.render(ctx)

@@ -78,7 +78,7 @@ class WindowManager(fhomm.ui.Container):
     def active_child(self):
         return self.child_slots[-1]
 
-    def render(self, ctx, force=False):
+    def render(self, ctx, force=True): # False
         return self.render_child(self.active_child(), ctx, force)
 
     def render_fps(self, ctx, dt):
@@ -90,10 +90,10 @@ class WindowManager(fhomm.ui.Container):
         size = font.measure_layout(layout)
         pos = Pos(0, 0)
 
-        if self._bg_fps is None:
-            self._bg_fps = ctx.capture(Rect.of(size, pos))
-        else:
+        if self._bg_fps is not None:
             self._bg_fps.render(ctx, pos)
+
+        self._bg_fps = ctx.capture(Rect.of(size, pos))
 
         font.draw_layout(ctx, layout, pos)
 
@@ -129,38 +129,40 @@ class WindowManager(fhomm.ui.Container):
         self.run_event_loop()
 
     def run_event_loop(self):
-        clock = pygame.time.Clock()
+        self.clock = pygame.time.Clock()
 
         self.last_exception = None
 
-        # TODO: extract to a func to help autoreload
         self.running = True
         while self.running:
-            with self.logging_just_once():
-                for event in pygame.event.get():
-                    command = self.handle(event)
-                    if command is not None:
-                        self.run_command(command)
-
-                if self.render(self.screen_ctx):
-                    # print("flippin")
-                    pygame.display.flip()
-
-                dt = clock.tick(self.fps_limit)
-
-                if self.show_fps:
-                    self.render_fps(self.screen_ctx, dt)
-
-                # TODO: for now no way to move it to on_event, as a child
-                # handling on tick will prevent palette from cycling a way to
-                # solve it may be by re-thinking the short-circuit on first
-                # returned command
-                if self.palette.update_tick(dt):
-                    self.screen.set_palette(self.palette.palette)
-
-                self.post_tick(dt)
+            self.event_loop_step()
 
         pygame.quit()
+
+    # having this as a separate method helps with autoreload
+    def event_loop_step(self):
+        with self.logging_just_once():
+            for event in pygame.event.get():
+                one_or_more_cmd = self.handle(event)
+                if one_or_more_cmd:
+                    self.run_commands(one_or_more_cmd)
+
+            if self.render(self.screen_ctx):
+                # print("flippin")
+                pygame.display.flip()
+
+            dt = self.clock.tick(self.fps_limit)
+
+            if self.show_fps:
+                self.render_fps(self.screen_ctx, dt)
+
+            # TODO: for now no way to move it to on_event, as a child handling
+            # on tick will prevent palette from cycling a way to solve it may
+            # be by re-thinking the short-circuit on first returned command
+            if self.palette.update_tick(dt):
+                self.screen.set_palette(self.palette.palette)
+
+            self.post_tick_event(dt)
 
     @contextmanager
     def logging_just_once(self):
@@ -173,8 +175,19 @@ class WindowManager(fhomm.ui.Container):
 
             self.last_exception = e
 
-    def post_tick(self, dt):
+    def post_tick_event(self, dt):
         pygame.event.post(pygame.event.Event(fhomm.handler.EVENT_TICK, dt=dt))
+
+    def post_close_event(self):
+        pygame.event.post(pygame.event.Event(fhomm.handler.EVENT_WINDOW_CLOSED))
+
+    def run_commands(self, one_or_more_cmd):
+        if isinstance(one_or_more_cmd, fhomm.handler.Command):
+            self.run_command(one_or_more_cmd)
+
+        else:
+            for cmd in one_or_more_cmd:
+                self.run_command(cmd)
 
     def run_command(self, command):
         # TODO: table-based dispatch
@@ -202,6 +215,10 @@ class WindowManager(fhomm.ui.Container):
 
         elif command.code == fhomm.handler.CLOSE:
             self.close_active()
+            self.post_close_event()
+
+        # elif command.code == fhomm.handler.UPDATE:
+        #     pass
 
         # elif command.code == fhomm.handler.COMPOSE:
         #     for cmd in command.kwargs['commands']:

@@ -20,7 +20,7 @@ class SmallArmyIcon(fhomm.ui.element.ActiveArea):
 
         self._bg_capture = None
 
-    def on_render(self, ctx):
+    def on_render(self, ctx, _):
         if self._bg_capture is None:
             self._bg_capture = ctx.capture(self.rect)
         else:

@@ -27,7 +27,7 @@ class MainMenu(fhomm.ui.Window):
                 Pos(33, 45 + 66*i),
             )
 
-    def on_render(self, ctx):
+    def on_render(self, ctx, _):
         self.bg_image.render(ctx)
 
     def on_key_up(self, key):

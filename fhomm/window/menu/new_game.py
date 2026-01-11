@@ -68,7 +68,7 @@ class NewGameMenu(fhomm.ui.Window):
 
         return img
 
-    def on_render(self, ctx):
+    def on_render(self, ctx, _):
         self.bg_image.render(ctx)
 
     def cmd_standard_game(self):

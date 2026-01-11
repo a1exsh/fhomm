@@ -1,11 +1,12 @@
 # TODO: rename this file to something like "command"
-
 from collections import namedtuple
 
 import pygame
 
-# EVENT_INIT = pygame.USEREVENT   # pygame.event.custom_type()
+# EVENT_COMMAND = pygame.USEREVENT   # pygame.event.custom_type()
 EVENT_TICK = pygame.USEREVENT + 1
+EVENT_WINDOW_CLOSED = pygame.USEREVENT + 2
+
 
 QUIT = -1
 IGNORE = 0
@@ -15,7 +16,8 @@ CLOSE = 3                       # close the active window or a screen
 TOGGLE_DEBUG_UI_RENDER = 4
 TOGGLE_DEBUG_UI_EVENTS = 5
 TOGGLE_FPS = 6
-# COMPOSE = ...              # could be expressed by posting events to the queue
+UPDATE = 7
+
 
 Command = namedtuple('Command', ['code', 'kwargs'], defaults=[{}])
 
@@ -36,3 +38,7 @@ def cmd_show(element, screen_pos):
             'screen_pos': screen_pos,
         }
     )
+
+
+def cmd_update(update_fn):
+    return Command(UPDATE, {'fn': update_fn})
