@@ -12,11 +12,11 @@ DEBUG_EVENTS = False
 
 class Element(object):
 
-    NoState = namedtuple('NoState', [])
+    # NoState = namedtuple('NoState', [])
 
-    def __init__(self, size, make_state=NoState):
+    def __init__(self, size): #, make_state=NoState):
         self.size = size
-        self.make_state = make_state
+        # self.make_state = make_state
 
         self.parent = None
         self.hovered = False
@@ -171,30 +171,30 @@ class Element(object):
 class Container(Element):
 
     class ChildSlot(object):
-        def __init__(self, element, relpos, state):
+        def __init__(self, element, relpos, key):
             self.element = element
             self.relpos = relpos
-            self.state = state
+            self.key = key
 
         @property
         def rect(self):
             return Rect.of(self.element.size, self.relpos)
 
-    def __init__(self, size, make_state=Element.NoState):
-        super().__init__(size, make_state)
+    def __init__(self, size): #, make_state=Element.NoState):
+        super().__init__(size) #, make_state)
         self.child_slots = []
 
-    def attach(self, element, relpos, state=None):
+    def attach(self, element, relpos, key=None): #, state=None):
         if element.parent is not None:
             raise Exception(f"The UI element {element} is already attached to {parent}!")
 
         element.parent = self
         element.on_attach(self)
 
-        if state is None:
-            state = element.make_state()
+        # if state is None:
+        #     state = element.make_state()
 
-        self.child_slots.append(Container.ChildSlot(element, relpos, state))
+        self.child_slots.append(Container.ChildSlot(element, relpos, key))
 
     def detach(self, element):
         if self is not element.parent:
@@ -214,18 +214,20 @@ class Container(Element):
             force = True
 
         for child in self.child_slots:
-            if self.render_child(child, ctx, force):
+            if self.render_child(child, ctx, state, force):
                 update = True
 
         return update
 
-    def render_child(self, child, ctx, force=False):
+    def render_child(self, child, ctx, state, force=True):
         with ctx.restrict(child.rect) as child_ctx:
-            return child.element.render(child_ctx, child.state, force)
+            if child.key:
+                child_state = state[child.key]
+            else:
+                child_state = state
+            return child.element.render(child_ctx, child_state, force)
 
     def handle(self, event):
-#        print(f"{self}.handle: {event}")
-
         # TODO: input focus?
         cmd = self.on_event(event)
         if cmd is not None:
@@ -237,20 +239,21 @@ class Container(Element):
             cmd = self.handle_by_child(child, event)
             if cmd:
                 if isinstance(cmd, fhomm.handler.Command):
-                    cmd = self.run_cmd(child, cmd)
-                    if cmd:
-                        commands.append(cmd)
+                    commands.append(self.cmd_from_child(child, cmd))
                 else:
-                    cmd = [self.run_cmd(child, c) for c in cmd]
-                    commands.extend(c for c in cmd if c)
+                    commands.extend(
+                        self.cmd_from_child(child, c)
+                        for c in cmd
+                    )
 
         return commands
 
-    def run_cmd(self, child, cmd):
-        if cmd.code == fhomm.handler.UPDATE:
-            child.state = cmd.kwargs['fn'](child.state)
-        else:
-            return cmd
+    def cmd_from_child(self, child, cmd):
+        if cmd.code == fhomm.handler.UPDATE and child.key:
+            cmd = fhomm.handler.cmd_update(cmd.kwargs['fn'])
+            cmd.kwargs['ks'] = [child.key, *cmd.kwargs.get('ks', [])]
+
+        return cmd
 
     def handle_by_child(self, child, event):
         if Element.is_mouse_event(event):
@@ -300,10 +303,11 @@ class Window(Container):
         )
         super().attach(self.container, Pos(border_width, border_width))
 
-    def attach(self, element, relpos):
+    def attach(self, element, relpos, key=None):
         self.container.attach(
             element,
             relpos.moved_by(Pos(-self.border_width, -self.border_width)),
+            key,
         )
 
     def on_render(self, ctx, _):

@@ -24,10 +24,10 @@ class Label(fhomm.ui.Element):
 
 class ActiveArea(fhomm.ui.Element):
 
-    State = namedtuple('ActiveAreaState', ['is_pressed'], defaults=[False])
+    # State = namedtuple('ActiveAreaState', ['is_pressed'], defaults=[False])
 
     def __init__(self, size, action, hotkey=None):
-        super().__init__(size, ActiveArea.State)
+        super().__init__(size) #, ActiveArea.State)
         self.action = action
         self.hotkey = hotkey
         self.cmd_press = fhomm.handler.cmd_update(ActiveArea.set_pressed)
@@ -35,11 +35,13 @@ class ActiveArea(fhomm.ui.Element):
 
     @classmethod
     def set_pressed(cls, _):
-        return ActiveArea.State(True)
+        # return ActiveArea.State(True)
+        return {'is_pressed': True}
 
     @classmethod
     def set_released(cls, _):
-        return ActiveArea.State(False)
+        # return ActiveArea.State(False)
+        return {'is_pressed': False}
 
     def on_key_down(self, key):
         if key == self.hotkey:
@@ -80,5 +82,6 @@ class Button(ActiveIcon):
         self.img_pressed = img_pressed
 
     def on_render(self, ctx, state):
-        img = self.img_pressed if state.is_pressed else self.img
+        # print("on_render")
+        img = self.img_pressed if state['is_pressed'] else self.img
         img.render(ctx)

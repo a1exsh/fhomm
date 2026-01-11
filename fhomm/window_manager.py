@@ -1,3 +1,4 @@
+from collections import defaultdict
 from contextlib import contextmanager
 import traceback
 
@@ -6,6 +7,10 @@ import pygame
 from fhomm.render import Pos, Size, Rect
 import fhomm.handler
 import fhomm.ui
+
+
+def defaultdefaultdict():
+    return defaultdict(defaultdefaultdict)
 
 
 class WindowManager(fhomm.ui.Container):
@@ -24,6 +29,8 @@ class WindowManager(fhomm.ui.Container):
         self.bg_captures = []
         self.running = False
         self.last_exception = None
+
+        self.state = defaultdefaultdict()
 
         self.show_fps = False
         self._bg_fps = None
@@ -78,8 +85,8 @@ class WindowManager(fhomm.ui.Container):
     def active_child(self):
         return self.child_slots[-1]
 
-    def render(self, ctx, force=True): # False
-        return self.render_child(self.active_child(), ctx, force)
+    def render(self, ctx, state, force=True): # False
+        return self.render_child(self.active_child(), ctx, state, force)
 
     def render_fps(self, ctx, dt):
         fps = 0 if dt == 0 else 1000 // dt
@@ -147,7 +154,7 @@ class WindowManager(fhomm.ui.Container):
                 if one_or_more_cmd:
                     self.run_commands(one_or_more_cmd)
 
-            if self.render(self.screen_ctx):
+            if self.render(self.screen_ctx, self.state):
                 # print("flippin")
                 pygame.display.flip()
 
@@ -217,12 +224,23 @@ class WindowManager(fhomm.ui.Container):
             self.close_active()
             self.post_close_event()
 
-        # elif command.code == fhomm.handler.UPDATE:
-        #     pass
-
-        # elif command.code == fhomm.handler.COMPOSE:
-        #     for cmd in command.kwargs['commands']:
-        #         self.run_command(cmd, handler)
+        elif command.code == fhomm.handler.UPDATE:
+            update(self.state, command.kwargs['ks'], command.kwargs['fn'])
 
         else:
             print(f"unknown command: {command}")
+
+
+def todict(m):
+    return {
+        k: todict(v) if isinstance(v, defaultdict) else v
+        for k, v in m.items()
+    }
+
+
+def update(m, ks, fn):
+    print(f"update: {todict(m)} / {ks}")
+    for k in ks[:-1]:
+        m = m[k]
+    k = ks[-1]
+    m[k] = fn(m[k])

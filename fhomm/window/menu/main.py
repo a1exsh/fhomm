@@ -15,16 +15,17 @@ class MainMenu(fhomm.ui.Window):
         self.toolkit = toolkit
 
         buttons = [
-            (2, pygame.K_n, self.cmd_new_game),
-            (0, pygame.K_l, self.cmd_load_game),
-            (4, pygame.K_h, self.cmd_high_scores),
-            (6, pygame.K_c, self.cmd_credits),
-            (8, pygame.K_q, self.cmd_quit),
+            (2, pygame.K_n, self.cmd_new_game, 'new_game'),
+            (0, pygame.K_l, self.cmd_load_game, 'load_game'),
+            (4, pygame.K_h, self.cmd_high_scores, 'high_scores'),
+            (6, pygame.K_c, self.cmd_credits, 'credits'),
+            (8, pygame.K_q, self.cmd_quit, 'quit'),
         ]
-        for i, (base_idx, key, cmd) in enumerate(buttons):
+        for i, (base_idx, key, cmd, name) in enumerate(buttons):
             self.attach(
                 toolkit.button('btnmain.icn', base_idx, action=cmd, hotkey=key),
                 Pos(33, 45 + 66*i),
+                key=f"btn_{name}",
             )
 
     def on_render(self, ctx, _):
