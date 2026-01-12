@@ -31,8 +31,8 @@ class List(fhomm.ui.Element):
 
         self.items = items
 
-        self.selected_idx = None
-        self.scroll_idx = 0
+        # self.selected_idx = None
+        # self.scroll_idx = 0
         self.items_per_page = size.h // (img_size.h + item_vpad)
 
         self.list_pad = Size(
@@ -53,7 +53,7 @@ class List(fhomm.ui.Element):
             self._bg_capture.render(ctx)
 
         for i in range(min(len(self.items), self.items_per_page)):
-            item_idx = self.scroll_idx + i
+            item_idx = state.get('scroll_idx', 0) + i
             item = self.items[item_idx]
 
             img_pos = Pos(
@@ -72,7 +72,7 @@ class List(fhomm.ui.Element):
                     ctx,
                     item.text,
                     text_pos,
-                    item_idx == self.selected_idx,
+                    item_idx == state.get('selected_idx', None),
                 )
 
     def render_item_text(self, ctx, text, text_pos, is_selected):
@@ -95,10 +95,10 @@ class List(fhomm.ui.Element):
             valign=fhomm.render.CENTER,
         )
 
-    def set_scroll_idx(self, idx):
-        old, self.scroll_idx = self.scroll_idx, idx
-        if old != self.scroll_idx:
-            self.dirty()
+    # def set_scroll_idx(self, idx):
+    #     old, self.scroll_idx = self.scroll_idx, idx
+    #     if old != self.scroll_idx:
+    #         self.dirty()
 
     def get_max_scroll_idx(self):
         return max(0, len(self.items) - self.items_per_page)
@@ -169,20 +169,23 @@ class List(fhomm.ui.Element):
                 self.move_selection_by(self.key_hold_delta)
                 self.tick -= self.key_hold_ticks
 
-    def on_mouse_down(self, _, pos, button):
+    def on_mouse_down(self, state, pos, button):
         if button == 1:
             visible_idx = (
                 (pos.y - self.list_pad.h)
                 //
                 (self.img_size.h + self.item_vpad)
             )
-            item_idx = self.scroll_idx + visible_idx
+            item_idx = state.get('scroll_idx', 0) + visible_idx
             last_visible_idx = min(
-                self.scroll_idx + self.items_per_page,
+                state.get('scroll_idx', 0) + self.items_per_page,
                 len(self.items),
             )
             if item_idx in range(last_visible_idx):
-                self.set_selected_idx(item_idx)
+                return fhomm.handler.cmd_update(
+                    lambda s: dict(s, selected_idx=item_idx)
+                )
+                # self.set_selected_idx(item_idx)
 
     def on_mouse_wheel(self, _, pos, dx, dy):
         self.scroll_by(dy)

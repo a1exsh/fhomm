@@ -250,11 +250,13 @@ class Container(Element):
 
     def cmd_from_child(self, child, cmd):
         if cmd.code == fhomm.handler.UPDATE and child.key:
-            ks = cmd.kwargs.get('ks', [])
-            print(f"ks: {ks}")
-            cmd = fhomm.handler.cmd_update(cmd.kwargs['fn'])
-            cmd.kwargs['ks'] = [child.key, *ks]
-            print(f"cmd: {cmd}")
+            cmd = fhomm.handler.Command(
+                fhomm.handler.UPDATE,
+                {
+                    'fn': cmd.kwargs['fn'],
+                    'ks': [child.key, *cmd.kwargs.get('ks', [])],
+                }
+            )
 
         return cmd
 

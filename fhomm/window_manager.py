@@ -239,13 +239,12 @@ def todict(m):
 
 
 def update(m, ks, fn):
-    t = m
     import yaml
-    print(f"before update: {ks}\n{yaml.dump(todict(t))}")
+    print(f"update: {ks}\n{yaml.dump(todict(m))}")
 
     for k in ks[:-1]:
         m = m[k]
     k = ks[-1]
     m[k] = fn(m[k])
 
-    print(f"after update: {ks}\n{yaml.dump(todict(t))}")
+    # print(f"after update: {ks}\n{yaml.dump(todict(t))}")

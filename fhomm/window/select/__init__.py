@@ -21,6 +21,15 @@ class ItemSelectorWindow(fhomm.ui.Window):
         img_list = toolkit.list(Size(206, 198), items, img_size)
         self.attach(img_list, Pos(56, 43), 'item_list')
 
+        self.attach(
+            toolkit.dynamic_label(
+                Size(223, 17),
+                lambda s: str(s.get('selected_idx', None)),
+            ),
+            Pos(49, 254),
+            'item_list',
+        )
+
         # OKAY
         self.attach(
             toolkit.button(

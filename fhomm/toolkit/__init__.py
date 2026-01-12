@@ -107,6 +107,9 @@ class Toolkit(object):
     def label(self, size, text):
         return fhomm.ui.element.Label(size, self.get_font(), text)
 
+    def dynamic_label(self, size, text_fn):
+        return fhomm.ui.element.DynamicLabel(size, self.get_font(), text_fn)
+
     def icon(self, icn_name, idx, **kwargs):
         return fhomm.ui.element.ActiveIcon(
             self.load_sprite(icn_name, idx),
