@@ -41,7 +41,11 @@ class SmallArmyIcon(fhomm.ui.element.ActiveArea):
 
 class NewBattleWindow(fhomm.ui.Window):
     def __init__(self, toolkit):
-        super().__init__(toolkit.load_image('swapwin.bmp'), border_width=4)
+        super().__init__(
+            'new_battle',
+            toolkit.load_image('swapwin.bmp'),
+            border_width=4,
+        )
         self.toolkit = toolkit
 
         self.attach(

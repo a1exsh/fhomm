@@ -46,7 +46,7 @@ class List(fhomm.ui.Element):
         self.key_hold_ticks = 50
         self.key_hold_delta = None
 
-    def on_render(self, ctx):
+    def on_render(self, ctx, state):
         if self._bg_capture is None:
             self._bg_capture = ctx.capture(self.rect)
         else:
@@ -123,7 +123,7 @@ class List(fhomm.ui.Element):
         elif self.selected_idx >= self.scroll_idx + self.items_per_page:
             self.set_scroll_idx(self.selected_idx - self.items_per_page + 1)
 
-    def on_key_down(self, key):
+    def on_key_down(self, _, key):
         if not self.items:      # no selection in an empty list
             return
 
@@ -158,18 +158,18 @@ class List(fhomm.ui.Element):
             self.tick = -250    # start repeating after a short delay 
             self.key_hold_delta = delta
 
-    def on_key_up(self, key):
+    def on_key_up(self, _, key):
         if key in [pygame.K_DOWN, pygame.K_UP, pygame.K_PAGEDOWN, pygame.K_PAGEUP]:
             self.key_hold_delta = None
 
-    def on_tick(self, dt):
+    def on_tick(self, _, dt):
         if self.key_hold_delta is not None:
             self.tick += dt
             while self.tick >= self.key_hold_ticks:
                 self.move_selection_by(self.key_hold_delta)
                 self.tick -= self.key_hold_ticks
 
-    def on_mouse_down(self, pos, button):
+    def on_mouse_down(self, _, pos, button):
         if button == 1:
             visible_idx = (
                 (pos.y - self.list_pad.h)
@@ -184,5 +184,5 @@ class List(fhomm.ui.Element):
             if item_idx in range(last_visible_idx):
                 self.set_selected_idx(item_idx)
 
-    def on_mouse_wheel(self, pos, dx, dy):
+    def on_mouse_wheel(self, _, pos, dx, dy):
         self.scroll_by(dy)

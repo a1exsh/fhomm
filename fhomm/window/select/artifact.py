@@ -14,4 +14,10 @@ class ArtifactSelectorWindow(ItemSelectorWindow):
             )
             for i, artifact in enumerate(fhomm.game.artifacts.ARTIFACTS)
         ]
-        super().__init__(loader, "Select Artifact:", items, items[0].img.size)
+        super().__init__(
+            'select_artifact',
+            loader,
+            "Select Artifact:",
+            items,
+            items[0].img.size,
+        )

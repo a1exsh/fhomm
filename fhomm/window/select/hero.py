@@ -16,4 +16,10 @@ class HeroSelectorWindow(ItemSelectorWindow):
             for i, hero in enumerate(fhomm.game.heroes.HEROES)
         ]
         # toolkit.load_sprite('locators.icn', 21), # extra bg
-        super().__init__(toolkit, title, items, items[0].img.size)
+        super().__init__(
+            'select_hero',
+            toolkit,
+            title,
+            items,
+            items[0].img.size,
+        )

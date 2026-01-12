@@ -11,7 +11,11 @@ import fhomm.ui
 
 class MainMenu(fhomm.ui.Window):
     def __init__(self, toolkit):
-        super().__init__(toolkit.load_image('redback.bmp'), border_width=25)
+        super().__init__(
+            'main_menu',
+            toolkit.load_image('redback.bmp'),
+            border_width=25,
+        )
         self.toolkit = toolkit
 
         buttons = [
@@ -31,7 +35,7 @@ class MainMenu(fhomm.ui.Window):
     def on_render(self, ctx, _):
         self.bg_image.render(ctx)
 
-    def on_key_up(self, key):
+    def on_key_up(self, _, key):
         if key == pygame.K_ESCAPE:
             return fhomm.handler.CMD_QUIT
 

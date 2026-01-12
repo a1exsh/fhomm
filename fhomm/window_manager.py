@@ -37,7 +37,7 @@ class WindowManager(fhomm.ui.Container):
 
         self.show(main_handler, Pos(0, 0))
 
-    def attach(self, element, pos):
+    def attach(self, element, pos, key=None):
         raise Exception("Elements should not be attached to window manager directly!")
 
     def detach(self, element):
@@ -104,7 +104,7 @@ class WindowManager(fhomm.ui.Container):
 
         font.draw_layout(ctx, layout, pos)
 
-    def handle(self, event):
+    def handle(self, state, event):
         # kind of has to be here to always react
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_F1:
@@ -122,13 +122,13 @@ class WindowManager(fhomm.ui.Container):
             elif event.key == pygame.K_q and event.mod & pygame.KMOD_CTRL:
                 return fhomm.handler.CMD_QUIT # DEBUG: fast quit
 
-        cmd = self.handle_by_child(self.active_child(), event)
+        cmd = self.handle_by_child(self.active_child(), state, event)
         if cmd is not None:
             return cmd
 
-        return self.on_event(event)
+        return self.on_event(state, event)
 
-    def on_event(self, event):
+    def on_event(self, state, event):
         if event.type == pygame.QUIT:
             return fhomm.handler.CMD_QUIT
 
@@ -150,7 +150,7 @@ class WindowManager(fhomm.ui.Container):
     def event_loop_step(self):
         with self.logging_just_once():
             for event in pygame.event.get():
-                one_or_more_cmd = self.handle(event)
+                one_or_more_cmd = self.handle(self.state, event)
                 if one_or_more_cmd:
                     self.run_commands(one_or_more_cmd)
 
@@ -239,8 +239,13 @@ def todict(m):
 
 
 def update(m, ks, fn):
-    print(f"update: {todict(m)} / {ks}")
+    t = m
+    import yaml
+    print(f"before update: {ks}\n{yaml.dump(todict(t))}")
+
     for k in ks[:-1]:
         m = m[k]
     k = ks[-1]
     m[k] = fn(m[k])
+
+    print(f"after update: {ks}\n{yaml.dump(todict(t))}")

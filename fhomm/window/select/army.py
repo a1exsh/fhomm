@@ -15,4 +15,10 @@ class ArmySelectorWindow(ItemSelectorWindow):
             )
             for i, monster in enumerate(fhomm.game.monsters.MONSTERS)
         ]
-        super().__init__(toolkit, "Select Army:", items, Size(32, 32))
+        super().__init__(
+            'select_army',
+            toolkit,
+            "Select Army:",
+            items,
+            Size(32, 32),
+        )

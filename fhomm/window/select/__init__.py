@@ -6,8 +6,12 @@ import fhomm.ui
 
 
 class ItemSelectorWindow(fhomm.ui.Window):
-    def __init__(self, toolkit, title, items, img_size):
-        super().__init__(toolkit.load_image('request.bmp'), border_width=16)
+    def __init__(self, state_key, toolkit, title, items, img_size):
+        super().__init__(
+            state_key,
+            toolkit.load_image('request.bmp'),
+            border_width=16,
+        )
 
         font = toolkit.get_font()
         hl_font = toolkit.get_hl_font()
@@ -15,7 +19,7 @@ class ItemSelectorWindow(fhomm.ui.Window):
         self.attach(toolkit.label(Size(219, 20), title), Pos(50, 16))
 
         img_list = toolkit.list(Size(206, 198), items, img_size)
-        self.attach(img_list, Pos(56, 43))
+        self.attach(img_list, Pos(56, 43), 'item_list')
 
         # OKAY
         self.attach(

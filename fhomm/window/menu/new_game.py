@@ -10,7 +10,11 @@ import fhomm.ui.element
 
 class NewGameMenu(fhomm.ui.Window):
     def __init__(self, toolkit):
-        super().__init__(toolkit.load_image('redback.bmp'), border_width=25)
+        super().__init__(
+            'new_game',
+            toolkit.load_image('redback.bmp'),
+            border_width=25,
+        )
         self.toolkit = toolkit
 
         buttons = [
