@@ -188,4 +188,7 @@ class List(fhomm.ui.Element):
                 # self.set_selected_idx(item_idx)
 
     def on_mouse_wheel(self, _, pos, dx, dy):
-        self.scroll_by(dy)
+        # self.scroll_by(dy)
+        return fhomm.handler.cmd_update(
+            lambda s: dict(s, scroll_idx=(s.get('scroll_idx', 0) + dy))
+        )
