@@ -12,8 +12,8 @@ class CreditsScreen(fhomm.ui.Window):
             border_width=0,
         )
 
-    def on_mouse_up(self, _, _pos, _button):
+    def on_mouse_up(self, _pos, _button):
         return fhomm.handler.CMD_CLOSE
 
-    def on_key_up(self, _, _key):
+    def on_key_up(self, _key):
         return fhomm.handler.CMD_CLOSE

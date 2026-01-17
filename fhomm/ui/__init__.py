@@ -53,11 +53,11 @@ class Element(object):
     def on_render(self, ctx, state):
         pass
 
-    def handle(self, state, event):
+    def handle(self, event):
         if DEBUG_EVENTS and event.type != fhomm.handler.EVENT_TICK:
             print(f"{self}.handle: {event}")
 
-        return self.on_event(state, event)
+        return self.on_event(event)
 
     # def post_command(self, cmd):
     #     pygame.event.post(pygame.event.Event(fhomm.handle.EVENT_COMMAND, cmd=cmd))
@@ -72,28 +72,28 @@ class Element(object):
         ]
 
     # on_event is low level, better define one of the more specific on_XXX
-    def on_event(self, state, event):
+    def on_event(self, event):
         #print(f"{self}.on_event: {event}")
 
         if event.type == fhomm.handler.EVENT_TICK:
-            return self.on_tick(state, event.dt)
+            return self.on_tick(event.dt)
 
         elif Element.is_mouse_event(event):
-            return self.handle_mouse_event(state, event)
+            return self.handle_mouse_event(event)
 
         elif event.type == pygame.KEYDOWN:
-            return self.on_key_down(state, event.key)
+            return self.on_key_down(event.key)
 
         elif event.type == pygame.KEYUP:
-            return self.on_key_up(state, event.key)
+            return self.on_key_up(event.key)
 
         elif event.type == pygame.QUIT:
-            return self.on_quit(state)
+            return self.on_quit()
 
         elif event.type == fhomm.handler.EVENT_WINDOW_CLOSED:
-            return self.on_window_closed(state)
+            return self.on_window_closed()
 
-    def handle_mouse_event(self, state, event):
+    def handle_mouse_event(self, event):
         pos = Pos(event.pos[0], event.pos[1])
 
         if event.type == pygame.MOUSEMOTION:
@@ -103,12 +103,12 @@ class Element(object):
                     self.dirty()
 
                 if self.hovered:
-                    return self.on_mouse_enter(state)
+                    return self.on_mouse_enter()
                 else:
-                    return self.on_mouse_leave(state)
+                    return self.on_mouse_leave()
 
             relpos = Pos(event.rel[0], event.rel[1])
-            return self.on_mouse_move(state, pos, relpos)
+            return self.on_mouse_move(pos, relpos)
 
         elif event.type == pygame.MOUSEBUTTONDOWN:
             #print(f"mousedown: {event}")
@@ -116,55 +116,55 @@ class Element(object):
                 pass
 
             else:
-                return self.on_mouse_down(state, pos, event.button)
+                return self.on_mouse_down(pos, event.button)
 
         elif event.type == pygame.MOUSEBUTTONUP:
             #print(f"mouseup: {event}")
             if event.button == 4:
-                return self.on_mouse_wheel(state, pos, 0, -1)
+                return self.on_mouse_wheel(pos, 0, -1)
 
             elif event.button == 5:
-                return self.on_mouse_wheel(state, pos, 0, 1)
+                return self.on_mouse_wheel(pos, 0, 1)
 
             else:
-                return self.on_mouse_up(state, pos, event.button)
+                return self.on_mouse_up(pos, event.button)
 
         elif event.type == pygame.MOUSEWHEEL:
             # print(f"mousewheel: {event}")
-            return self.on_mouse_wheel(state, mouse_pos, event.x, event.y)
+            return self.on_mouse_wheel(mouse_pos, event.x, event.y)
 
-    def on_tick(self, state, dt):
+    def on_tick(self, dt):
         pass
 
-    def on_mouse_enter(self, state):
+    def on_mouse_enter(self):
         pass
 
-    def on_mouse_leave(self, state):
+    def on_mouse_leave(self):
         pass
 
-    def on_mouse_move(self, state, pos, relpos):
+    def on_mouse_move(self, pos, relpos):
         pass
 
-    def on_mouse_down(self, state, pos, button):
+    def on_mouse_down(self, pos, button):
         pass
 
-    def on_mouse_up(self, state, pos, button):
+    def on_mouse_up(self, pos, button):
         pass
 
-    def on_mouse_wheel(self, state, pos, dx, dy):
+    def on_mouse_wheel(self, pos, dx, dy):
         pass
 
-    def on_key_down(self, state, key):
+    def on_key_down(self, key):
         pass
 
-    def on_key_up(self, state, key):
+    def on_key_up(self, key):
         pass
 
-    def on_quit(self, state):
+    def on_quit(self):
         #return fhomm.handler.CMD_IGNORE
         pass
 
-    def on_window_closed(self, state):
+    def on_window_closed(self):
         pass
 
 
@@ -227,16 +227,16 @@ class Container(Element):
                 child_state = state
             return child.element.render(child_ctx, child_state, force)
 
-    def handle(self, state, event):
+    def handle(self, event):
         # TODO: input focus?
-        cmd = self.on_event(state, event)
+        cmd = self.on_event(event)
         if cmd is not None:
             return cmd
 
         commands = []
 
         for child in self.child_slots:
-            cmd = self.handle_by_child(child, state, event)
+            cmd = self.handle_by_child(child, event)
             if cmd:
                 if isinstance(cmd, fhomm.handler.Command):
                     commands.append(self.cmd_from_child(child, cmd))
@@ -260,12 +260,7 @@ class Container(Element):
 
         return cmd
 
-    def handle_by_child(self, child, state, event):
-        if child.key:
-            child_state = state[child.key]
-        else:
-            child_state = state
-
+    def handle_by_child(self, child, event):
         if Element.is_mouse_event(event):
             cur_pos = Pos(event.pos[0], event.pos[1])
             if event.type == pygame.MOUSEMOTION:
@@ -279,12 +274,11 @@ class Container(Element):
             if child.rect.contains(cur_pos) or \
                (old_pos is not None and child.rect.contains(old_pos)):
                 return child.element.handle(
-                    child_state,
                     Container.translate_mouse_event(event, child.relpos),
                 )
 
         else:
-            return child.element.handle(child_state, event)
+            return child.element.handle(event)
 
     @classmethod
     def translate_mouse_event(cls, event, child_pos):

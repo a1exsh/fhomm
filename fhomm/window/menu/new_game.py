@@ -5,7 +5,6 @@ from fhomm.window.new_battle import NewBattleWindow
 import fhomm.handler
 import fhomm.render
 import fhomm.ui
-import fhomm.ui.element
 
 
 class NewGameMenu(fhomm.ui.Window):
@@ -32,7 +31,7 @@ class NewGameMenu(fhomm.ui.Window):
             )
 
         self.attach(
-            fhomm.ui.element.Button(
+            fhomm.ui.button.Button(
                 NewGameMenu.get_battle_button(toolkit, is_pressed=False),
                 NewGameMenu.get_battle_button(toolkit, is_pressed=True),
                 action=self.cmd_battle,

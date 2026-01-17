@@ -13,6 +13,6 @@ class HighScoresWindow(fhomm.ui.Window):
         )
 
     # TODO: use the actual buttons
-    def on_key_up(self, _, key):
+    def on_key_up(self, key):
         if key == pygame.K_ESCAPE:
             return fhomm.handler.CMD_CLOSE

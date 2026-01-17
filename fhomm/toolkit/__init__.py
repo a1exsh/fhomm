@@ -114,7 +114,7 @@ class Toolkit(object):
         return fhomm.ui.label.DynamicLabel(size, self.get_font(), text_fn)
 
     def icon(self, icn_name, idx, **kwargs):
-        return fhomm.ui.element.ActiveIcon(
+        return fhomm.ui.button.ActiveIcon(
             self.load_sprite(icn_name, idx),
             **kwargs,
         )

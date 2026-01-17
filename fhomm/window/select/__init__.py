@@ -30,7 +30,7 @@ class ItemSelectorWindow(fhomm.ui.Window):
         self.attach(
             toolkit.dynamic_label(
                 Size(225, 19),
-                lambda s: str(s.get('selected_idx', None)),
+                lambda s: str(s.get('selected_idx') or ''),
             ),
             Pos(48, 253),
             'item_list',

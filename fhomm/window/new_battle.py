@@ -8,10 +8,10 @@ import fhomm.handler
 import fhomm.render
 import fhomm.toolkit
 import fhomm.ui
-import fhomm.ui.element
+import fhomm.ui.button
 
 
-class SmallArmyIcon(fhomm.ui.element.ActiveArea):
+class SmallArmyIcon(fhomm.ui.button.ActiveArea):
     def __init__(self, toolkit, monster=None, count=None, **kwargs):
         super().__init__(Size(34, 44), **kwargs)
         self.toolkit = toolkit

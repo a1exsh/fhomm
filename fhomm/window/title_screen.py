@@ -12,7 +12,7 @@ class TitleScreen(fhomm.ui.Element): # screen, not a window
 
         self.main_menu = None
 
-    def on_tick(self, _, dt):
+    def on_tick(self, dt):
         if self.main_menu is None:
             self.main_menu = MainMenu(self.toolkit)
             return fhomm.handler.cmd_show(self.main_menu, Pos(401, 35))

@@ -123,7 +123,7 @@ class List(fhomm.ui.Element):
         elif self.selected_idx >= self.scroll_idx + self.items_per_page:
             self.set_scroll_idx(self.selected_idx - self.items_per_page + 1)
 
-    def on_key_down(self, _, key):
+    def on_key_down(self, key):
         if not self.items:      # no selection in an empty list
             return
 
@@ -158,36 +158,36 @@ class List(fhomm.ui.Element):
             self.tick = -250    # start repeating after a short delay 
             self.key_hold_delta = delta
 
-    def on_key_up(self, _, key):
+    def on_key_up(self, key):
         if key in [pygame.K_DOWN, pygame.K_UP, pygame.K_PAGEDOWN, pygame.K_PAGEUP]:
             self.key_hold_delta = None
 
-    def on_tick(self, _, dt):
+    def on_tick(self, dt):
         if self.key_hold_delta is not None:
             self.tick += dt
             while self.tick >= self.key_hold_ticks:
                 self.move_selection_by(self.key_hold_delta)
                 self.tick -= self.key_hold_ticks
 
-    def on_mouse_down(self, state, pos, button):
-        if button == 1:
-            visible_idx = (
-                (pos.y - self.list_pad.h)
-                //
-                (self.img_size.h + self.item_vpad)
-            )
-            item_idx = state.get('scroll_idx', 0) + visible_idx
-            last_visible_idx = min(
-                state.get('scroll_idx', 0) + self.items_per_page,
-                len(self.items),
-            )
-            if item_idx in range(last_visible_idx):
-                return fhomm.handler.cmd_update(
-                    lambda s: dict(s, selected_idx=item_idx)
-                )
-                # self.set_selected_idx(item_idx)
+    # def on_mouse_down(self, pos, button):
+    #     if button == 1:
+    #         visible_idx = (
+    #             (pos.y - self.list_pad.h)
+    #             //
+    #             (self.img_size.h + self.item_vpad)
+    #         )
+    #         item_idx = state.get('scroll_idx', 0) + visible_idx
+    #         last_visible_idx = min(
+    #             state.get('scroll_idx', 0) + self.items_per_page,
+    #             len(self.items),
+    #         )
+    #         if item_idx in range(last_visible_idx):
+    #             return fhomm.handler.cmd_update(
+    #                 lambda s: dict(s, selected_idx=item_idx)
+    #             )
+    #             # self.set_selected_idx(item_idx)
 
-    def on_mouse_wheel(self, _, pos, dx, dy):
+    def on_mouse_wheel(self, pos, dx, dy):
         # self.scroll_by(dy)
         return fhomm.handler.cmd_update(
             lambda s: dict(s, scroll_idx=(s.get('scroll_idx', 0) + dy))

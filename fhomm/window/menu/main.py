@@ -35,7 +35,7 @@ class MainMenu(fhomm.ui.Window):
     def on_render(self, ctx, _):
         self.bg_image.render(ctx)
 
-    def on_key_up(self, _, key):
+    def on_key_up(self, key):
         if key == pygame.K_ESCAPE:
             return fhomm.handler.CMD_QUIT
 

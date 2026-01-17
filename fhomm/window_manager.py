@@ -17,7 +17,7 @@ class WindowManager(fhomm.ui.Container):
 
     _SHADOW_OFFSET = Pos(16, 16)
 
-    def __init__(self, screen, palette, toolkit, main_handler, fps_limit=30):
+    def __init__(self, screen, palette, toolkit, main_handler, fps_limit=10):
         super().__init__(Size(screen.get_width(), screen.get_height()))
 
         self.screen = screen
@@ -104,7 +104,7 @@ class WindowManager(fhomm.ui.Container):
 
         font.draw_layout(ctx, layout, pos)
 
-    def handle(self, state, event):
+    def handle(self, event):
         # kind of has to be here to always react
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_F1:
@@ -122,13 +122,15 @@ class WindowManager(fhomm.ui.Container):
             elif event.key == pygame.K_q and event.mod & pygame.KMOD_CTRL:
                 return fhomm.handler.CMD_QUIT # DEBUG: fast quit
 
-        cmd = self.handle_by_child(self.active_child(), state, event)
+        # TODO: if we only keep the active window in the list of children,
+        # this would just work
+        cmd = self.handle_by_child(self.active_child(), event)
         if cmd is not None:
             return cmd
 
-        return self.on_event(state, event)
+        return self.on_event(event)
 
-    def on_event(self, state, event):
+    def on_event(self, event):
         if event.type == pygame.QUIT:
             return fhomm.handler.CMD_QUIT
 
@@ -150,12 +152,11 @@ class WindowManager(fhomm.ui.Container):
     def event_loop_step(self):
         with self.logging_just_once():
             for event in pygame.event.get():
-                one_or_more_cmd = self.handle(self.state, event)
+                one_or_more_cmd = self.handle(event)
                 if one_or_more_cmd:
                     self.run_commands(one_or_more_cmd)
 
             if self.render(self.screen_ctx, self.state):
-                # print("flippin")
                 pygame.display.flip()
 
             dt = self.clock.tick(self.fps_limit)
