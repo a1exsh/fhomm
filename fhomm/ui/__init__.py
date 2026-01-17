@@ -108,7 +108,7 @@ class Element(object):
                     return self.on_mouse_leave()
 
             relpos = Pos(event.rel[0], event.rel[1])
-            return self.on_mouse_move(pos, relpos)
+            return self.on_mouse_move(pos, relpos, event.buttons)
 
         elif event.type == pygame.MOUSEBUTTONDOWN:
             #print(f"mousedown: {event}")
@@ -142,7 +142,7 @@ class Element(object):
     def on_mouse_leave(self):
         pass
 
-    def on_mouse_move(self, pos, relpos):
+    def on_mouse_move(self, pos, rel, buttons):
         pass
 
     def on_mouse_down(self, pos, button):

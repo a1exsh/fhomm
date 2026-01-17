@@ -240,8 +240,8 @@ def todict(m):
 
 
 def update(m, ks, fn):
-    import yaml
-    print(f"update: {ks}\n{yaml.dump(todict(m))}")
+    # import yaml
+    # print(f"update: {ks}\n{yaml.dump(todict(m))}")
 
     for k in ks[:-1]:
         m = m[k]
