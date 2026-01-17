@@ -1,7 +1,8 @@
 import fhomm.render
 from fhomm.toolkit.button_font import ButtonFont
 import fhomm.ui
-import fhomm.ui.element
+import fhomm.ui.button
+import fhomm.ui.label
 import fhomm.ui.scrollbar
 
 
@@ -107,10 +108,10 @@ class Toolkit(object):
         return fhomm.render.font.Font(sprites, **kwargs)
 
     def label(self, size, text):
-        return fhomm.ui.element.Label(size, self.get_font(), text)
+        return fhomm.ui.label.Label(size, self.get_font(), text)
 
     def dynamic_label(self, size, text_fn):
-        return fhomm.ui.element.DynamicLabel(size, self.get_font(), text_fn)
+        return fhomm.ui.label.DynamicLabel(size, self.get_font(), text_fn)
 
     def icon(self, icn_name, idx, **kwargs):
         return fhomm.ui.element.ActiveIcon(
@@ -119,7 +120,7 @@ class Toolkit(object):
         )
 
     def button(self, icn_name, base_idx, **kwargs):
-        return fhomm.ui.element.Button(
+        return fhomm.ui.button.Button(
             self.load_sprite(icn_name, base_idx),
             self.load_sprite(icn_name, base_idx + 1),
             **kwargs,
