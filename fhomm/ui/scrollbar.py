@@ -3,6 +3,7 @@ import pygame
 from fhomm.render import Pos, Size, Rect
 import fhomm.handler
 import fhomm.ui
+import fhomm.ui.list
 
 
 class ScrollBar(fhomm.ui.Element):
@@ -11,22 +12,13 @@ class ScrollBar(fhomm.ui.Element):
         super().__init__(size)
 
         self.img_thumb = img_thumb
+        self.vrange = self.size.h - self.img_thumb.size.h
 
     def on_render(self, ctx, state):
-        max_scroll_idx = 28
-        vrange = self.size.h - self.img_thumb.size.h
-
-        scroll_idx = state.get('scroll_idx', 0)
-        posy = scroll_idx / max_scroll_idx * vrange
-        # print(f"vrange={vrange} posy={posy}")
-
-        self.img_thumb.render(ctx, Pos(0, int(posy)))
+        self.img_thumb.render(ctx, Pos(0, int(state.scroll_degree * self.vrange)))
 
     def on_mouse_wheel(self, pos, dx, dy):
-        # self.scroll_by(dy)
-        return fhomm.handler.cmd_update(
-            lambda s: dict(s, scroll_idx=(s.get('scroll_idx', 0) + dy))
-        )
+        return fhomm.handler.cmd_update(fhomm.ui.list.State.scroll_by(dy))
 
     def on_mouse_down(self, pos, button):
         if button == 1:
@@ -37,17 +29,8 @@ class ScrollBar(fhomm.ui.Element):
             return self.set_idx_from_pos(pos)
 
     def set_idx_from_pos(self, pos):
-        max_scroll_idx = 28
-        vrange = self.size.h - self.img_thumb.size.h
-
-        scroll_idx = max(
-            0,
-            min(
-                int((pos.y - self.img_thumb.size.h/2) / vrange * max_scroll_idx),
-                max_scroll_idx,
-            ),
-        )
-
         return fhomm.handler.cmd_update(
-            lambda s: dict(s, scroll_idx=scroll_idx)
+            fhomm.ui.list.State.scroll_to(
+                (pos.y - self.img_thumb.size.h / 2) / self.vrange
+            )
         )

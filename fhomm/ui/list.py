@@ -7,6 +7,42 @@ import fhomm.ui
 
 Item = namedtuple('Item', ['img', 'text'], module='fhomm.ui.list')
 
+class State(
+    namedtuple(
+        'State',
+        [
+            'scroll_idx',
+            'selected_idx',
+            'max_scroll_idx',
+        ],
+        module='fhomm.ui.list'
+    )
+):
+    __slots__ = ()
+
+    def clamp_scroll_idx(self, idx):
+        return max(0, min(idx, self.max_scroll_idx))
+
+    # @staticmethod
+    # def scroll_to(idx):
+    #     return lambda s: s._replace(scroll_idx=s.clamp_scroll_idx(idx))
+
+    @property
+    def scroll_degree(self):
+        return self.scroll_idx / self.max_scroll_idx
+
+    @staticmethod
+    def scroll_to(degree):
+        return lambda s: s._replace(
+            scroll_idx=s.clamp_scroll_idx(int(degree * max_scroll_idx))
+        )
+
+    @staticmethod
+    def scroll_by(rel_idx):
+        return lambda s: s._replace(
+            scroll_idx=s.clamp_scroll_idx(s.scroll_idx + rel_idx)
+        )
+
 
 class List(fhomm.ui.Element):
 
@@ -18,7 +54,7 @@ class List(fhomm.ui.Element):
             items,
             img_size,
             item_vpad=1,
-            text_hpad=4
+            text_hpad=4,
     ):
         super().__init__(size)
 

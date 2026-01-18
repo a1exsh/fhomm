@@ -1,6 +1,7 @@
-from collections import defaultdict
+# from collections import namedtuple
 from contextlib import contextmanager
 import traceback
+import yaml
 
 import pygame
 
@@ -9,8 +10,8 @@ import fhomm.handler
 import fhomm.ui
 
 
-def defaultdefaultdict():
-    return defaultdict(defaultdefaultdict)
+# def defaultdefaultdict():
+#     return defaultdict(defaultdefaultdict)
 
 
 class WindowManager(fhomm.ui.Container):
@@ -30,7 +31,7 @@ class WindowManager(fhomm.ui.Container):
         self.running = False
         self.last_exception = None
 
-        self.state = defaultdefaultdict()
+        self.state = {}         # defaultdefaultdict()
 
         self.show_fps = False
         self._bg_fps = None
@@ -43,12 +44,17 @@ class WindowManager(fhomm.ui.Container):
     def detach(self, element):
         raise Exception("Elements should not be detached from window manager directly!")
 
+    # show a screen or a window: is that a useful distinction though?
     def show(self, element, screen_pos):
+        if isinstance(element, fhomm.ui.Window): # wtf
+            self.state.update({element.state_key: element.initial_state_map})
+            print(yaml.dump(asdict(self.state)))
+
         super().attach(element, screen_pos)
 
         self._capture_background(element, screen_pos)
 
-        element.dirty()
+        element.dirty()          # FIXME: redundant?
 
     def close_active(self):
         child = self.active_child()
@@ -232,15 +238,14 @@ class WindowManager(fhomm.ui.Container):
             print(f"unknown command: {command}")
 
 
-def todict(m):
+def asdict(m):
     return {
-        k: todict(v) if isinstance(v, defaultdict) else v
+        k: asdict(v) if isinstance(v, dict) else v._asdict()
         for k, v in m.items()
     }
 
 
 def update(m, ks, fn):
-    # import yaml
     # print(f"update: {ks}\n{yaml.dump(todict(m))}")
 
     for k in ks[:-1]:

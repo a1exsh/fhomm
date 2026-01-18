@@ -32,6 +32,13 @@ class MainMenu(fhomm.ui.Window):
                 key=f"btn_{name}",
             )
 
+        # TODO: move to Window init
+        self.initial_state_map = {
+            child.key: child.element.initial_state
+            for child in self.container.child_slots
+        }
+        self.initial_state_map['_'] = {}
+
     def on_render(self, ctx, _):
         self.bg_image.render(ctx)
 

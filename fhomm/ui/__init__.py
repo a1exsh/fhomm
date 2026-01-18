@@ -12,14 +12,14 @@ DEBUG_EVENTS = False
 
 class Element(object):
 
-    # NoState = namedtuple('NoState', [])
+    State = namedtuple('State', [], module='fhomm.ui.Element')
 
-    def __init__(self, size): #, make_state=NoState):
+    def __init__(self, size, state=State()):
         self.size = size
-        # self.make_state = make_state
+        self.initial_state = state
 
         self.parent = None
-        self.hovered = False
+        self.hovered = False    # TODO: should be part of the state
         self._dirty = False
 
     @property
@@ -62,8 +62,8 @@ class Element(object):
     # def post_command(self, cmd):
     #     pygame.event.post(pygame.event.Event(fhomm.handle.EVENT_COMMAND, cmd=cmd))
 
-    @classmethod
-    def is_mouse_event(cls, event):
+    @staticmethod
+    def is_mouse_event(event):
         return event.type in [
             pygame.MOUSEMOTION,
             pygame.MOUSEBUTTONDOWN,
@@ -209,7 +209,7 @@ class Container(Element):
         element.parent = None
 
     def render(self, ctx, state, force=False):
-        update = super().render(ctx, state, force)
+        update = super().render(ctx, state['_'], force)
         if update:
             force = True
 
@@ -219,19 +219,19 @@ class Container(Element):
 
         return update
 
-    def render_child(self, child, ctx, state, force=True):
+    def render_child(self, child, ctx, state, force=True): # False
         with ctx.restrict(child.rect) as child_ctx:
             if child.key:
-                child_state = state[child.key]
+                child_state = state.get(child.key) #, child.element.initial_state)
             else:
-                child_state = state
+                child_state = None
             return child.element.render(child_ctx, child_state, force)
 
     def handle(self, event):
         # TODO: input focus?
         cmd = self.on_event(event)
         if cmd is not None:
-            return cmd
+            return self.cmd_from_self(cmd)
 
         commands = []
 
@@ -247,18 +247,6 @@ class Container(Element):
                     )
 
         return commands
-
-    def cmd_from_child(self, child, cmd):
-        if cmd.code == fhomm.handler.UPDATE and child.key:
-            cmd = fhomm.handler.Command(
-                fhomm.handler.UPDATE,
-                {
-                    'fn': cmd.kwargs['fn'],
-                    'ks': [child.key, *cmd.kwargs.get('ks', [])],
-                }
-            )
-
-        return cmd
 
     def handle_by_child(self, child, event):
         if Element.is_mouse_event(event):
@@ -280,8 +268,34 @@ class Container(Element):
         else:
             return child.element.handle(event)
 
-    @classmethod
-    def translate_mouse_event(cls, event, child_pos):
+    @staticmethod
+    def cmd_from_self(cmd):
+        if cmd.code == fhomm.handler.UPDATE:
+            return cmd_with_key(cmd, '_')
+
+        else:
+            return cmd
+
+    @staticmethod
+    def cmd_from_child(child, cmd):
+        if cmd.code == fhomm.handler.UPDATE and child.key:
+            return cmd_with_key(cmd, child.key)
+
+        else:
+            return cmd
+
+    @staticmethod
+    def cmd_with_key(cmd, key):
+        return fhomm.handler.Command(
+            fhomm.handler.UPDATE,
+            {
+                'fn': cmd.kwargs['fn'],
+                'ks': [key, *cmd.kwargs.get('ks', [])],
+            }
+        )
+
+    @staticmethod
+    def translate_mouse_event(event, child_pos):
         return pygame.event.Event(
             event.type,
             {
@@ -311,6 +325,7 @@ class Window(Container):
             Pos(border_width, border_width),
             state_key,
         )
+        self.state_key = state_key # FIXME
 
     def attach(self, element, relpos, key=None):
         self.container.attach(
@@ -318,6 +333,10 @@ class Window(Container):
             relpos.moved_by(Pos(-self.border_width, -self.border_width)),
             key,
         )
+
+    # FIXME: yagni: better init all children at construct time and don't change later
+    def detach(self, element):
+        self.container.detach(element)
 
     def on_render(self, ctx, _):
         self.bg_image.render(ctx)

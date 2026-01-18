@@ -6,50 +6,53 @@ import fhomm.render
 import fhomm.ui
 
 
+class State(namedtuple('State', ['is_pressed'], module='fhomm.ui.button')):
+    __slots__ = ()
+
+    @staticmethod
+    def pressed(s):
+        return s._replace(is_pressed=True)
+
+    @staticmethod
+    def released(s):
+        return s._replace(is_pressed=False)
+
+
 class ActiveArea(fhomm.ui.Element):
 
-    # State = namedtuple('ActiveAreaState', ['is_pressed'], defaults=[False])
+    CMD_PRESS = fhomm.handler.cmd_update(State.pressed)
+    CMD_RELEASE = fhomm.handler.cmd_update(State.released)
 
     def __init__(self, size, action, hotkey=None):
         super().__init__(size) #, ActiveArea.State)
         self.action = action
         self.hotkey = hotkey
-        self.cmd_press = fhomm.handler.cmd_update(ActiveArea.set_pressed)
-        self.cmd_release = fhomm.handler.cmd_update(ActiveArea.set_released)
 
-    @classmethod
-    def set_pressed(cls, _):
-        # return ActiveArea.State(True)
-        return {'is_pressed': True}
-
-    @classmethod
-    def set_released(cls, _):
-        # return ActiveArea.State(False)
-        return {'is_pressed': False}
+        self.initial_state = State(is_pressed=False)
 
     def on_key_down(self, key):
         if key == self.hotkey:
-            return self.cmd_press
+            return CMD_PRESS
 
     def on_key_up(self, key):
         # FIXME: don't leak state here, better handle it by tracking key/mouse "hold"
         if key == self.hotkey: # and state['is_pressed']:
-            return self.cmd_release, self.action()
+            return CMD_RELEASE, self.action()
 
     def on_mouse_down(self, pos, button):
         if button == 1:         # TODO: are there consts for this?
-            return self.cmd_press
+            return CMD_PRESS
 
     def on_mouse_up(self, pos, button):
         if button == 1: # and state['is_pressed']:
-            return self.cmd_release, self.action()
+            return CMD_RELEASE, self.action()
 
     def on_mouse_leave(self):
         # FIXME: hold the hotkey, enter mouse, then leave => released
-        return self.cmd_release
+        return CMD_RELEASE
 
     # def on_window_closed(self):
-    #     return self.cmd_release
+    #     return CMD_RELEASE
 
 
 class ActiveIcon(ActiveArea):
