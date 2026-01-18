@@ -30,15 +30,15 @@ CMD_TOGGLE_DEBUG_UI_EVENTS = Command(TOGGLE_DEBUG_UI_EVENTS)
 CMD_TOGGLE_FPS = Command(TOGGLE_FPS)
 
 
-def cmd_show(element, screen_pos):
+def cmd_show(window, screen_pos):
     return Command(
         SHOW,
         {
-            'element': element,
+            'window': window,
             'screen_pos': screen_pos,
         }
     )
 
 
 def cmd_update(update_fn):
-    return Command(UPDATE, {'fn': update_fn})
+    return Command(UPDATE, {'update_fn': update_fn})

@@ -32,27 +32,27 @@ class ActiveArea(fhomm.ui.Element):
 
     def on_key_down(self, key):
         if key == self.hotkey:
-            return CMD_PRESS
+            return self.CMD_PRESS
 
     def on_key_up(self, key):
         # FIXME: don't leak state here, better handle it by tracking key/mouse "hold"
         if key == self.hotkey: # and state['is_pressed']:
-            return CMD_RELEASE, self.action()
+            return self.CMD_RELEASE, self.action()
 
     def on_mouse_down(self, pos, button):
         if button == 1:         # TODO: are there consts for this?
-            return CMD_PRESS
+            return self.CMD_PRESS
 
     def on_mouse_up(self, pos, button):
         if button == 1: # and state['is_pressed']:
-            return CMD_RELEASE, self.action()
+            return self.CMD_RELEASE, self.action()
 
     def on_mouse_leave(self):
         # FIXME: hold the hotkey, enter mouse, then leave => released
-        return CMD_RELEASE
+        return self.CMD_RELEASE
 
     # def on_window_closed(self):
-    #     return CMD_RELEASE
+    #     return self.CMD_RELEASE
 
 
 class ActiveIcon(ActiveArea):
@@ -71,5 +71,5 @@ class Button(ActiveIcon):
 
     def on_render(self, ctx, state):
         # print("on_render")
-        img = self.img_pressed if state['is_pressed'] else self.img
+        img = self.img_pressed if state.is_pressed else self.img
         img.render(ctx)

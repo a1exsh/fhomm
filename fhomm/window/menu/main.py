@@ -35,7 +35,7 @@ class MainMenu(fhomm.ui.Window):
         # TODO: move to Window init
         self.initial_state_map = {
             child.key: child.element.initial_state
-            for child in self.container.child_slots
+            for child in self.child_slots
         }
         self.initial_state_map['_'] = {}
 

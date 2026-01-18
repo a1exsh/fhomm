@@ -71,6 +71,27 @@ class Element(object):
             pygame.MOUSEWHEEL,
         ]
 
+    @staticmethod
+    def translate_event(event, origin_pos):
+        if Element.is_mouse_event(event):
+            return Element.translate_mouse_event(event, origin_pos)
+
+        else:
+            return event
+
+    @staticmethod
+    def translate_mouse_event(event, origin_pos):
+        return pygame.event.Event(
+            event.type,
+            dict(
+                event.__dict__,
+                pos=(
+                    event.pos[0] - origin_pos.x,
+                    event.pos[1] - origin_pos.y,
+                ),
+            ),
+        )
+
     # on_event is low level, better define one of the more specific on_XXX
     def on_event(self, event):
         #print(f"{self}.on_event: {event}")
@@ -168,20 +189,30 @@ class Element(object):
         pass
 
 
-class Container(Element):
+class Window(Element):
 
-    class ChildSlot(object):
-        def __init__(self, element, relpos, key):
-            self.element = element
-            self.relpos = relpos
-            self.key = key
+    class ChildSlot(
+        namedtuple('ChildSlot', ['element', 'relpos', 'key'], module='fhomm.ui')
+    ):
+        __slots__ = ()
 
         @property
         def rect(self):
             return Rect.of(self.element.size, self.relpos)
 
-    def __init__(self, size): #, make_state=Element.NoState):
-        super().__init__(size) #, make_state)
+    def __init__(self, state_key, bg_image, border_width=0):
+        super().__init__(bg_image.size)
+        self.state_key = state_key # FIXME
+        self.bg_image = bg_image
+        self.border_width = border_width
+
+        self.content_rect = Rect.of(
+            Size(
+                self.size.w - 2*border_width,
+                self.size.h - 2*border_width,
+            ),
+            Pos(border_width, border_width),
+        )
         self.child_slots = []
 
     def attach(self, element, relpos, key=None): #, state=None):
@@ -194,7 +225,7 @@ class Container(Element):
         # if state is None:
         #     state = element.make_state()
 
-        self.child_slots.append(Container.ChildSlot(element, relpos, key))
+        self.child_slots.append(Window.ChildSlot(element, relpos, key))
 
     def detach(self, element):
         if self is not element.parent:
@@ -213,19 +244,16 @@ class Container(Element):
         if update:
             force = True
 
-        for child in self.child_slots:
-            if self.render_child(child, ctx, state, force):
-                update = True
+        with ctx.restrict(self.content_rect) as content_ctx:
+            for child in self.child_slots:
+                with ctx.restrict(child.rect) as child_ctx:
+                    if child.element.render(child_ctx, state[child.key], force):
+                        update = True
 
         return update
 
-    def render_child(self, child, ctx, state, force=True): # False
-        with ctx.restrict(child.rect) as child_ctx:
-            if child.key:
-                child_state = state.get(child.key) #, child.element.initial_state)
-            else:
-                child_state = None
-            return child.element.render(child_ctx, child_state, force)
+    def on_render(self, ctx, _):
+        self.bg_image.render(ctx)
 
     def handle(self, event):
         # TODO: input focus?
@@ -262,7 +290,7 @@ class Container(Element):
             if child.rect.contains(cur_pos) or \
                (old_pos is not None and child.rect.contains(old_pos)):
                 return child.element.handle(
-                    Container.translate_mouse_event(event, child.relpos),
+                    Element.translate_mouse_event(event, child.relpos)
                 )
 
         else:
@@ -271,15 +299,15 @@ class Container(Element):
     @staticmethod
     def cmd_from_self(cmd):
         if cmd.code == fhomm.handler.UPDATE:
-            return cmd_with_key(cmd, '_')
+            return Window.cmd_with_key(cmd, '_')
 
         else:
             return cmd
 
     @staticmethod
     def cmd_from_child(child, cmd):
-        if cmd.code == fhomm.handler.UPDATE and child.key:
-            return cmd_with_key(cmd, child.key)
+        if cmd.code == fhomm.handler.UPDATE: # and child.key:
+            return Window.cmd_with_key(cmd, child.key)
 
         else:
             return cmd
@@ -288,55 +316,8 @@ class Container(Element):
     def cmd_with_key(cmd, key):
         return fhomm.handler.Command(
             fhomm.handler.UPDATE,
-            {
-                'fn': cmd.kwargs['fn'],
-                'ks': [key, *cmd.kwargs.get('ks', [])],
-            }
+            dict(
+                cmd.kwargs,
+                ks=[key, *cmd.kwargs.get('ks', [])],
+            ),
         )
-
-    @staticmethod
-    def translate_mouse_event(event, child_pos):
-        return pygame.event.Event(
-            event.type,
-            {
-                **event.__dict__,
-                'pos': (
-                    event.pos[0] - child_pos.x,
-                    event.pos[1] - child_pos.y,
-                ),
-            },
-        )
-
-
-class Window(Container):
-    def __init__(self, state_key, bg_image, border_width):
-        super().__init__(bg_image.size)
-        self.bg_image = bg_image
-        self.border_width = border_width
-
-        self.container = Container(
-            Size(
-                self.size.w - 2*border_width,
-                self.size.h - 2*border_width,
-            )
-        )
-        super().attach(
-            self.container,
-            Pos(border_width, border_width),
-            state_key,
-        )
-        self.state_key = state_key # FIXME
-
-    def attach(self, element, relpos, key=None):
-        self.container.attach(
-            element,
-            relpos.moved_by(Pos(-self.border_width, -self.border_width)),
-            key,
-        )
-
-    # FIXME: yagni: better init all children at construct time and don't change later
-    def detach(self, element):
-        self.container.detach(element)
-
-    def on_render(self, ctx, _):
-        self.bg_image.render(ctx)
