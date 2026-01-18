@@ -200,9 +200,9 @@ class Window(Element):
         def rect(self):
             return Rect.of(self.element.size, self.relpos)
 
-    def __init__(self, state_key, bg_image, border_width=0):
+    def __init__(self, bg_image, border_width=0):
         super().__init__(bg_image.size)
-        self.state_key = state_key # FIXME
+        # self.state_key = state_key # FIXME
         self.bg_image = bg_image
         self.border_width = border_width
 
@@ -316,8 +316,5 @@ class Window(Element):
     def cmd_with_key(cmd, key):
         return fhomm.handler.Command(
             fhomm.handler.UPDATE,
-            dict(
-                cmd.kwargs,
-                ks=[key, *cmd.kwargs.get('ks', [])],
-            ),
+            dict(cmd.kwargs, key=key),
         )

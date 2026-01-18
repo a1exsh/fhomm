@@ -14,10 +14,21 @@ import fhomm.ui
 #     return defaultdict(defaultdefaultdict)
 
 
+def asdict(m):
+    return {
+        k: asdict(v) if isinstance(v, dict) else v._asdict()
+        for k, v in m.items()
+    }
+
+
 class WindowManager(object):
 
-    class Slot(
-        namedtuple('Slot', ['window', 'screen_pos', 'bg_capture'], module='fhomm')
+    class WindowSlot(
+        namedtuple(
+            'WindowSlot',
+            ['window', 'screen_pos', 'state_key', 'bg_capture'],
+            module='fhomm'
+        )
     ):
         __slots__ = ()
 
@@ -28,8 +39,6 @@ class WindowManager(object):
     _SHADOW_OFFSET = Pos(16, 16)
 
     def __init__(self, screen, palette, toolkit, main_handler, fps_limit=10):
-        # super().__init__(Size(screen.get_width(), screen.get_height()))
-
         self.screen = screen
         self.palette = palette
         self.toolkit = toolkit
@@ -45,10 +54,10 @@ class WindowManager(object):
         self.show_fps = False
         self._bg_fps = None
 
-        self.show(main_handler, Pos(0, 0))
+        self.show(main_handler, Pos(0, 0), 'main_handler')
 
-    def show(self, window, screen_pos):
-        self.state.update({window.state_key: window.initial_state_map})
+    def show(self, window, screen_pos, state_key):
+        self.state.update({state_key: window.initial_state_map})
         print(yaml.dump(asdict(self.state)))
 
         if self.window_slots:
@@ -60,7 +69,7 @@ class WindowManager(object):
             bg_capture = None
 
         self.window_slots.append(
-            WindowManager.Slot(window, screen_pos, bg_capture)
+            WindowManager.WindowSlot(window, screen_pos, state_key, bg_capture)
         )
 
         window.dirty()          # FIXME: redundant?
@@ -98,7 +107,7 @@ class WindowManager(object):
         with self.screen_ctx.restrict(slot.screen_rect) as window_ctx:
             return slot.window.render(
                 window_ctx,
-                self.state[slot.window.state_key],
+                self.state[slot.state_key],
                 force,
             )
 
@@ -246,25 +255,12 @@ class WindowManager(object):
             self.post_close_event()
 
         elif command.code == fhomm.handler.UPDATE:
-            update(self.state, command.kwargs['ks'], command.kwargs['update_fn'])
+            self.update_state(**command.kwargs)
 
         else:
             print(f"unknown command: {command}")
 
-
-def asdict(m):
-    return {
-        k: asdict(v) if isinstance(v, dict) else v._asdict()
-        for k, v in m.items()
-    }
-
-
-def update(m, ks, fn):
-    # print(f"update: {ks}\n{yaml.dump(todict(m))}")
-
-    for k in ks[:-1]:
-        m = m[k]
-    k = ks[-1]
-    m[k] = fn(m[k])
-
-    # print(f"after update: {ks}\n{yaml.dump(todict(t))}")
+    def update_state(self, key, update_fn):
+        print(f"update_state: {key} {update_fn}")
+        active_state = self.state[self.active_slot().state_key]
+        active_state.update({key: update_fn(active_state[key])})

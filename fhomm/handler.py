@@ -30,12 +30,13 @@ CMD_TOGGLE_DEBUG_UI_EVENTS = Command(TOGGLE_DEBUG_UI_EVENTS)
 CMD_TOGGLE_FPS = Command(TOGGLE_FPS)
 
 
-def cmd_show(window, screen_pos):
+def cmd_show(window, screen_pos, state_key):
     return Command(
         SHOW,
         {
             'window': window,
             'screen_pos': screen_pos,
+            'state_key': state_key,
         }
     )
 
