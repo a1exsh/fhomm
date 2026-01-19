@@ -11,10 +11,6 @@ class TitleScreen(fhomm.ui.Window):
 
         self.main_menu = None
 
-        self.initial_state_map = {
-            '_': {},
-        }
-
     def on_tick(self, dt):
         if self.main_menu is None:
             self.main_menu = MainMenu(self.toolkit)

@@ -9,11 +9,6 @@ import fhomm.ui
 
 class NewGameMenu(fhomm.ui.Window):
     def __init__(self, toolkit):
-        super().__init__(
-            'new_game',
-            toolkit.load_image('redback.bmp'),
-            border_width=25,
-        )
         self.toolkit = toolkit
 
         buttons = [
@@ -23,22 +18,31 @@ class NewGameMenu(fhomm.ui.Window):
             # skip for battle
             (4, 6, pygame.K_ESCAPE, self.cmd_cancel, 'cancel'),
         ]
-        for i, base_idx, key, cmd, name in buttons:
-            self.attach(
+        children = [
+            fhomm.ui.Window.Slot(
                 toolkit.button('btnnewgm.icn', base_idx, action=cmd, hotkey=key),
                 Pos(33, 45 + 66*i),
                 key=f"btn_{name}",
             )
+            for i, base_idx, key, cmd, name in buttons
+        ]
+        children.append(
+            fhomm.ui.Window.Slot(
+                fhomm.ui.button.Button(
+                    NewGameMenu.get_battle_button(toolkit, is_pressed=False),
+                    NewGameMenu.get_battle_button(toolkit, is_pressed=True),
+                    action=self.cmd_battle,
+                    hotkey=pygame.K_b,
+                ),
+                Pos(33, 45 + 66*3),
+                key='btn_battle',
+            )
+        )
 
-        self.attach(
-            fhomm.ui.button.Button(
-                NewGameMenu.get_battle_button(toolkit, is_pressed=False),
-                NewGameMenu.get_battle_button(toolkit, is_pressed=True),
-                action=self.cmd_battle,
-                hotkey=pygame.K_b,
-            ),
-            Pos(33, 45 + 66*3),
-            'btn_battle',
+        super().__init__(
+            toolkit.load_image('redback.bmp'),
+            children,
+            border_width=25,
         )
 
     # TODO: memoize
@@ -101,6 +105,7 @@ class NewGameMenu(fhomm.ui.Window):
         return fhomm.handler.cmd_show(
             NewBattleWindow(self.toolkit),
             Pos((640 - 448)//2, (480 - 448)//2), # TODO: ask WindowManager to center
+            'new_battle',
         )
 
     def cmd_cancel(self):

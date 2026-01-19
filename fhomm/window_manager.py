@@ -236,7 +236,7 @@ class WindowManager(object):
 
         elif command.code == fhomm.handler.TOGGLE_DEBUG_UI_RENDER:
             fhomm.ui.DEBUG_RENDER = not fhomm.ui.DEBUG_RENDER
-            self.active_child().element.dirty()
+            self.active_slot().window.dirty()
 
         elif command.code == fhomm.handler.TOGGLE_DEBUG_UI_EVENTS:
             fhomm.ui.DEBUG_EVENTS = not fhomm.ui.DEBUG_EVENTS
@@ -251,7 +251,7 @@ class WindowManager(object):
             self.show(**command.kwargs)
 
         elif command.code == fhomm.handler.CLOSE:
-            self.close_active()
+            self.close_active_window()
             self.post_close_event()
 
         elif command.code == fhomm.handler.UPDATE:

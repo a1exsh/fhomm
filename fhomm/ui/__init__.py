@@ -18,19 +18,12 @@ class Element(object):
         self.size = size
         self.initial_state = state
 
-        self.parent = None
         self.hovered = False    # TODO: should be part of the state
         self._dirty = False
 
     @property
     def rect(self):
         return Rect.of(self.size)
-
-    def on_attach(self, parent):
-        pass
-
-    def on_detach(self):
-        pass
 
     def dirty(self):
         self._dirty = True
@@ -189,9 +182,24 @@ class Element(object):
         pass
 
 
-class Window(Element):
+def asseq(cmd):
+    # print(f"asseq: {cmd}")
+    if cmd is None:
+        return []
 
-    class ChildSlot(
+    elif isinstance(cmd, fhomm.handler.Command):
+        return [cmd]
+
+    else:
+        return [c for c in cmd if c] # filter out Nones
+
+
+class Window(Element):
+    #
+    # We externalize the state key so that an element cannot accidentally
+    # affect state of an unrelated element.
+    #
+    class Slot(
         namedtuple('ChildSlot', ['element', 'relpos', 'key'], module='fhomm.ui')
     ):
         __slots__ = ()
@@ -200,10 +208,11 @@ class Window(Element):
         def rect(self):
             return Rect.of(self.element.size, self.relpos)
 
-    def __init__(self, bg_image, border_width=0):
+    def __init__(self, bg_image, child_slots=[], border_width=0):
         super().__init__(bg_image.size)
-        # self.state_key = state_key # FIXME
+
         self.bg_image = bg_image
+        self.child_slots = child_slots
         self.border_width = border_width
 
         self.content_rect = Rect.of(
@@ -213,34 +222,15 @@ class Window(Element):
             ),
             Pos(border_width, border_width),
         )
-        self.child_slots = []
 
-    def attach(self, element, relpos, key=None): #, state=None):
-        if element.parent is not None:
-            raise Exception(f"The UI element {element} is already attached to {parent}!")
-
-        element.parent = self
-        element.on_attach(self)
-
-        # if state is None:
-        #     state = element.make_state()
-
-        self.child_slots.append(Window.ChildSlot(element, relpos, key))
-
-    def detach(self, element):
-        if self is not element.parent:
-            raise Exception(f"The UI element {element} is not attached to {self}!")
-
-        self.child_slots = [
-            child
+        self.initial_state_map = {
+            child.key: child.element.initial_state
             for child in self.child_slots
-            if element is not child.element
-        ]
-        element.on_detach()
-        element.parent = None
+        }
+        self.initial_state_map['_self'] = self.initial_state
 
     def render(self, ctx, state, force=False):
-        update = super().render(ctx, state['_'], force)
+        update = super().render(ctx, state['_self'], force)
         if update:
             force = True
 
@@ -254,25 +244,18 @@ class Window(Element):
 
     def on_render(self, ctx, _):
         self.bg_image.render(ctx)
-
+        
     def handle(self, event):
         # TODO: input focus?
         cmd = self.on_event(event)
-        if cmd is not None:
-            return self.cmd_from_self(cmd)
+        if cmd:
+            return [self.cmd_with_key('_self', c) for c in asseq(cmd)]
 
         commands = []
 
         for child in self.child_slots:
             cmd = self.handle_by_child(child, event)
-            if cmd:
-                if isinstance(cmd, fhomm.handler.Command):
-                    commands.append(self.cmd_from_child(child, cmd))
-                else:
-                    commands.extend(
-                        self.cmd_from_child(child, c)
-                        for c in cmd
-                    )
+            commands.extend(self.cmd_with_key(child.key, c) for c in asseq(cmd))
 
         return commands
 
@@ -297,24 +280,13 @@ class Window(Element):
             return child.element.handle(event)
 
     @staticmethod
-    def cmd_from_self(cmd):
+    def cmd_with_key(key, cmd):
+        print(f"cmd_with_key: {key} {cmd}")
         if cmd.code == fhomm.handler.UPDATE:
-            return Window.cmd_with_key(cmd, '_')
+            return fhomm.handler.Command(
+                fhomm.handler.UPDATE,
+                dict(cmd.kwargs, key=key),
+            )
 
         else:
             return cmd
-
-    @staticmethod
-    def cmd_from_child(child, cmd):
-        if cmd.code == fhomm.handler.UPDATE: # and child.key:
-            return Window.cmd_with_key(cmd, child.key)
-
-        else:
-            return cmd
-
-    @staticmethod
-    def cmd_with_key(cmd, key):
-        return fhomm.handler.Command(
-            fhomm.handler.UPDATE,
-            dict(cmd.kwargs, key=key),
-        )

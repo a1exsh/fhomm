@@ -6,11 +6,7 @@ import fhomm.ui
 
 class CreditsScreen(fhomm.ui.Window):
     def __init__(self, toolkit):
-        super().__init__(
-            'credits',
-            toolkit.load_image('credits.bmp'),
-            border_width=0,
-        )
+        super().__init__(toolkit.load_image('credits.bmp'))
 
     def on_mouse_up(self, _pos, _button):
         return fhomm.handler.CMD_CLOSE
