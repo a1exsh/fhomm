@@ -48,7 +48,9 @@ class MainMenu(fhomm.ui.Window):
         )
 
     def cmd_load_game(self):
-        return fhomm.handler.cmd_show(LoadGameMenu(self.toolkit), Pos(311, 14))
+        return fhomm.handler.cmd_show(
+            LoadGameMenu(self.toolkit), Pos(311, 14), 'load_game'
+        )
 
     def cmd_high_scores(self):
         return fhomm.handler.cmd_show(

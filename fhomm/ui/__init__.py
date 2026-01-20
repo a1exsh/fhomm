@@ -15,6 +15,7 @@ class Element(object):
     State = namedtuple('State', [], module='fhomm.ui.Element')
 
     def __init__(self, size, state=State()):
+        print(f"{self.__class__}: {size} {state}")
         self.size = size
         self.initial_state = state
 
@@ -224,10 +225,12 @@ class Window(Element):
         )
 
         self.initial_state_map = {
-            child.key: child.element.initial_state
-            for child in self.child_slots
+            '_self': self.initial_state,
         }
-        self.initial_state_map['_self'] = self.initial_state
+        for child in self.child_slots:
+            if child.key not in self.initial_state_map:
+                # first write wins!
+                self.initial_state_map[child.key] = child.element.initial_state
 
     def render(self, ctx, state, force=False):
         update = super().render(ctx, state['_self'], force)

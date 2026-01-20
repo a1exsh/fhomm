@@ -101,6 +101,11 @@ class Image(object):
     def render(self, ctx, pos=Pos(0, 0)):
         ctx.blit(self, pos)
 
+    def __getstate__(self):
+        return {
+            'size': self.size,
+        }
+
 
 class Sprite(Image):
 
@@ -137,6 +142,12 @@ class Sprite(Image):
 
     def render(self, ctx, pos=Pos(0, 0)):
         super().render(ctx, Pos(pos.x + self.offset.x, pos.y + self.offset.y))
+
+    def __getstate__(self):
+        return {
+            'size': self.size,
+            'offset': self.offset,
+        }
 
 
 # TODO: with context(): => lock/release surface

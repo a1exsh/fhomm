@@ -17,7 +17,6 @@ class HeroSelectorWindow(ItemSelectorWindow):
         ]
         # toolkit.load_sprite('locators.icn', 21), # extra bg
         super().__init__(
-            'select_hero',
             toolkit,
             title,
             items,

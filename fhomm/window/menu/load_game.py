@@ -8,7 +8,6 @@ class LoadGameMenu(fhomm.ui.Window):
     # standard, campaign, multiplayer
     def __init__(self, loader):
         super().__init__(
-            'load_game',
             loader.load_image('request.bmp'),
             border_width=16,
         )

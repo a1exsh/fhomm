@@ -24,11 +24,9 @@ class ActiveArea(fhomm.ui.Element):
     CMD_RELEASE = fhomm.handler.cmd_update(State.released)
 
     def __init__(self, size, action, hotkey=None):
-        super().__init__(size) #, ActiveArea.State)
+        super().__init__(size, State(is_pressed=False))
         self.action = action
         self.hotkey = hotkey
-
-        self.initial_state = State(is_pressed=False)
 
     def on_key_down(self, key):
         if key == self.hotkey:

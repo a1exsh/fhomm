@@ -7,18 +7,29 @@ import fhomm.ui
 
 Item = namedtuple('Item', ['img', 'text'], module='fhomm.ui.list')
 
+
 class State(
     namedtuple(
         'State',
         [
-            'scroll_idx',
+            'items',
+            'num_items_per_page',
             'selected_idx',
-            'max_scroll_idx',
+            'scroll_idx'
         ],
-        module='fhomm.ui.list'
+        module='fhomm.ui.list',
     )
 ):
     __slots__ = ()
+
+    @property
+    def selected_item(self):
+        if self.selected_idx:
+            return self.items[self.selected_idx]
+
+    @property
+    def max_scroll_idx(self):
+        return max(0, len(self.items) - self.num_items_per_page)
 
     def clamp_scroll_idx(self, idx):
         return max(0, min(idx, self.max_scroll_idx))
@@ -29,12 +40,12 @@ class State(
 
     @property
     def scroll_degree(self):
-        return self.scroll_idx / self.max_scroll_idx
+        return self.scroll_idx / self.max_scroll_idx # FIXME: dividing by 0, huh?
 
     @staticmethod
     def scroll_to(degree):
         return lambda s: s._replace(
-            scroll_idx=s.clamp_scroll_idx(int(degree * max_scroll_idx))
+            scroll_idx=s.clamp_scroll_idx(int(degree * s.max_scroll_idx))
         )
 
     @staticmethod
@@ -56,8 +67,6 @@ class List(fhomm.ui.Element):
             item_vpad=1,
             text_hpad=4,
     ):
-        super().__init__(size)
-
         self.font = font
         self.hl_font = hl_font
 
@@ -65,19 +74,29 @@ class List(fhomm.ui.Element):
         self.item_vpad = item_vpad
         self.text_hpad = text_hpad
 
-        self.items = items
-
-        # self.selected_idx = None
-        # self.scroll_idx = 0
-        self.items_per_page = size.h // (img_size.h + item_vpad)
-
+        num_items_per_page = size.h // (img_size.h + item_vpad)
         self.list_pad = Size(
             3,
-            (size.h - self.items_per_page*(img_size.h + item_vpad)) // 2,
+            (
+                size.h
+                - num_items_per_page * img_size.h
+                - max(0, num_items_per_page - 1) * item_vpad
+            ) // 2,
+        )
+
+        super().__init__(
+            size,
+            fhomm.ui.list.State(
+                items=items,
+                num_items_per_page=num_items_per_page,
+                scroll_idx=0,
+                selected_idx=None,
+            )
         )
 
         self._bg_capture = None
 
+        # TODO: generalize as key hold event
         self.tick = 0
         self.key_hold_ticks = 50
         self.key_hold_delta = None
@@ -88,9 +107,9 @@ class List(fhomm.ui.Element):
         else:
             self._bg_capture.render(ctx)
 
-        for i in range(min(len(self.items), self.items_per_page)):
-            item_idx = state.get('scroll_idx', 0) + i
-            item = self.items[item_idx]
+        for i in range(min(len(state.items), state.num_items_per_page)):
+            item_idx = state.scroll_idx + i
+            item = state.items[item_idx]
 
             img_pos = Pos(
                 self.list_pad.w,
@@ -108,7 +127,7 @@ class List(fhomm.ui.Element):
                     ctx,
                     item.text,
                     text_pos,
-                    item_idx == state.get('selected_idx', None),
+                    item_idx == state.selected_idx,
                 )
 
     def render_item_text(self, ctx, text, text_pos, is_selected):
@@ -136,74 +155,71 @@ class List(fhomm.ui.Element):
     #     if old != self.scroll_idx:
     #         self.dirty()
 
-    def get_max_scroll_idx(self):
-        return max(0, len(self.items) - self.items_per_page)
+    # def scroll_by(self, delta):
+    #     self.set_scroll_idx(
+    #         max(0, min(self.scroll_idx + delta, self.get_max_scroll_idx()))
+    #     )
 
-    def scroll_by(self, delta):
-        self.set_scroll_idx(
-            max(0, min(self.scroll_idx + delta, self.get_max_scroll_idx()))
-        )
+    # def set_selected_idx(self, idx):
+    #     old, self.selected_idx = self.selected_idx, idx
+    #     if old != self.selected_idx:
+    #         self.dirty()
 
-    def set_selected_idx(self, idx):
-        old, self.selected_idx = self.selected_idx, idx
-        if old != self.selected_idx:
-            self.dirty()
+    # def move_selection_by(self, delta):
+    #     self.set_selected_idx(
+    #         max(0, min(self.selected_idx + delta, len(self.items) - 1))
+    #     )
+    #     if self.selected_idx < self.scroll_idx:
+    #         self.set_scroll_idx(self.selected_idx)
 
-    def move_selection_by(self, delta):
-        self.set_selected_idx(
-            max(0, min(self.selected_idx + delta, len(self.items) - 1))
-        )
-        if self.selected_idx < self.scroll_idx:
-            self.set_scroll_idx(self.selected_idx)
+    #     elif self.selected_idx >= self.scroll_idx + self.items_per_page:
+    #         self.set_scroll_idx(self.selected_idx - self.items_per_page + 1)
 
-        elif self.selected_idx >= self.scroll_idx + self.items_per_page:
-            self.set_scroll_idx(self.selected_idx - self.items_per_page + 1)
+    # def on_key_down(self, key):
+    #     if not self.items:      # no selection in an empty list
+    #         return
 
-    def on_key_down(self, key):
-        if not self.items:      # no selection in an empty list
-            return
+    #     delta = None
 
-        delta = None
+    #     if key == pygame.K_UP:
+    #         delta = -1
 
-        if key == pygame.K_UP:
-            delta = -1
+    #     elif key == pygame.K_DOWN:
+    #         delta = 1
 
-        elif key == pygame.K_DOWN:
-            delta = 1
+    #     elif key == pygame.K_PAGEUP:
+    #         delta = -self.items_per_page
 
-        elif key == pygame.K_PAGEUP:
-            delta = -self.items_per_page
+    #     elif key == pygame.K_PAGEDOWN:
+    #         delta = self.items_per_page
 
-        elif key == pygame.K_PAGEDOWN:
-            delta = self.items_per_page
+    #     elif key == pygame.K_HOME:
+    #         self.set_selected_idx(0)
+    #         self.set_scroll_idx(0)
 
-        elif key == pygame.K_HOME:
-            self.set_selected_idx(0)
-            self.set_scroll_idx(0)
+    #     elif key == pygame.K_END:
+    #         self.set_selected_idx(len(self.items) - 1)
+    #         self.set_scroll_idx(self.get_max_scroll_idx())
 
-        elif key == pygame.K_END:
-            self.set_selected_idx(len(self.items) - 1)
-            self.set_scroll_idx(self.get_max_scroll_idx())
+    #     if delta is not None and self.key_hold_delta is None:
+    #         if self.selected_idx is None:
+    #             self.set_selected_idx(0)
+    #         else:
+    #             self.move_selection_by(delta)
 
-        if delta is not None and self.key_hold_delta is None:
-            if self.selected_idx is None:
-                self.set_selected_idx(0)
-            else:
-                self.move_selection_by(delta)
+    #         self.tick = -250    # start repeating after a short delay 
+    #         self.key_hold_delta = delta
 
-            self.tick = -250    # start repeating after a short delay 
-            self.key_hold_delta = delta
+    # def on_key_up(self, key):
+    #     if key in [pygame.K_DOWN, pygame.K_UP, pygame.K_PAGEDOWN, pygame.K_PAGEUP]:
+    #         self.key_hold_delta = None
 
-    def on_key_up(self, key):
-        if key in [pygame.K_DOWN, pygame.K_UP, pygame.K_PAGEDOWN, pygame.K_PAGEUP]:
-            self.key_hold_delta = None
-
-    def on_tick(self, dt):
-        if self.key_hold_delta is not None:
-            self.tick += dt
-            while self.tick >= self.key_hold_ticks:
-                self.move_selection_by(self.key_hold_delta)
-                self.tick -= self.key_hold_ticks
+    # def on_tick(self, dt):
+    #     if self.key_hold_delta is not None:
+    #         self.tick += dt
+    #         while self.tick >= self.key_hold_ticks:
+    #             self.move_selection_by(self.key_hold_delta)
+    #             self.tick -= self.key_hold_ticks
 
     # def on_mouse_down(self, pos, button):
     #     if button == 1:
@@ -223,8 +239,6 @@ class List(fhomm.ui.Element):
     #             )
     #             # self.set_selected_idx(item_idx)
 
+
     def on_mouse_wheel(self, pos, dx, dy):
-        # self.scroll_by(dy)
-        return fhomm.handler.cmd_update(
-            lambda s: dict(s, scroll_idx=(s.get('scroll_idx', 0) + dy))
-        )
+        return fhomm.handler.cmd_update(State.scroll_by(dy))
