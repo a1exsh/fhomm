@@ -16,7 +16,6 @@ class ArmySelectorWindow(ItemSelectorWindow):
             for i, monster in enumerate(fhomm.game.monsters.MONSTERS)
         ]
         super().__init__(
-            'select_army',
             toolkit,
             "Select Army:",
             items,

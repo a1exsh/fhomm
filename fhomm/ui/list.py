@@ -24,7 +24,7 @@ class State(
 
     @property
     def selected_item(self):
-        if self.selected_idx:
+        if self.selected_idx is not None:
             return self.items[self.selected_idx]
 
     @property
@@ -53,6 +53,60 @@ class State(
         return lambda s: s._replace(
             scroll_idx=s.clamp_scroll_idx(s.scroll_idx + rel_idx)
         )
+
+    @staticmethod
+    def select_first(s):
+        if len(s.items) > 0:
+            return s._replace(
+                selected_idx=0,
+                scroll_idx=0,
+            )
+
+        else:
+            return s
+
+    @staticmethod
+    def select_last(s):
+        if len(s.items) > 0:
+            return s._replace(
+                selected_idx=(len(s.items) - 1),
+                scroll_idx=s.max_scroll_idx,
+            )
+
+        else:
+            return s
+
+    @staticmethod
+    def select_prev(s):
+        if len(s.items) > 0:
+            if s.selected_idx is None:
+                prev_idx = 0
+            else:
+                prev_idx = max(0, s.selected_idx - 1)
+
+            return s._replace(
+                selected_idx=prev_idx,
+                scroll_idx=min(s.scroll_idx, prev_idx),
+            )
+
+        else:
+            return s
+
+    @staticmethod
+    def select_next(s):
+        if len(s.items) > 0:
+            if s.selected_idx is None:
+                next_idx = 0
+            else:
+                next_idx = min(s.selected_idx + 1, len(s.items) - 1)
+
+            return s._replace(
+                selected_idx=next_idx,
+                scroll_idx=max(next_idx - s.num_items_per_page + 1, s.scroll_idx),
+            )
+
+        else:
+            return s
 
 
 class List(fhomm.ui.Element):
@@ -210,6 +264,19 @@ class List(fhomm.ui.Element):
     #         self.tick = -250    # start repeating after a short delay 
     #         self.key_hold_delta = delta
 
+    def on_key_down(self, key):
+        if key == pygame.K_HOME:
+            return fhomm.handler.cmd_update(State.select_first)
+
+        elif key == pygame.K_END:
+            return fhomm.handler.cmd_update(State.select_last)
+
+        elif key == pygame.K_UP:
+            return fhomm.handler.cmd_update(State.select_prev)
+
+        elif key == pygame.K_DOWN:
+            return fhomm.handler.cmd_update(State.select_next)
+
     # def on_key_up(self, key):
     #     if key in [pygame.K_DOWN, pygame.K_UP, pygame.K_PAGEDOWN, pygame.K_PAGEUP]:
     #         self.key_hold_delta = None
@@ -238,7 +305,6 @@ class List(fhomm.ui.Element):
     #                 lambda s: dict(s, selected_idx=item_idx)
     #             )
     #             # self.set_selected_idx(item_idx)
-
 
     def on_mouse_wheel(self, pos, dx, dy):
         return fhomm.handler.cmd_update(State.scroll_by(dy))
