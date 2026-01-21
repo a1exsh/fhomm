@@ -29,7 +29,7 @@ class ItemSelectorWindow(fhomm.ui.Window):
             ),
             fhomm.ui.Window.Slot(
                 toolkit.dynamic_label(
-                    Size(225, 17),
+                    Size(225, 16),
                     lambda s: (s.selected_item.text if s.selected_item else None),
                 ),
                 Pos(48, 254),
