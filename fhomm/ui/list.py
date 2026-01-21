@@ -80,6 +80,17 @@ class State(
             return s
 
     @staticmethod
+    def scroll_to_selected(s):
+        if s.selected_idx < s.scroll_idx:
+            return s._replace(scroll_idx=s.selected_idx)
+
+        elif s.selected_idx >= s.scroll_idx + s.num_items_per_page:
+            return s._replace(scroll_idx=(s.selected_idx - s.num_items_per_page + 1))
+
+        else:
+            return s
+
+    @staticmethod
     def select_prev(s):
         if len(s.items) > 0:
             if s.selected_idx is None:
@@ -87,9 +98,8 @@ class State(
             else:
                 prev_idx = max(0, s.selected_idx - 1)
 
-            return s._replace(
-                selected_idx=prev_idx,
-                scroll_idx=min(s.scroll_idx, prev_idx),
+            return State.scroll_to_selected(
+                s._replace(selected_idx=prev_idx)
             )
 
         else:
@@ -103,9 +113,8 @@ class State(
             else:
                 next_idx = min(s.selected_idx + 1, len(s.items) - 1)
 
-            return s._replace(
-                selected_idx=next_idx,
-                scroll_idx=max(next_idx - s.num_items_per_page + 1, s.scroll_idx),
+            return State.scroll_to_selected(
+                s._replace(selected_idx=next_idx)
             )
 
         else:
