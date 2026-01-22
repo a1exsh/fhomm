@@ -31,10 +31,13 @@ class State(
     def max_scroll_idx(self):
         return max(0, len(self.items) - self.num_items_per_page)
 
+    def clamp_item_idx(self, idx):
+        return max(0, min(idx, len(self.items) - 1))
+
     def clamp_scroll_idx(self, idx):
         return max(0, min(idx, self.max_scroll_idx))
 
-    def clamp_page_idx(self, idx):
+    def clamp_on_page_idx(self, idx):
         return max(0, min(idx, self.num_items_per_page - 1))
 
     # @staticmethod
@@ -60,10 +63,7 @@ class State(
     @staticmethod
     def select_first(s):
         if len(s.items) > 0:
-            return s._replace(
-                selected_idx=0,
-                scroll_idx=0,
-            )
+            return s._replace(selected_idx=0, scroll_idx=0)
 
         else:
             return s
@@ -93,13 +93,8 @@ class State(
     @staticmethod
     def select_prev(s):
         if len(s.items) > 0:
-            if s.selected_idx is None:
-                prev_idx = 0
-            else:
-                prev_idx = max(0, s.selected_idx - 1)
-
             return State.scroll_to_selected(
-                s._replace(selected_idx=prev_idx)
+                s._replace(selected_idx=s.clamp_item_idx((s.selected_idx or 0) - 1))
             )
 
         else:
@@ -108,13 +103,39 @@ class State(
     @staticmethod
     def select_next(s):
         if len(s.items) > 0:
-            if s.selected_idx is None:
+            if s.selected_idx is None: # no selection is a special case here
                 next_idx = 0
             else:
-                next_idx = min(s.selected_idx + 1, len(s.items) - 1)
+                next_idx = s.clamp_item_idx(s.selected_idx + 1)
 
+            return State.scroll_to_selected(s._replace(selected_idx=next_idx))
+
+        else:
+            return s
+
+    @staticmethod
+    def select_prev_page(s):
+        if len(s.items) > 0:
             return State.scroll_to_selected(
-                s._replace(selected_idx=next_idx)
+                s._replace(
+                    selected_idx=s.clamp_item_idx(
+                        (s.selected_idx or 0) - s.num_items_per_page
+                    )
+                )
+            )
+
+        else:
+            return s
+
+    @staticmethod
+    def select_next_page(s):
+        if len(s.items) > 0:
+            return State.scroll_to_selected(
+                s._replace(
+                    selected_idx=s.clamp_item_idx(
+                        (s.selected_idx or 0) + s.num_items_per_page
+                    )
+                )
             )
 
         else:
@@ -128,7 +149,7 @@ class State(
                     selected_idx=max(
                         0,
                         min(
-                            s.scroll_idx + s.clamp_page_idx(idx_on_page),
+                            s.scroll_idx + s.clamp_on_page_idx(idx_on_page),
                             len(s.items) - 1
                         )
                     )
@@ -258,6 +279,12 @@ class List(fhomm.ui.Element):
 
         elif key == pygame.K_DOWN:
             return fhomm.handler.cmd_update(State.select_next)
+
+        elif key == pygame.K_PAGEUP:
+            return fhomm.handler.cmd_update(State.select_prev_page)
+
+        elif key == pygame.K_PAGEDOWN:
+            return fhomm.handler.cmd_update(State.select_next_page)
 
     # def on_key_up(self, key):
     #     if key in [pygame.K_DOWN, pygame.K_UP, pygame.K_PAGEDOWN, pygame.K_PAGEUP]:
