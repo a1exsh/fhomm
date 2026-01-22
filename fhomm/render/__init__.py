@@ -15,19 +15,38 @@ TOP = 3
 # CENTER
 BOTTOM = 4
 
-# module=
-Size = namedtuple('Size', ['w', 'h'])
 
-
-class Pos(namedtuple('Pos', ['x', 'y'])):
+class Size(namedtuple('Size', ['w', 'h'], module='fhomm.render')):
     __slots__ = ()
+
+    def __getstate__(self):
+        return self._asdict()
+
+    def __getnewargs__(self):
+        return ()
+
+
+class Pos(namedtuple('Pos', ['x', 'y'], module='fhomm.render')):
+    __slots__ = ()
+
+    def __getstate__(self):
+        return self._asdict()
+
+    def __getnewargs__(self):
+        return ()
 
     def moved_by(self, relpos):
         return Pos(self.x + relpos.x, self.y + relpos.y)
 
 
-class Rect(namedtuple('Rect', ['x', 'y', 'w', 'h'])):
+class Rect(namedtuple('Rect', ['x', 'y', 'w', 'h'], module='fhomm.render')):
     __slots__ = ()
+
+    def __getstate__(self):
+        return self._asdict()
+
+    def __getnewargs__(self):
+        return ()
 
     @classmethod
     def of(cls, size, pos=Pos(0, 0)):

@@ -5,7 +5,15 @@ import pygame
 from fhomm.render import Pos, Size, Rect
 import fhomm.ui
 
-Item = namedtuple('Item', ['img', 'text'], module='fhomm.ui.list')
+
+class Item(namedtuple('Item', ['img', 'text'], module='fhomm.ui.list')):
+    __slots__ = ()
+
+    def __getstate__(self):
+        return self._asdict()
+
+    def __getnewargs__(self):
+        return ()
 
 
 class State(
@@ -21,6 +29,15 @@ class State(
     )
 ):
     __slots__ = ()
+
+    # def __getstate__(self):
+    #     return dict(
+    #         self._asdict(),
+    #         items=[itm.text for itm in self.items],
+    #     )
+
+    def __getnewargs__(self):
+        return ()
 
     @property
     def selected_item(self):
