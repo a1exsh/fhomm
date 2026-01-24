@@ -1,4 +1,5 @@
 import os
+import sys
 import threading
 
 import pygame
@@ -38,4 +39,7 @@ WINDOW_MANAGER = WindowManager(
     TOOLKIT,
     TitleScreen(TOOLKIT)
 )
-threading.Thread(target=WINDOW_MANAGER).start()
+if sys.argv[-1] == '--background':
+    threading.Thread(target=WINDOW_MANAGER).start()
+else:
+    WINDOW_MANAGER.run_event_loop()
