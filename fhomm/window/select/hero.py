@@ -7,7 +7,7 @@ import fhomm.ui.list
 
 
 class HeroSelectorWindow(ItemSelectorWindow):
-    def __init__(self, toolkit, title):
+    def __init__(self, toolkit, title, return_key):
         items = [
             fhomm.ui.list.Item(
                 toolkit.load_sprite('miniport.icn', i),
@@ -21,4 +21,5 @@ class HeroSelectorWindow(ItemSelectorWindow):
             title,
             items,
             items[0].img.size,
+            return_key,
         )

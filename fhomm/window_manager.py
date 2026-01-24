@@ -57,6 +57,9 @@ class WindowManager(object):
         self.show(main_handler, Pos(0, 0), 'main_handler')
 
     def show(self, window, screen_pos, state_key):
+        if state_key in self.state:
+            raise Exception(f"Window for {state_key} is already shown!")
+
         self.state.update({state_key: window.initial_state_map})
         print(yaml.dump(asdict(self.state)))
 
@@ -65,6 +68,7 @@ class WindowManager(object):
             if bg_capture.size.w > window.size.w or \
                bg_capture.size.h > window.size.h:
                 self._cast_shadow(bg_capture, Rect.of(window.size, screen_pos))
+
         else:
             bg_capture = None
 
@@ -75,9 +79,14 @@ class WindowManager(object):
         window.dirty()          # FIXME: redundant?
 
     def close_active_window(self):
-        window = self.window_slots.pop()
-        if window.bg_capture:
-            window.bg_capture.render(self.screen_ctx, window.screen_pos)
+        slot = self.window_slots.pop()
+        if slot.bg_capture:
+            slot.bg_capture.render(self.screen_ctx, slot.screen_pos)
+
+        return_value = slot.window.make_return_value(self.state[slot.state_key])
+        del self.state[slot.state_key]
+
+        return return_value
 
     def _capture_background(self, window, screen_pos):
         if window.size.w < self.screen.get_width() or \
@@ -215,8 +224,14 @@ class WindowManager(object):
     def post_tick_event(self, dt):
         pygame.event.post(pygame.event.Event(fhomm.handler.EVENT_TICK, dt=dt))
 
-    def post_close_event(self):
-        pygame.event.post(pygame.event.Event(fhomm.handler.EVENT_WINDOW_CLOSED))
+    def post_close_event(self, return_key, return_value):
+        pygame.event.post(
+            pygame.event.Event(
+                fhomm.handler.EVENT_WINDOW_CLOSED,
+                return_key=return_key,
+                return_value=return_value,
+            )
+        )
 
     def run_commands(self, one_or_more_cmd):
         if isinstance(one_or_more_cmd, fhomm.handler.Command):
@@ -251,8 +266,11 @@ class WindowManager(object):
             self.show(**command.kwargs)
 
         elif command.code == fhomm.handler.CLOSE:
-            self.close_active_window()
-            self.post_close_event()
+            return_value = self.close_active_window()
+            return_key = command.kwargs['return_key']
+            if return_key:
+                print(f"CLOSE: {return_key}: {return_value}")
+                self.post_close_event(return_key, return_value)
 
         elif command.code == fhomm.handler.UPDATE:
             self.update_state(**command.kwargs)

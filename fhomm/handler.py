@@ -24,12 +24,12 @@ Command = namedtuple('Command', ['code', 'kwargs'], defaults=[{}])
 CMD_QUIT = Command(QUIT)
 CMD_IGNORE = Command(IGNORE)
 CMD_TOGGLE_FULLSCREEN = Command(TOGGLE_FULLSCREEN)
-CMD_CLOSE = Command(CLOSE)
 CMD_TOGGLE_DEBUG_UI_RENDER = Command(TOGGLE_DEBUG_UI_RENDER)
 CMD_TOGGLE_DEBUG_UI_EVENTS = Command(TOGGLE_DEBUG_UI_EVENTS)
 CMD_TOGGLE_FPS = Command(TOGGLE_FPS)
 
 
+# TODO: the opposite of "close" is not "show"...  "open" maybe?
 def cmd_show(window, screen_pos, state_key):
     return Command(
         SHOW,
@@ -39,6 +39,13 @@ def cmd_show(window, screen_pos, state_key):
             'state_key': state_key,
         }
     )
+
+
+def cmd_close(return_key=None):
+    return Command(CLOSE, {'return_key': return_key})
+
+
+CMD_CLOSE = cmd_close()
 
 
 def cmd_update(update_fn):

@@ -106,7 +106,7 @@ class Element(object):
             return self.on_quit()
 
         elif event.type == fhomm.handler.EVENT_WINDOW_CLOSED:
-            return self.on_window_closed()
+            return self.on_window_closed(event.return_key, event.return_value)
 
     def handle_mouse_event(self, event):
         pos = Pos(event.pos[0], event.pos[1])
@@ -179,7 +179,7 @@ class Element(object):
         #return fhomm.handler.CMD_IGNORE
         pass
 
-    def on_window_closed(self):
+    def on_window_closed(self, key, value):
         pass
 
 
@@ -293,3 +293,6 @@ class Window(Element):
 
         else:
             return cmd
+
+    def make_return_value(self, state):
+        pass

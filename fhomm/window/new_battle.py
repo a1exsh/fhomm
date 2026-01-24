@@ -106,7 +106,11 @@ class NewBattleWindow(fhomm.ui.Window):
 
     def cmd_select_attacker(self):
         return fhomm.handler.cmd_show(
-            HeroSelectorWindow(self.toolkit, "Select Attacking Hero:"),
+            HeroSelectorWindow(
+                self.toolkit,
+                "Select Attacking Hero:",
+                'attacker',
+            ),
             Pos(0, 74),
             'select_hero',
         )
@@ -134,3 +138,7 @@ class NewBattleWindow(fhomm.ui.Window):
 
     def cmd_cancel(self):
         return fhomm.handler.CMD_CLOSE
+
+    def on_window_closed(self, key, value):
+        if key == 'attacker':
+            print(f"attacker => {value}")

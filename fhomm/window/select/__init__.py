@@ -7,7 +7,9 @@ import fhomm.ui.list
 
 
 class ItemSelectorWindow(fhomm.ui.Window):
-    def __init__(self, toolkit, title, items, img_size):
+    def __init__(self, toolkit, title, items, img_size, return_key):
+        self.return_key = return_key
+
         font = toolkit.get_font()
         hl_font = toolkit.get_hl_font()
 
@@ -39,7 +41,7 @@ class ItemSelectorWindow(fhomm.ui.Window):
                 toolkit.button(
                     'request.icn',
                     1,
-                    action=self.cmd_cancel, # FIXME, don't cancel here
+                    action=self.cmd_return,
                     hotkey=pygame.K_RETURN,
                 ),
                 Pos(36, 280),
@@ -62,6 +64,12 @@ class ItemSelectorWindow(fhomm.ui.Window):
             children,
             border_width=16,
         )
+
+    def make_return_value(self, state):
+        return state['lst_items'].selected_idx
+
+    def cmd_return(self):
+        return fhomm.handler.cmd_close(self.return_key)
 
     def cmd_cancel(self):
         return fhomm.handler.CMD_CLOSE
