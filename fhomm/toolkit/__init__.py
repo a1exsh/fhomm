@@ -75,7 +75,7 @@ class Toolkit(object):
         bmp = self.loader.load_bmp(bmp_name)
         return fhomm.render.Image.from_bmp(bmp, self.palette)
 
-    def load_sprite(self, icn_name, idx):
+    def load_sprite(self, icn_name, idx=0):
         return fhomm.render.Sprite.from_icn_sprite(
             self.loader.load_icn(icn_name)[idx],
             self.palette,
@@ -113,7 +113,7 @@ class Toolkit(object):
     def dynamic_label(self, size, text_fn):
         return fhomm.ui.label.DynamicLabel(size, self.get_font(), text_fn)
 
-    def icon(self, icn_name, idx, **kwargs):
+    def icon(self, icn_name, idx=0, **kwargs):
         return fhomm.ui.button.ActiveIcon(
             self.load_sprite(icn_name, idx),
             **kwargs,

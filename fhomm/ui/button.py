@@ -62,6 +62,10 @@ class ActiveIcon(ActiveArea):
         self.img.render(ctx)
 
 
+    def set_image(self, img):
+        self.img = img
+
+
 class Button(ActiveIcon):
     def __init__(self, img, img_pressed, **kwargs):
         super().__init__(img, **kwargs)

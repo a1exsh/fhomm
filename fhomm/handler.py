@@ -41,6 +41,7 @@ def cmd_show(window, screen_pos, state_key):
     )
 
 
+# TODO: name it cmd_return and make the key external (in the window slot)
 def cmd_close(return_key=None):
     return Command(CLOSE, {'return_key': return_key})
 

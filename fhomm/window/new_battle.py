@@ -1,5 +1,8 @@
+from collections import namedtuple
+
 import pygame
 
+from fhomm.game.heroes import HEROES
 from fhomm.render import Pos, Size, Rect
 from fhomm.window.select.army import ArmySelectorWindow
 from fhomm.window.select.artifact import ArtifactSelectorWindow
@@ -39,32 +42,54 @@ class SmallArmyIcon(fhomm.ui.button.ActiveArea):
             )
 
 
+class State(
+    namedtuple(
+        'State',
+        [
+            'attacker',
+            'defender',
+        ],
+        module='fhomm.window.new_battle',
+    )
+):
+    __slots__ = ()
+
+    @staticmethod
+    def set_attacker(attacker):
+        return lambda s: s._replace(attacker=attacker)
+
+    @staticmethod
+    def set_defender(defender):
+        return lambda s: s._replace(defender=defender)
+
+
 class NewBattleWindow(fhomm.ui.Window):
     def __init__(self, toolkit):
         self.toolkit = toolkit
 
+        self.icn_attacker = self.toolkit.icon(
+            'port0000.icn',
+            action=self.cmd_select_attacker,
+            hotkey=pygame.K_a,
+        )
+        self.icn_defender = self.toolkit.icon(
+            'port0035.icn',
+            action=self.cmd_select_defender,
+            hotkey=pygame.K_d,
+        )
+
         children = [
             fhomm.ui.Window.Slot(
-                self.toolkit.icon(
-                    'port0000.icn',
-                    0,
-                    action=self.cmd_select_attacker,
-                    hotkey=pygame.K_a,
+                toolkit.dynamic_label(
+                    Size(337, 22),
+                    NewBattleWindow.versus_label_text,
                 ),
-                Pos(28, 44),
-                'icn_attacker',
+                Pos(56, 9),
+                '_self',
             ),
 
-            fhomm.ui.Window.Slot(
-                self.toolkit.icon(
-                    'port0035.icn',
-                    0,
-                    action=self.cmd_select_defender,
-                    hotkey=pygame.K_d,
-                ),
-                Pos(319, 44),
-                'icn_defender',
-            ),
+            fhomm.ui.Window.Slot(self.icn_attacker, Pos(28, 44), 'icn_attacker'),
+            fhomm.ui.Window.Slot(self.icn_defender, Pos(319, 44), 'icn_defender'),
 
             # army selectors
             fhomm.ui.Window.Slot(
@@ -102,7 +127,15 @@ class NewBattleWindow(fhomm.ui.Window):
             toolkit.load_image('swapwin.bmp'),
             children,
             border_width=4,
+            state=State(
+                attacker=0,
+                defender=35,
+            ),
         )
+
+    @staticmethod
+    def versus_label_text(state):
+        return f"{HEROES[state.attacker].name} vs. {HEROES[state.defender].name}"
 
     def cmd_select_attacker(self):
         return fhomm.handler.cmd_show(
@@ -117,7 +150,11 @@ class NewBattleWindow(fhomm.ui.Window):
 
     def cmd_select_defender(self):
         return fhomm.handler.cmd_show(
-            HeroSelectorWindow(self.toolkit, "Select Defending Hero:"),
+            HeroSelectorWindow(
+                self.toolkit,
+                "Select Defending Hero:",
+                'defender',
+            ),
             Pos(320, 74),
             'select_hero',
         )
@@ -139,6 +176,16 @@ class NewBattleWindow(fhomm.ui.Window):
     def cmd_cancel(self):
         return fhomm.handler.CMD_CLOSE
 
+    # TODO: rename to on_return
     def on_window_closed(self, key, value):
         if key == 'attacker':
-            print(f"attacker => {value}")
+            self.icn_attacker.set_image(
+                self.toolkit.load_sprite("port%04d.icn" % value)
+            )
+            return fhomm.handler.cmd_update(State.set_attacker(value))
+
+        elif key == 'defender':
+            self.icn_defender.set_image(
+                self.toolkit.load_sprite("port%04d.icn" % value)
+            )
+            return fhomm.handler.cmd_update(State.set_defender(value))

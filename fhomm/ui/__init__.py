@@ -209,8 +209,14 @@ class Window(Element):
         def rect(self):
             return Rect.of(self.element.size, self.relpos)
 
-    def __init__(self, bg_image, child_slots=[], border_width=0):
-        super().__init__(bg_image.size)
+    def __init__(
+            self,
+            bg_image,
+            child_slots=[],
+            border_width=0,
+            state=Element.State()
+    ):
+        super().__init__(bg_image.size, state)
 
         self.bg_image = bg_image
         self.child_slots = child_slots
