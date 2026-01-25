@@ -273,17 +273,6 @@ class List(fhomm.ui.Element):
             valign=fhomm.render.CENTER,
         )
 
-    # def on_key_down(self, key):
-
-    #     if delta is not None and self.key_hold_delta is None:
-    #         if self.selected_idx is None:
-    #             self.set_selected_idx(0)
-    #         else:
-    #             self.move_selection_by(delta)
-
-    #         self.tick = -250    # start repeating after a short delay 
-    #         self.key_hold_delta = delta
-
     def on_key_down(self, key):
         if key == pygame.K_HOME:
             return fhomm.handler.cmd_update(State.select_first)
@@ -303,16 +292,8 @@ class List(fhomm.ui.Element):
         elif key == pygame.K_PAGEDOWN:
             return fhomm.handler.cmd_update(State.select_next_page)
 
-    # def on_key_up(self, key):
-    #     if key in [pygame.K_DOWN, pygame.K_UP, pygame.K_PAGEDOWN, pygame.K_PAGEUP]:
-    #         self.key_hold_delta = None
-
-    # def on_tick(self, dt):
-    #     if self.key_hold_delta is not None:
-    #         self.tick += dt
-    #         while self.tick >= self.key_hold_ticks:
-    #             self.move_selection_by(self.key_hold_delta)
-    #             self.tick -= self.key_hold_ticks
+    def on_key_hold(self, key):
+        return self.on_key_down(key)
 
     def on_mouse_down(self, pos, button):
         if button == 1:
