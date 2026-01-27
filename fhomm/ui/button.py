@@ -23,9 +23,10 @@ class ActiveArea(fhomm.ui.Element):
     CMD_PRESS = fhomm.handler.cmd_update(State.pressed)
     CMD_RELEASE = fhomm.handler.cmd_update(State.released)
 
-    def __init__(self, size, action, hotkey=None):
+    def __init__(self, size, action, act_on_hold=False, hotkey=None):
         super().__init__(size, State(is_pressed=False))
         self.action = action
+        self.act_on_hold = act_on_hold
         self.hotkey = hotkey
 
     def on_key_down(self, key):
@@ -40,6 +41,10 @@ class ActiveArea(fhomm.ui.Element):
     def on_mouse_down(self, pos, button):
         if button == 1:         # TODO: are there consts for this?
             return self.CMD_PRESS
+
+    def on_mouse_hold(self, button):
+        if button == 1 and self.act_on_hold:
+            return self.action()
 
     def on_mouse_up(self, pos, button):
         if button == 1: # and state['is_pressed']:
@@ -60,7 +65,6 @@ class ActiveIcon(ActiveArea):
 
     def on_render(self, ctx, _):
         self.img.render(ctx)
-
 
     def set_image(self, img):
         self.img = img

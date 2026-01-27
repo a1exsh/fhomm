@@ -163,7 +163,7 @@ class Element(object):
 
             else:
                 if self.hold_event is not None and \
-                   self.hold_event.type == pygame.MOUSEBUTTONUP and \
+                   self.hold_event.type == pygame.MOUSEBUTTONDOWN and \
                    self.hold_event.button == event.button:
                     self.clear_input_hold()
 
@@ -345,7 +345,7 @@ class Window(Element):
     @staticmethod
     def cmd_with_key(key, cmd):
         print(f"cmd_with_key: {key} {cmd}")
-        if cmd.code == fhomm.handler.UPDATE:
+        if cmd.code == fhomm.handler.UPDATE and 'key' not in cmd.kwargs:
             return fhomm.handler.Command(
                 fhomm.handler.UPDATE,
                 dict(cmd.kwargs, key=key),

@@ -18,7 +18,6 @@ TOGGLE_DEBUG_UI_EVENTS = 5
 TOGGLE_FPS = 6
 UPDATE = 7
 
-
 Command = namedtuple('Command', ['code', 'kwargs'], defaults=[{}])
 
 CMD_QUIT = Command(QUIT)
@@ -51,3 +50,7 @@ CMD_CLOSE = cmd_close()
 
 def cmd_update(update_fn):
     return Command(UPDATE, {'update_fn': update_fn})
+
+
+def cmd_update_other(key, update_fn):
+    return Command(UPDATE, {'key': key, 'update_fn': update_fn})

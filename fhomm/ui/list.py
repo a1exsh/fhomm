@@ -163,12 +163,8 @@ class State(
         def select(s):
             if len(s.items) > 0:
                 return s._replace(
-                    selected_idx=max(
-                        0,
-                        min(
-                            s.scroll_idx + s.clamp_on_page_idx(idx_on_page),
-                            len(s.items) - 1
-                        )
+                    selected_idx=s.clamp_item_idx(
+                        s.scroll_idx + s.clamp_on_page_idx(idx_on_page)
                     )
                 )
 
