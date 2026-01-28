@@ -137,9 +137,11 @@ class Element(object):
 
                 if self.is_hovered:
                     return self.on_mouse_enter()
+
                 else:
-                    if not self.mouse_grab:
-                        self.stop_mouse_hold()
+                    if self.is_mouse_held() and not self.mouse_grab:
+                        self.stop_hold()
+
                     return self.on_mouse_leave()
 
             relpos = Pos(event.rel[0], event.rel[1])
@@ -164,8 +166,8 @@ class Element(object):
             elif event.button == 5:
                 return self.on_mouse_wheel(pos, 0, 1)
 
-            else:
-                self.stop_mouse_hold(event.button)
+            elif self.is_mouse_held(event.button):
+                self.stop_hold()
 
                 return self.on_mouse_up(pos, event.button)
 
@@ -181,11 +183,10 @@ class Element(object):
         self.hold_event = None
         self.hold_ticks = 0
 
-    def stop_mouse_hold(self, button=None):
-        if self.hold_event is not None and \
-           self.hold_event.type == pygame.MOUSEBUTTONDOWN and \
-           (button is None or self.hold_event.button == button):
-            self.stop_hold()
+    def is_mouse_held(self, button=None):
+        return self.hold_event is not None and \
+            self.hold_event.type == pygame.MOUSEBUTTONDOWN and \
+            (button is None or self.hold_event.button == button)
 
     def on_hold(self, dt):
         commands = []
@@ -281,7 +282,9 @@ class Window(Element):
             border_width=0,
             state=Element.State()
     ):
-        super().__init__(bg_image.size, state)
+        # a window must grab the mouse, otherwise it can lead to elements
+        # getting input after mouse leaves and returns to the window area:
+        super().__init__(bg_image.size, state, mouse_grab=True)
 
         self.bg_image = bg_image
         self.child_slots = child_slots
@@ -320,40 +323,61 @@ class Window(Element):
         self.bg_image.render(ctx)
         
     def handle(self, event):
-        # TODO: input focus?
-        cmd = self.on_event(event)
-        if cmd:
-            return [self.cmd_with_key('_self', c) for c in asseq(cmd)]
+        # if mouse is held, only the active element must be able to handle
+        is_mouse_held = self.is_mouse_held() or \
+            any(child.element.is_mouse_held() for child in self.child_slots)
 
         commands = []
 
         for child in self.child_slots:
-            cmd = self.handle_by_child(child, event)
-            commands.extend(self.cmd_with_key(child.key, c) for c in asseq(cmd))
+            cmd = self.handle_by_child(is_mouse_held, child, event)
+            commands.extend(
+                self.cmd_with_key(child.key, c)
+                for c in asseq(cmd)
+            )
+
+        # TODO: are there situations where the window would want to handle
+        # events before any child?
+        #
+        # TODO: input focus?
+        cmd = self.on_event(event)
+        commands.extend(
+            self.cmd_with_key('_self', c)
+            for c in asseq(cmd)
+        )
 
         return commands
 
-    def handle_by_child(self, child, event):
+    def handle_by_child(self, is_mouse_held, child, event):
         if Element.is_mouse_event(event):
+            return self.handle_mouse_by_child(is_mouse_held, child, event)
+
+        else:
+            return child.element.handle(event)
+
+    def handle_mouse_by_child(self, is_mouse_held, child, event):
+        if is_mouse_held:
+            should_handle = child.element.is_mouse_held()
+
+        else:
             cur_pos = Pos(event.pos[0], event.pos[1])
+
             if event.type == pygame.MOUSEMOTION:
                 old_pos = Pos(
                     event.pos[0] - event.rel[0],
                     event.pos[1] - event.rel[1],
                 )
+
             else:
                 old_pos = None
 
-            if child.rect.contains(cur_pos) or \
-               (old_pos is not None and child.rect.contains(old_pos)) or \
-               (child.element.hold_event is not None and
-                child.element.hold_event.type == pygame.MOUSEBUTTONDOWN):
-                return child.element.handle(
-                    Element.translate_mouse_event(event, child.relpos)
-                )
+            should_handle = child.rect.contains(cur_pos) or \
+                (old_pos is not None and child.rect.contains(old_pos))
 
-        else:
-            return child.element.handle(event)
+        if should_handle:
+            return child.element.handle(
+                Element.translate_mouse_event(event, child.relpos)
+            )
 
     @staticmethod
     def cmd_with_key(key, cmd):
