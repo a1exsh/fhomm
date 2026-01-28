@@ -114,6 +114,12 @@ class Image(object):
     def make_copy(self):
         return Image(self._surface.copy())
 
+    # def __enter__(self):
+    #     return self.get_context()
+
+    # def __exit__(self, *args, **kwargs):
+    #     pass
+
     def get_context(self):
         return Context(self._surface)
 
@@ -165,10 +171,16 @@ class Sprite(Image):
         super().render(ctx, Pos(pos.x + self.offset.x, pos.y + self.offset.y))
 
 
-# TODO: with context(): => lock/release surface
 class Context(object):
     def __init__(self, surface):
         self._surface = surface
+
+    # TODO: lock/release surface
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args, **kwargs):
+        pass
 
     def make_image(self, size):
         surface = pygame.Surface(size, depth=8)

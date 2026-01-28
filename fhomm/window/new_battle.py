@@ -48,6 +48,8 @@ class State(
         [
             'attacker',
             'defender',
+            'aarmy1',
+            'aart1',
         ],
         module='fhomm.window.new_battle',
     )
@@ -130,6 +132,8 @@ class NewBattleWindow(fhomm.ui.Window):
             state=State(
                 attacker=0,
                 defender=35,
+                aarmy1=23,
+                aart1=1,
             ),
         )
 
@@ -161,14 +165,14 @@ class NewBattleWindow(fhomm.ui.Window):
 
     def cmd_select_army(self):
         return fhomm.handler.cmd_show(
-            ArmySelectorWindow(self.toolkit),
+            ArmySelectorWindow(self.toolkit, 'aarmy1'),
             Pos(0, 74),
             'select_army',
         )
 
     def cmd_select_artifact(self):
         return fhomm.handler.cmd_show(
-            ArtifactSelectorWindow(self.toolkit),
+            ArtifactSelectorWindow(self.toolkit, 'aart1'),
             Pos(0, 74),
             'select_artifact',
         )
