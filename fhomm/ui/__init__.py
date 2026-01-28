@@ -18,11 +18,11 @@ class Element(object):
     State = namedtuple('State', [], module='fhomm.ui.Element')
 
     def __init__(self, size, state=State()):
-        print(f"{self.__class__}: {size} {state}")
+        # print(f"{self.__class__}: {size} {state}")
         self.size = size
         self.initial_state = state
 
-        self.hovered = False    # TODO: should be part of the state
+        self.is_hovered = False    # TODO: should be part of the state
         self.hold_event = None
 
         self._dirty = False
@@ -42,7 +42,7 @@ class Element(object):
         if force:
             self.on_render(ctx, state)
 
-            if DEBUG_RENDER and self.hovered:
+            if DEBUG_RENDER and self.is_hovered:
                 ctx.draw_rect(228, self.rect, 1)
 
             return True         # rendered, tell to update the screen
@@ -97,7 +97,7 @@ class Element(object):
 
         if event.type == fhomm.handler.EVENT_TICK:
             if self.hold_event is not None:
-                cmds = asseq(self.on_input_hold(event.dt))
+                cmds = asseq(self.on_hold(event.dt))
             else:
                 cmds = []
             return cmds + asseq(self.on_tick(event.dt))
@@ -107,7 +107,7 @@ class Element(object):
 
         elif event.type == pygame.KEYDOWN:
             if self.hold_event is None:
-                self.start_input_hold(event)
+                self.start_hold(event)
 
             return self.on_key_down(event.key)
 
@@ -115,7 +115,7 @@ class Element(object):
             if self.hold_event is not None and \
                self.hold_event.type == pygame.KEYDOWN and \
                self.hold_event.key == event.key:
-                self.clear_input_hold()
+                self.stop_hold()
 
             return self.on_key_up(event.key)
 
@@ -129,14 +129,15 @@ class Element(object):
         pos = Pos(event.pos[0], event.pos[1])
 
         if event.type == pygame.MOUSEMOTION:
-            old, self.hovered = self.hovered, self.rect.contains(pos)
-            if old != self.hovered:
+            old, self.is_hovered = self.is_hovered, self.rect.contains(pos)
+            if old != self.is_hovered:
                 if DEBUG_RENDER:
                     self.dirty()
 
-                if self.hovered:
+                if self.is_hovered:
                     return self.on_mouse_enter()
                 else:
+                    self.stop_mouse_hold()
                     return self.on_mouse_leave()
 
             relpos = Pos(event.rel[0], event.rel[1])
@@ -149,7 +150,7 @@ class Element(object):
 
             else:
                 if self.hold_event is None:
-                    self.start_input_hold(event)
+                    self.start_hold(event)
 
                 return self.on_mouse_down(pos, event.button)
 
@@ -162,10 +163,7 @@ class Element(object):
                 return self.on_mouse_wheel(pos, 0, 1)
 
             else:
-                if self.hold_event is not None and \
-                   self.hold_event.type == pygame.MOUSEBUTTONDOWN and \
-                   self.hold_event.button == event.button:
-                    self.clear_input_hold()
+                self.stop_mouse_hold(event.button)
 
                 return self.on_mouse_up(pos, event.button)
 
@@ -173,26 +171,37 @@ class Element(object):
             # print(f"mousewheel: {event}")
             return self.on_mouse_wheel(mouse_pos, event.x, event.y)
 
-    def start_input_hold(self, event):
+    def start_hold(self, event):
         self.hold_event = event
-        self.input_hold_ticks = -HOLD_TICKS_REPEAT_DELAY
+        self.hold_ticks = -HOLD_TICKS_REPEAT_DELAY
 
-    def clear_input_hold(self):
+    def stop_hold(self):
         self.hold_event = None
-        self.input_hold_ticks = 0
+        self.hold_ticks = 0
 
-    def on_input_hold(self, dt):
+    def stop_mouse_hold(self, button=None):
+        if self.hold_event is not None and \
+           self.hold_event.type == pygame.MOUSEBUTTONDOWN and \
+           (button is None or self.hold_event.button == button):
+            self.stop_hold()
+
+    def on_hold(self, dt):
         commands = []
 
-        self.input_hold_ticks += dt
-        while self.input_hold_ticks >= HOLD_TICKS_REPEAT_EVERY:
+        self.hold_ticks += dt
+        while self.hold_ticks >= HOLD_TICKS_REPEAT_EVERY:
+            self.hold_ticks -= HOLD_TICKS_REPEAT_EVERY
+
             if self.hold_event.type == pygame.KEYDOWN:
                 cmds = self.on_key_hold(self.hold_event.key)
-            else:
-                cmds = self.on_mouse_hold(self.hold_event.button)
-            commands.extend(asseq(cmds))
 
-            self.input_hold_ticks -= HOLD_TICKS_REPEAT_EVERY
+            elif self.hold_event.type == pygame.MOUSEBUTTONDOWN:
+                cmds = self.on_mouse_hold(self.hold_event.button)
+
+            else:
+                cmds = None
+
+            commands.extend(asseq(cmds))
 
         return commands
 
@@ -344,7 +353,7 @@ class Window(Element):
 
     @staticmethod
     def cmd_with_key(key, cmd):
-        print(f"cmd_with_key: {key} {cmd}")
+        # print(f"cmd_with_key: {key} {cmd}")
         if cmd.code == fhomm.handler.UPDATE and 'key' not in cmd.kwargs:
             return fhomm.handler.Command(
                 fhomm.handler.UPDATE,

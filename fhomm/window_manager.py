@@ -61,7 +61,7 @@ class WindowManager(object):
             raise Exception(f"Window for {state_key} is already shown!")
 
         self.state.update({state_key: window.initial_state_map})
-        print(yaml.dump(asdict(self.state)))
+        # print(yaml.dump(asdict(self.state)))
 
         if self.window_slots:
             bg_capture = self._capture_background(window, screen_pos)
@@ -269,7 +269,7 @@ class WindowManager(object):
             return_value = self.close_active_window()
             return_key = command.kwargs['return_key']
             if return_key:
-                print(f"CLOSE: {return_key}: {return_value}")
+                # print(f"CLOSE: {return_key}: {return_value}")
                 self.post_close_event(return_key, return_value)
 
         elif command.code == fhomm.handler.UPDATE:
@@ -279,6 +279,6 @@ class WindowManager(object):
             print(f"unknown command: {command}")
 
     def update_state(self, key, update_fn):
-        print(f"update_state: {key} {update_fn}")
+        # print(f"update_state: {key} {update_fn}")
         active_state = self.state[self.active_slot().state_key]
         active_state.update({key: update_fn(active_state[key])})

@@ -39,23 +39,29 @@ class ActiveArea(fhomm.ui.Element):
             return self.CMD_RELEASE, self.action()
 
     def on_mouse_down(self, pos, button):
-        if button == 1:         # TODO: are there consts for this?
-            return self.CMD_PRESS
+        if button == 1:         # TODO: are there consts for mouse buttons: L/M/R?
+            if self.act_on_hold:
+                return self.CMD_PRESS, self.action()
+            else:
+                return self.CMD_PRESS
 
     def on_mouse_hold(self, button):
-        if button == 1 and self.act_on_hold:
-            return self.action()
+        # TODO: what about hotkey hold?
+        if button == 1:
+            if self.act_on_hold:
+                return self.action()
 
     def on_mouse_up(self, pos, button):
-        if button == 1: # and state['is_pressed']:
-            return self.CMD_RELEASE, self.action()
+        # FIXME: we don't have access to state here, but shouldn't trigger action if it wasn't pressed...
+        if button == 1:
+            if self.act_on_hold:
+                return self.CMD_RELEASE
+            else:
+                return self.CMD_RELEASE, self.action()
 
     def on_mouse_leave(self):
         # FIXME: hold the hotkey, enter mouse, then leave => released
         return self.CMD_RELEASE
-
-    # def on_window_closed(self):
-    #     return self.CMD_RELEASE
 
 
 class ActiveIcon(ActiveArea):
@@ -76,6 +82,5 @@ class Button(ActiveIcon):
         self.img_pressed = img_pressed
 
     def on_render(self, ctx, state):
-        # print("on_render")
         img = self.img_pressed if state.is_pressed else self.img
         img.render(ctx)
