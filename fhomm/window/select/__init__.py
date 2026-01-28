@@ -13,7 +13,7 @@ class ItemSelectorWindow(fhomm.ui.Window):
         font = toolkit.get_font()
         hl_font = toolkit.get_hl_font()
 
-        item_list = toolkit.list(Size(206, 198), items, img_size)
+        item_list = toolkit.list(Size(208, 200), items, img_size)
 
         # add scroll up/down buttons that react to mouse hold
         children = [
@@ -22,7 +22,7 @@ class ItemSelectorWindow(fhomm.ui.Window):
                 Pos(50, 16),
                 'lbl_title',
             ),
-            fhomm.ui.Window.Slot(item_list, Pos(56, 43), 'lst_items'),
+            fhomm.ui.Window.Slot(item_list, Pos(56, 41), 'lst_items'),
             fhomm.ui.Window.Slot(
                 toolkit.button(
                     'scroll.icn',

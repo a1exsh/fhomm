@@ -183,23 +183,26 @@ class List(fhomm.ui.Element):
             hl_font,
             items,
             img_size,
-            item_vpad=1,
             text_hpad=4,
     ):
         self.font = font
         self.hl_font = hl_font
 
         self.img_size = img_size
-        self.item_vpad = item_vpad
         self.text_hpad = text_hpad
 
-        num_items_per_page = size.h // (img_size.h + item_vpad)
+        num_items_per_page = size.h // img_size.h
+        if num_items_per_page > 0:
+            self.item_vpad = (size.h % img_size.h) // num_items_per_page
+        else:
+            self.item_vpad = 0
+
         self.list_pad = Size(
-            3,
+            0,
             (
                 size.h
                 - num_items_per_page * img_size.h
-                - max(0, num_items_per_page - 1) * item_vpad
+                - max(0, num_items_per_page - 1) * self.item_vpad
             ) // 2,
         )
 
