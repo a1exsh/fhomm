@@ -17,10 +17,11 @@ class Element(object):
 
     State = namedtuple('State', [], module='fhomm.ui.Element')
 
-    def __init__(self, size, state=State()):
+    def __init__(self, size, state=State(), mouse_grab=False):
         # print(f"{self.__class__}: {size} {state}")
         self.size = size
         self.initial_state = state
+        self.mouse_grab = mouse_grab
 
         self.is_hovered = False    # TODO: should be part of the state
         self.hold_event = None
@@ -137,7 +138,8 @@ class Element(object):
                 if self.is_hovered:
                     return self.on_mouse_enter()
                 else:
-                    self.stop_mouse_hold()
+                    if not self.mouse_grab:
+                        self.stop_mouse_hold()
                     return self.on_mouse_leave()
 
             relpos = Pos(event.rel[0], event.rel[1])
@@ -343,7 +345,9 @@ class Window(Element):
                 old_pos = None
 
             if child.rect.contains(cur_pos) or \
-               (old_pos is not None and child.rect.contains(old_pos)):
+               (old_pos is not None and child.rect.contains(old_pos)) or \
+               (child.element.hold_event is not None and
+                child.element.hold_event.type == pygame.MOUSEBUTTONDOWN):
                 return child.element.handle(
                     Element.translate_mouse_event(event, child.relpos)
                 )
