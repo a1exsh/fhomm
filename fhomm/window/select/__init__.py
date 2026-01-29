@@ -34,8 +34,8 @@ class ItemSelectorWindow(fhomm.ui.Window):
                 'btn_scroll_up',
             ),
             fhomm.ui.Window.Slot(
-                toolkit.scrollbar(Size(8, 173)),
-                Pos(283, 56),
+                toolkit.scrollbar(Size(14, 179)),
+                Pos(280, 53),
                 'lst_items',
             ),
             fhomm.ui.Window.Slot(

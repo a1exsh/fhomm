@@ -12,10 +12,10 @@ class ScrollBar(fhomm.ui.Element):
         super().__init__(size, mouse_grab=True)
 
         self.img_thumb = img_thumb
-        self.vrange = self.size.h - self.img_thumb.size.h
+        self.vrange = self.size.h - self.img_thumb.size.h - 6
 
     def on_render(self, ctx, state):
-        self.img_thumb.render(ctx, Pos(0, int(state.scroll_degree * self.vrange)))
+        self.img_thumb.render(ctx, Pos(3, 3 + int(state.scroll_degree * self.vrange)))
 
     def on_mouse_wheel(self, pos, dx, dy):
         return fhomm.handler.cmd_update(fhomm.ui.list.State.scroll_by(dy))
