@@ -54,3 +54,15 @@ def cmd_update(update_fn):
 
 def cmd_update_other(key, update_fn):
     return Command(UPDATE, {'key': key, 'update_fn': update_fn})
+
+
+def asseq(cmd):
+    if cmd is None:
+        return []
+
+    elif isinstance(cmd, Command):
+        return [cmd]
+
+    else:
+        # we could check for list or tuple here, but Command is a tuple as well...
+        return [c for c in cmd if c] # filter out Nones, but why?

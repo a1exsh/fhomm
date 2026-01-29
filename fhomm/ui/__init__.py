@@ -94,14 +94,15 @@ class Element(object):
 
     # on_event is low level, better define one of the more specific on_XXX
     def on_event(self, event):
-        #print(f"{self}.on_event: {event}")
+        # if event.type != fhomm.handler.EVENT_TICK:
+        #     print(f"{self}.on_event: {event}")
 
         if event.type == fhomm.handler.EVENT_TICK:
             if self.hold_event is not None:
-                cmds = asseq(self.on_hold(event.dt))
+                cmds = fhomm.handler.asseq(self.on_hold(event.dt))
             else:
                 cmds = []
-            return cmds + asseq(self.on_tick(event.dt))
+            return cmds + fhomm.handler.asseq(self.on_tick(event.dt))
 
         elif Element.is_mouse_event(event):
             return self.handle_mouse_event(event)
@@ -113,9 +114,7 @@ class Element(object):
             return self.on_key_down(event.key)
 
         elif event.type == pygame.KEYUP:
-            if self.hold_event is not None and \
-               self.hold_event.type == pygame.KEYDOWN and \
-               self.hold_event.key == event.key:
+            if self.is_key_held(event.key):
                 self.stop_hold()
 
             return self.on_key_up(event.key)
@@ -176,12 +175,19 @@ class Element(object):
             return self.on_mouse_wheel(mouse_pos, event.x, event.y)
 
     def start_hold(self, event):
+        # print(f"start_hold: {event}")
         self.hold_event = event
         self.hold_ticks = -HOLD_TICKS_REPEAT_DELAY
 
     def stop_hold(self):
+        # print(f"stop_hold: {self.hold_event}")
         self.hold_event = None
         self.hold_ticks = 0
+
+    def is_key_held(self, key=None):
+        return self.hold_event is not None and \
+            self.hold_event.type == pygame.KEYDOWN and \
+            (key is None or self.hold_event.key == key)
 
     def is_mouse_held(self, button=None):
         return self.hold_event is not None and \
@@ -204,7 +210,7 @@ class Element(object):
             else:
                 cmds = None
 
-            commands.extend(asseq(cmds))
+            commands.extend(fhomm.handler.asseq(cmds))
 
         return commands
 
@@ -247,18 +253,6 @@ class Element(object):
 
     def on_window_closed(self, key, value):
         pass
-
-
-def asseq(cmd):
-    # print(f"asseq: {cmd}")
-    if cmd is None:
-        return []
-
-    elif isinstance(cmd, fhomm.handler.Command):
-        return [cmd]
-
-    else:
-        return [c for c in cmd if c] # filter out Nones
 
 
 class Window(Element):
@@ -333,7 +327,7 @@ class Window(Element):
             cmd = self.handle_by_child(is_mouse_held, child, event)
             commands.extend(
                 self.cmd_with_key(child.key, c)
-                for c in asseq(cmd)
+                for c in fhomm.handler.asseq(cmd)
             )
 
         # TODO: are there situations where the window would want to handle
@@ -343,7 +337,7 @@ class Window(Element):
         cmd = self.on_event(event)
         commands.extend(
             self.cmd_with_key('_self', c)
-            for c in asseq(cmd)
+            for c in fhomm.handler.asseq(cmd)
         )
 
         return commands

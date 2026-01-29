@@ -5,20 +5,10 @@ import yaml
 
 import pygame
 
+from fhomm import asdict
 from fhomm.render import Pos, Size, Rect
 import fhomm.handler
 import fhomm.ui
-
-
-# def defaultdefaultdict():
-#     return defaultdict(defaultdefaultdict)
-
-
-def asdict(m):
-    return {
-        k: asdict(v) if isinstance(v, dict) else v._asdict()
-        for k, v in m.items()
-    }
 
 
 class WindowManager(object):
@@ -161,8 +151,8 @@ class WindowManager(object):
         )
 
     def handle_event(self, event):
-        return self.handle_global(event) or \
-            self.handle_by_active_window(event)
+        return fhomm.handler.asseq(self.handle_global(event)) + \
+            fhomm.handler.asseq(self.handle_by_active_window(event))
 
     # def on_event(self, event):
     #     if event.type == pygame.QUIT:
@@ -187,9 +177,9 @@ class WindowManager(object):
     def event_loop_step(self):
         with self.logging_just_once():
             for event in pygame.event.get():
-                one_or_more_cmd = self.handle_event(event)
-                if one_or_more_cmd:
-                    self.run_commands(one_or_more_cmd)
+                cmds = self.handle_event(event)
+                for cmd in cmds:
+                    self.run_command(cmd)
 
             if self.render_active_window():
                 pygame.display.flip()
@@ -233,15 +223,9 @@ class WindowManager(object):
             )
         )
 
-    def run_commands(self, one_or_more_cmd):
-        if isinstance(one_or_more_cmd, fhomm.handler.Command):
-            self.run_command(one_or_more_cmd)
-
-        else:
-            for cmd in one_or_more_cmd:
-                self.run_command(cmd)
-
     def run_command(self, command):
+        # print(command)
+
         # TODO: table-based dispatch
         if command.code == fhomm.handler.QUIT:
             self.running = False
