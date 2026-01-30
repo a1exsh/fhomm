@@ -99,10 +99,10 @@ class Element(object):
 
         if event.type == fhomm.command.EVENT_TICK:
             if self.hold_event is not None:
-                cmds = fhomm.command.asseq(self.on_hold(event.dt))
+                cmds = fhomm.command.aslist(self.on_hold(event.dt))
             else:
                 cmds = []
-            return cmds + fhomm.command.asseq(self.on_tick(event.dt))
+            return cmds + fhomm.command.aslist(self.on_tick(event.dt))
 
         elif Element.is_mouse_event(event):
             return self.handle_mouse_event(event)
@@ -210,7 +210,7 @@ class Element(object):
             else:
                 cmds = None
 
-            commands.extend(fhomm.command.asseq(cmds))
+            commands.extend(fhomm.command.aslist(cmds))
 
         return commands
 
@@ -327,7 +327,7 @@ class Window(Element):
             cmd = self.handle_by_child(is_mouse_held, child, event)
             commands.extend(
                 self.cmd_with_key(child.key, c)
-                for c in fhomm.command.asseq(cmd)
+                for c in fhomm.command.aslist(cmd)
             )
 
         # TODO: are there situations where the window would want to handle
@@ -337,7 +337,7 @@ class Window(Element):
         cmd = self.on_event(event)
         commands.extend(
             self.cmd_with_key('_self', c)
-            for c in fhomm.command.asseq(cmd)
+            for c in fhomm.command.aslist(cmd)
         )
 
         return commands

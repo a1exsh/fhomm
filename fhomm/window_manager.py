@@ -151,8 +151,8 @@ class WindowManager(object):
         )
 
     def handle_event(self, event):
-        return fhomm.command.asseq(self.handle_global(event)) + \
-            fhomm.command.asseq(self.handle_by_active_window(event))
+        return fhomm.command.aslist(self.handle_global(event)) + \
+            fhomm.command.aslist(self.handle_by_active_window(event))
 
     # def on_event(self, event):
     #     if event.type == pygame.QUIT:

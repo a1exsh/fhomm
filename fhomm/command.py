@@ -54,7 +54,7 @@ def cmd_update_other(key, update_fn):
     return Command(UPDATE, {'key': key, 'update_fn': update_fn})
 
 
-def asseq(cmd):
+def aslist(cmd):
     if cmd is None:
         return []
 
