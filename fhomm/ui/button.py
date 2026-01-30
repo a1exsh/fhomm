@@ -1,7 +1,7 @@
 from collections import namedtuple
 
 from fhomm.render import Pos
-import fhomm.handler
+import fhomm.command
 import fhomm.render
 import fhomm.ui
 
@@ -20,8 +20,8 @@ class State(namedtuple('State', ['is_pressed'], module='fhomm.ui.button')):
 
 class ActiveArea(fhomm.ui.Element):
 
-    CMD_PRESS = fhomm.handler.cmd_update(State.pressed)
-    CMD_RELEASE = fhomm.handler.cmd_update(State.released)
+    CMD_PRESS = fhomm.command.cmd_update(State.pressed)
+    CMD_RELEASE = fhomm.command.cmd_update(State.released)
 
     def __init__(self, size, action, act_on_hold=False, hotkey=None):
         super().__init__(size, State(is_pressed=False))

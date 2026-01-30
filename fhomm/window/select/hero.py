@@ -3,7 +3,7 @@ import pygame
 from fhomm.render import Pos
 from fhomm.window.select import ItemSelectorWindow
 import fhomm.game.heroes
-import fhomm.handler
+import fhomm.command
 import fhomm.ui.list
 
 

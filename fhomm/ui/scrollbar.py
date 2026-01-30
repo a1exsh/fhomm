@@ -1,7 +1,7 @@
 import pygame
 
 from fhomm.render import Pos, Size, Rect
-import fhomm.handler
+import fhomm.command
 import fhomm.ui
 import fhomm.ui.list
 
@@ -18,7 +18,7 @@ class ScrollBar(fhomm.ui.Element):
         self.img_thumb.render(ctx, Pos(3, 3 + int(state.scroll_degree * self.vrange)))
 
     def on_mouse_wheel(self, pos, dx, dy):
-        return fhomm.handler.cmd_update(fhomm.ui.list.State.scroll_by(dy))
+        return fhomm.command.cmd_update(fhomm.ui.list.State.scroll_by(dy))
 
     def on_mouse_down(self, pos, button):
         if button == 1:
@@ -29,7 +29,7 @@ class ScrollBar(fhomm.ui.Element):
             return self.set_idx_from_pos(pos)
 
     def set_idx_from_pos(self, pos):
-        return fhomm.handler.cmd_update(
+        return fhomm.command.cmd_update(
             fhomm.ui.list.State.scroll_to(
                 (pos.y - self.img_thumb.size.h / 2) / self.vrange
             )

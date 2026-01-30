@@ -1,7 +1,7 @@
 import pygame
 
 from fhomm.render import Pos, Size
-import fhomm.handler
+import fhomm.command
 import fhomm.ui
 import fhomm.ui.list
 
@@ -88,19 +88,19 @@ class ItemSelectorWindow(fhomm.ui.Window):
         return state['lst_items'].selected_idx
 
     def cmd_scroll_up(self):
-        return fhomm.handler.cmd_update_other(
+        return fhomm.command.cmd_update_other(
             'lst_items',
             fhomm.ui.list.State.scroll_by(-1),
         )
 
     def cmd_scroll_down(self):
-        return fhomm.handler.cmd_update_other(
+        return fhomm.command.cmd_update_other(
             'lst_items',
             fhomm.ui.list.State.scroll_by(1),
         )
 
     def cmd_return(self):
-        return fhomm.handler.cmd_close(self.return_key)
+        return fhomm.command.cmd_close(self.return_key)
 
     def cmd_cancel(self):
-        return fhomm.handler.CMD_CLOSE
+        return fhomm.command.CMD_CLOSE

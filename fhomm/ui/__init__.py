@@ -3,7 +3,7 @@ from collections import namedtuple
 import pygame
 
 from fhomm.render import Pos, Size, Rect
-import fhomm.handler
+import fhomm.command
 import fhomm.render
 
 DEBUG_RENDER = False
@@ -54,7 +54,7 @@ class Element(object):
         pass
 
     def handle(self, event):
-        if DEBUG_EVENTS and event.type != fhomm.handler.EVENT_TICK:
+        if DEBUG_EVENTS and event.type != fhomm.command.EVENT_TICK:
             print(f"{self}.handle: {event}")
 
         return self.on_event(event)
@@ -94,15 +94,15 @@ class Element(object):
 
     # on_event is low level, better define one of the more specific on_XXX
     def on_event(self, event):
-        # if event.type != fhomm.handler.EVENT_TICK:
+        # if event.type != fhomm.command.EVENT_TICK:
         #     print(f"{self}.on_event: {event}")
 
-        if event.type == fhomm.handler.EVENT_TICK:
+        if event.type == fhomm.command.EVENT_TICK:
             if self.hold_event is not None:
-                cmds = fhomm.handler.asseq(self.on_hold(event.dt))
+                cmds = fhomm.command.asseq(self.on_hold(event.dt))
             else:
                 cmds = []
-            return cmds + fhomm.handler.asseq(self.on_tick(event.dt))
+            return cmds + fhomm.command.asseq(self.on_tick(event.dt))
 
         elif Element.is_mouse_event(event):
             return self.handle_mouse_event(event)
@@ -122,7 +122,7 @@ class Element(object):
         elif event.type == pygame.QUIT:
             return self.on_quit()
 
-        elif event.type == fhomm.handler.EVENT_WINDOW_CLOSED:
+        elif event.type == fhomm.command.EVENT_WINDOW_CLOSED:
             return self.on_window_closed(event.return_key, event.return_value)
 
     def handle_mouse_event(self, event):
@@ -210,7 +210,7 @@ class Element(object):
             else:
                 cmds = None
 
-            commands.extend(fhomm.handler.asseq(cmds))
+            commands.extend(fhomm.command.asseq(cmds))
 
         return commands
 
@@ -248,7 +248,7 @@ class Element(object):
         pass
 
     def on_quit(self):
-        #return fhomm.handler.CMD_IGNORE
+        #return fhomm.command.CMD_IGNORE
         pass
 
     def on_window_closed(self, key, value):
@@ -327,7 +327,7 @@ class Window(Element):
             cmd = self.handle_by_child(is_mouse_held, child, event)
             commands.extend(
                 self.cmd_with_key(child.key, c)
-                for c in fhomm.handler.asseq(cmd)
+                for c in fhomm.command.asseq(cmd)
             )
 
         # TODO: are there situations where the window would want to handle
@@ -337,7 +337,7 @@ class Window(Element):
         cmd = self.on_event(event)
         commands.extend(
             self.cmd_with_key('_self', c)
-            for c in fhomm.handler.asseq(cmd)
+            for c in fhomm.command.asseq(cmd)
         )
 
         return commands
@@ -376,9 +376,9 @@ class Window(Element):
     @staticmethod
     def cmd_with_key(key, cmd):
         # print(f"cmd_with_key: {key} {cmd}")
-        if cmd.code == fhomm.handler.UPDATE and 'key' not in cmd.kwargs:
-            return fhomm.handler.Command(
-                fhomm.handler.UPDATE,
+        if cmd.code == fhomm.command.UPDATE and 'key' not in cmd.kwargs:
+            return fhomm.command.Command(
+                fhomm.command.UPDATE,
                 dict(cmd.kwargs, key=key),
             )
 

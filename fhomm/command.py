@@ -1,11 +1,9 @@
-# TODO: rename this file to something like "command"
 from collections import namedtuple
 
 import pygame
 
-# EVENT_COMMAND = pygame.USEREVENT   # pygame.event.custom_type()
-EVENT_TICK = pygame.USEREVENT + 1
-EVENT_WINDOW_CLOSED = pygame.USEREVENT + 2
+EVENT_TICK = pygame.USEREVENT   # pygame.event.custom_type()
+EVENT_WINDOW_CLOSED = pygame.USEREVENT + 1
 
 
 QUIT = -1

@@ -2,7 +2,7 @@ import pygame
 
 from fhomm.render import Pos, Rect
 from fhomm.window.new_battle import NewBattleWindow
-import fhomm.handler
+import fhomm.command
 import fhomm.render
 import fhomm.ui
 
@@ -81,32 +81,32 @@ class NewGameMenu(fhomm.ui.Window):
         self.bg_image.render(ctx)
 
     def cmd_standard_game(self):
-        # return fhomm.handler.cmd_show(
+        # return fhomm.command.cmd_show(
         #     fhomm.window.new_game.Handler(self.toolkit),
         #     Pos(311, 14),
         # )
         pass
 
     def cmd_campaign_game(self):
-        # return fhomm.handler.cmd_show(
+        # return fhomm.command.cmd_show(
         #     fhomm.window.load_game.Handler(self.toolkit),
         #     Pos(311, 14),
         # )
         pass
 
     def cmd_multiplayer_game(self):
-        # return fhomm.handler.cmd_show(
+        # return fhomm.command.cmd_show(
         #     fhomm.window.high_scores.Handler(self.toolkit),
         #     Pos(0, 0),
         # )
         pass
 
     def cmd_battle(self):
-        return fhomm.handler.cmd_show(
+        return fhomm.command.cmd_show(
             NewBattleWindow(self.toolkit),
             Pos((640 - 448)//2, (480 - 448)//2), # TODO: ask WindowManager to center
             'new_battle',
         )
 
     def cmd_cancel(self):
-        return fhomm.handler.CMD_CLOSE
+        return fhomm.command.CMD_CLOSE

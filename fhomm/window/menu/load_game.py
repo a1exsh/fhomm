@@ -1,6 +1,6 @@
 import pygame
 
-import fhomm.handler
+import fhomm.command
 import fhomm.ui
 
 
@@ -14,4 +14,4 @@ class LoadGameMenu(fhomm.ui.Window):
 
     def on_key_up(self, key):
         if key == pygame.K_ESCAPE:
-            return fhomm.handler.CMD_CLOSE
+            return fhomm.command.CMD_CLOSE

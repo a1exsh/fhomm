@@ -1,6 +1,6 @@
 from fhomm.render import Pos
 from fhomm.window.menu.main import MainMenu
-import fhomm.handler
+import fhomm.command
 import fhomm.ui
 
 
@@ -14,6 +14,6 @@ class TitleScreen(fhomm.ui.Window):
     def on_tick(self, dt):
         if self.main_menu is None:
             self.main_menu = MainMenu(self.toolkit)
-            return fhomm.handler.cmd_show(
+            return fhomm.command.cmd_show(
                 self.main_menu, Pos(401, 35), 'main_menu'
             )

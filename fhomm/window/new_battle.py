@@ -7,7 +7,7 @@ from fhomm.render import Pos, Size, Rect
 from fhomm.window.select.army import ArmySelectorWindow
 from fhomm.window.select.artifact import ArtifactSelectorWindow
 from fhomm.window.select.hero import HeroSelectorWindow
-import fhomm.handler
+import fhomm.command
 import fhomm.render
 import fhomm.toolkit
 import fhomm.ui
@@ -142,7 +142,7 @@ class NewBattleWindow(fhomm.ui.Window):
         return f"{HEROES[state.attacker].name} vs. {HEROES[state.defender].name}"
 
     def cmd_select_attacker(self):
-        return fhomm.handler.cmd_show(
+        return fhomm.command.cmd_show(
             HeroSelectorWindow(
                 self.toolkit,
                 "Select Attacking Hero:",
@@ -153,7 +153,7 @@ class NewBattleWindow(fhomm.ui.Window):
         )
 
     def cmd_select_defender(self):
-        return fhomm.handler.cmd_show(
+        return fhomm.command.cmd_show(
             HeroSelectorWindow(
                 self.toolkit,
                 "Select Defending Hero:",
@@ -164,21 +164,21 @@ class NewBattleWindow(fhomm.ui.Window):
         )
 
     def cmd_select_army(self):
-        return fhomm.handler.cmd_show(
+        return fhomm.command.cmd_show(
             ArmySelectorWindow(self.toolkit, 'aarmy1'),
             Pos(0, 74),
             'select_army',
         )
 
     def cmd_select_artifact(self):
-        return fhomm.handler.cmd_show(
+        return fhomm.command.cmd_show(
             ArtifactSelectorWindow(self.toolkit, 'aart1'),
             Pos(0, 74),
             'select_artifact',
         )
 
     def cmd_cancel(self):
-        return fhomm.handler.CMD_CLOSE
+        return fhomm.command.CMD_CLOSE
 
     # TODO: rename to on_return
     def on_window_closed(self, key, value):
@@ -186,10 +186,10 @@ class NewBattleWindow(fhomm.ui.Window):
             self.icn_attacker.set_image(
                 self.toolkit.load_sprite("port%04d.icn" % value)
             )
-            return fhomm.handler.cmd_update(State.set_attacker(value))
+            return fhomm.command.cmd_update(State.set_attacker(value))
 
         elif key == 'defender':
             self.icn_defender.set_image(
                 self.toolkit.load_sprite("port%04d.icn" % value)
             )
-            return fhomm.handler.cmd_update(State.set_defender(value))
+            return fhomm.command.cmd_update(State.set_defender(value))

@@ -274,22 +274,22 @@ class List(fhomm.ui.Element):
 
     def on_key_down(self, key):
         if key == pygame.K_HOME:
-            return fhomm.handler.cmd_update(State.select_first)
+            return fhomm.command.cmd_update(State.select_first)
 
         elif key == pygame.K_END:
-            return fhomm.handler.cmd_update(State.select_last)
+            return fhomm.command.cmd_update(State.select_last)
 
         elif key == pygame.K_UP:
-            return fhomm.handler.cmd_update(State.select_prev)
+            return fhomm.command.cmd_update(State.select_prev)
 
         elif key == pygame.K_DOWN:
-            return fhomm.handler.cmd_update(State.select_next)
+            return fhomm.command.cmd_update(State.select_next)
 
         elif key == pygame.K_PAGEUP:
-            return fhomm.handler.cmd_update(State.select_prev_page)
+            return fhomm.command.cmd_update(State.select_prev_page)
 
         elif key == pygame.K_PAGEDOWN:
-            return fhomm.handler.cmd_update(State.select_next_page)
+            return fhomm.command.cmd_update(State.select_next_page)
 
     def on_key_hold(self, key):
         return self.on_key_down(key)
@@ -301,7 +301,7 @@ class List(fhomm.ui.Element):
                 //
                 (self.img_size.h + self.item_vpad)
             )
-            return fhomm.handler.cmd_update(State.select_at(idx_on_page))
+            return fhomm.command.cmd_update(State.select_at(idx_on_page))
 
     def on_mouse_wheel(self, pos, dx, dy):
-        return fhomm.handler.cmd_update(State.scroll_by(dy))
+        return fhomm.command.cmd_update(State.scroll_by(dy))

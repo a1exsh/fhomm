@@ -7,7 +7,7 @@ import pygame
 
 from fhomm import asdict
 from fhomm.render import Pos, Size, Rect
-import fhomm.handler
+import fhomm.command
 import fhomm.ui
 
 
@@ -130,19 +130,19 @@ class WindowManager(object):
         # kind of has to be here to always react
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_F1:
-                return fhomm.handler.CMD_TOGGLE_DEBUG_UI_RENDER
+                return fhomm.command.CMD_TOGGLE_DEBUG_UI_RENDER
 
             elif event.key == pygame.K_F2:
-                return fhomm.handler.CMD_TOGGLE_DEBUG_UI_EVENTS
+                return fhomm.command.CMD_TOGGLE_DEBUG_UI_EVENTS
 
             elif event.key == pygame.K_F3:
-                return fhomm.handler.CMD_TOGGLE_FPS
+                return fhomm.command.CMD_TOGGLE_FPS
 
             elif event.key == pygame.K_F4:
-                return fhomm.handler.CMD_TOGGLE_FULLSCREEN
+                return fhomm.command.CMD_TOGGLE_FULLSCREEN
 
             elif event.key == pygame.K_q and event.mod & pygame.KMOD_CTRL:
-                return fhomm.handler.CMD_QUIT # DEBUG: fast quit
+                return fhomm.command.CMD_QUIT # DEBUG: fast quit
 
     def handle_by_active_window(self, event):
         slot = self.active_slot()
@@ -151,12 +151,12 @@ class WindowManager(object):
         )
 
     def handle_event(self, event):
-        return fhomm.handler.asseq(self.handle_global(event)) + \
-            fhomm.handler.asseq(self.handle_by_active_window(event))
+        return fhomm.command.asseq(self.handle_global(event)) + \
+            fhomm.command.asseq(self.handle_by_active_window(event))
 
     # def on_event(self, event):
     #     if event.type == pygame.QUIT:
-    #         return fhomm.handler.CMD_QUIT
+    #         return fhomm.command.CMD_QUIT
 
     # TODO: this can be separated to a MainLoop or something
     def __call__(self):
@@ -212,12 +212,12 @@ class WindowManager(object):
             self.last_exception = e
 
     def post_tick_event(self, dt):
-        pygame.event.post(pygame.event.Event(fhomm.handler.EVENT_TICK, dt=dt))
+        pygame.event.post(pygame.event.Event(fhomm.command.EVENT_TICK, dt=dt))
 
     def post_close_event(self, return_key, return_value):
         pygame.event.post(
             pygame.event.Event(
-                fhomm.handler.EVENT_WINDOW_CLOSED,
+                fhomm.command.EVENT_WINDOW_CLOSED,
                 return_key=return_key,
                 return_value=return_value,
             )
@@ -227,36 +227,36 @@ class WindowManager(object):
         # print(command)
 
         # TODO: table-based dispatch
-        if command.code == fhomm.handler.QUIT:
+        if command.code == fhomm.command.QUIT:
             self.running = False
 
-        elif command.code == fhomm.handler.IGNORE:
+        elif command.code == fhomm.command.IGNORE:
             pass
 
-        elif command.code == fhomm.handler.TOGGLE_DEBUG_UI_RENDER:
+        elif command.code == fhomm.command.TOGGLE_DEBUG_UI_RENDER:
             fhomm.ui.DEBUG_RENDER = not fhomm.ui.DEBUG_RENDER
             self.active_slot().window.dirty()
 
-        elif command.code == fhomm.handler.TOGGLE_DEBUG_UI_EVENTS:
+        elif command.code == fhomm.command.TOGGLE_DEBUG_UI_EVENTS:
             fhomm.ui.DEBUG_EVENTS = not fhomm.ui.DEBUG_EVENTS
 
-        elif command.code == fhomm.handler.TOGGLE_FPS:
+        elif command.code == fhomm.command.TOGGLE_FPS:
             self.show_fps = not self.show_fps
 
-        elif command.code == fhomm.handler.TOGGLE_FULLSCREEN:
+        elif command.code == fhomm.command.TOGGLE_FULLSCREEN:
             pygame.display.toggle_fullscreen()
 
-        elif command.code == fhomm.handler.SHOW:
+        elif command.code == fhomm.command.SHOW:
             self.show(**command.kwargs)
 
-        elif command.code == fhomm.handler.CLOSE:
+        elif command.code == fhomm.command.CLOSE:
             return_value = self.close_active_window()
             return_key = command.kwargs['return_key']
             if return_key:
                 # print(f"CLOSE: {return_key}: {return_value}")
                 self.post_close_event(return_key, return_value)
 
-        elif command.code == fhomm.handler.UPDATE:
+        elif command.code == fhomm.command.UPDATE:
             self.update_state(**command.kwargs)
 
         else:

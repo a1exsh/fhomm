@@ -1,6 +1,6 @@
 import pygame
 
-import fhomm.handler
+import fhomm.command
 import fhomm.ui
 
 
@@ -9,7 +9,7 @@ class CreditsScreen(fhomm.ui.Window):
         super().__init__(toolkit.load_image('credits.bmp'))
 
     def on_mouse_up(self, _pos, _button):
-        return fhomm.handler.CMD_CLOSE
+        return fhomm.command.CMD_CLOSE
 
     def on_key_up(self, _key):
-        return fhomm.handler.CMD_CLOSE
+        return fhomm.command.CMD_CLOSE
