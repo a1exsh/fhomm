@@ -17,19 +17,16 @@ class Item(namedtuple('Item', ['img', 'text'], module='fhomm.ui.list')):
 
 
 class State(
-    namedtuple(
-        'State',
+    fhomm.ui.state_tuple(
         [
             'items',
             'num_items_per_page',
             'selected_idx',
             'scroll_idx'
         ],
-        module='fhomm.ui.list',
+        submodule='list',
     )
 ):
-    __slots__ = ()
-
     # def __getstate__(self):
     #     return dict(
     #         self._asdict(),

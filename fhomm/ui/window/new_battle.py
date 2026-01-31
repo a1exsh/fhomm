@@ -43,19 +43,16 @@ class SmallArmyIcon(fhomm.ui.button.ActiveArea):
 
 
 class State(
-    namedtuple(
-        'State',
+    fhomm.ui.state_tuple(
         [
             'attacker',
             'defender',
             'aarmy1',
             'aart1',
         ],
-        module='fhomm.ui.window.new_battle',
+        submodule='window.new_battle',
     )
 ):
-    __slots__ = ()
-
     @staticmethod
     def set_attacker(attacker):
         return lambda s: s._replace(attacker=attacker)

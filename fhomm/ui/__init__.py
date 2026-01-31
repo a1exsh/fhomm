@@ -14,9 +14,33 @@ HOLD_TICKS_REPEAT_DELAY = 250
 HOLD_TICKS_REPEAT_EVERY = 50
 
 
+def state_tuple(fields=[], defaults=[], submodule='', **kwargs):
+
+    class State(
+        namedtuple(
+            'State',
+            fields + ['is_active', 'is_hovered'],
+            defaults=(defaults + [True, False]),
+            module=('fhomm.ui.' + submodule),
+            **kwargs
+        )
+    ):
+        __slots__ = ()
+
+        @staticmethod
+        def active(s):
+            return s._replace(is_active=True)
+
+        @staticmethod
+        def inactive(s):
+            return s._replace(is_active=False)
+
+    return State
+
+
 class Element(object):
 
-    State = namedtuple('State', [], module='fhomm.ui.Element')
+    State = state_tuple(submodule='Element')
 
     def __init__(self, size, state=State(), grabs_mouse=False):
         # print(f"{self.__class__}: {size} {state}")
@@ -58,8 +82,7 @@ class Element(object):
         if DEBUG_EVENTS and event.type != fhomm.event.EVENT_TICK:
             print(f"{self}.handle: {event}")
 
-        # TODO: make it part of the element state, sub-classes should provide it
-        if state._asdict().get('is_active', True):
+        if state.is_active:
             return self.on_event(event)
 
     @staticmethod

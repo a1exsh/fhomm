@@ -7,23 +7,8 @@ import fhomm.ui
 
 
 class State(
-    namedtuple(
-        'State',
-        ['is_active', 'is_pressed'],
-        defaults=[True, False],
-        module='fhomm.ui.button',
-    )
+    fhomm.ui.state_tuple(['is_pressed'], defaults=[False], submodule='button')
 ):
-    __slots__ = ()
-
-    @staticmethod
-    def active(s):
-        return s._replace(is_active=True)
-
-    @staticmethod
-    def inactive(s):
-        return s._replace(is_active=False)
-
     @staticmethod
     def pressed(s):
         return s._replace(is_pressed=True)
@@ -98,6 +83,5 @@ class Button(ActiveIcon):
         self.img_pressed = img_pressed
 
     def on_render(self, ctx, state):
-        # TODO: is_active should be part of the state, right?
         img = self.img_pressed if state.is_pressed or not state.is_active else self.img
         img.render(ctx)
