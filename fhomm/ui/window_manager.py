@@ -179,9 +179,10 @@ class WindowManager(object):
     def event_loop_step(self):
         with self.logging_just_once():
             for event in pygame.event.get():
+                slot = self.active_slot()
                 cmds = self.handle_event(event)
                 for cmd in cmds:
-                    self.run_command(cmd)
+                    self.run_command(slot, cmd)
 
             if self.render_active_window():
                 pygame.display.flip()
@@ -213,8 +214,9 @@ class WindowManager(object):
 
             self.last_exception = e
 
-    def run_command(self, command):
-        # print(command)
+    def run_command(self, slot, command):
+        if fhomm.ui.DEBUG_EVENTS:
+            print(command)
 
         # TODO: table-based dispatch
         if command.code == fhomm.command.QUIT:
@@ -225,7 +227,7 @@ class WindowManager(object):
 
         elif command.code == fhomm.command.TOGGLE_DEBUG_UI_RENDER:
             fhomm.ui.DEBUG_RENDER = not fhomm.ui.DEBUG_RENDER
-            self.active_slot().window.dirty()
+            slot.window.dirty()
 
         elif command.code == fhomm.command.TOGGLE_DEBUG_UI_EVENTS:
             fhomm.ui.DEBUG_EVENTS = not fhomm.ui.DEBUG_EVENTS
@@ -247,14 +249,14 @@ class WindowManager(object):
                 fhomm.event.post_window_close(return_key, return_value)
 
         elif command.code == fhomm.command.UPDATE:
-            self.update_state(**command.kwargs)
+            self.update_state(slot, **command.kwargs)
 
         else:
             print(f"unknown command: {command}")
 
-    def update_state(self, key, update_fn):
+    def update_state(self, slot, key, update_fn):
         # print(f"update_state: {key} {update_fn}")
-        active_state = self.state[self.active_slot().state_key]
+        active_state = self.state[slot.state_key]
         old = active_state[key]
         new = update_fn(old)
         if old != new:

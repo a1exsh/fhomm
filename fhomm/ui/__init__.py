@@ -19,8 +19,8 @@ def state_tuple(fields=[], defaults=[], submodule='', **kwargs):
     class State(
         namedtuple(
             'State',
-            fields + ['is_active', 'is_hovered'],
-            defaults=(defaults + [True, False]),
+            fields + ['is_active', 'is_hovered', 'hold_event', 'hold_ticks'],
+            defaults=(defaults + [True, False, None, 0]),
             module=('fhomm.ui.' + submodule),
             **kwargs
         )
@@ -43,6 +43,21 @@ def state_tuple(fields=[], defaults=[], submodule='', **kwargs):
         def unhovered(s):
             return s._replace(is_hovered=False)
 
+        @staticmethod
+        def start_hold(event):
+            return lambda s: s._replace(
+                hold_event=event,
+                hold_ticks=-HOLD_TICKS_REPEAT_DELAY,
+            )
+
+        @staticmethod
+        def stop_hold(s):
+            return s._replace(hold_event=None, hold_ticks=0)
+
+        @staticmethod
+        def set_hold_ticks(ticks):
+            return lambda s: s._replace(hold_ticks=ticks)
+
     return State
 
 
@@ -55,8 +70,6 @@ class Element(object):
         self.size = size
         self.initial_state = state
         self.grabs_mouse = grabs_mouse
-
-        self.hold_event = None
 
         self._dirty = False
 
@@ -128,26 +141,31 @@ class Element(object):
         #     print(f"{self}.on_event: {event}")
 
         if event.type == fhomm.event.EVENT_TICK:
-            if self.hold_event is not None:
-                cmds = fhomm.command.aslist(self.on_hold(event.dt))
+            if state.hold_event is not None:
+                cmds = fhomm.command.aslist(self.on_hold(state, event.dt))
             else:
                 cmds = []
+
             return cmds + fhomm.command.aslist(self.on_tick(event.dt))
 
         elif Element.is_mouse_event(event):
             return self.handle_mouse_event(state, event)
 
         elif event.type == pygame.KEYDOWN:
-            if self.hold_event is None:
-                self.start_hold(event)
+            cmds = fhomm.command.aslist(self.on_key_down(event.key))
 
-            return self.on_key_down(event.key)
+            if state.hold_event is None: # start_hold could also check that
+                cmds.append(fhomm.command.cmd_update(Element.State.start_hold(event)))
+
+            return cmds
 
         elif event.type == pygame.KEYUP:
-            if self.is_key_held(event.key):
-                self.stop_hold()
+            cmds = fhomm.command.aslist(self.on_key_up(event.key))
 
-            return self.on_key_up(event.key)
+            if Element.is_key_held(state, event.key):
+                cmds.append(fhomm.command.cmd_update(Element.State.stop_hold))
+
+            return cmds
 
         elif event.type == pygame.QUIT:
             return self.on_quit()
@@ -166,84 +184,86 @@ class Element(object):
                     self.dirty() # TODO: remove
 
                 if is_hovered_now:
-                    return fhomm.command.cmd_update(Element.State.hovered), \
-                        self.on_mouse_enter()
+                    cmds = fhomm.command.aslist(self.on_mouse_enter())
+                    cmds.append(fhomm.command.cmd_update(Element.State.hovered))
+
+                    return cmds
 
                 else:
-                    if self.is_mouse_held() and not self.grabs_mouse:
-                        self.stop_hold()
+                    # FIXME: wrapping everything in `aslist()` is getting old..
+                    cmds = fhomm.command.aslist(self.on_mouse_leave())
+                    cmds.append(fhomm.command.cmd_update(Element.State.unhovered))
 
-                    return fhomm.command.cmd_update(Element.State.unhovered), \
-                        self.on_mouse_leave()
+                    if Element.is_mouse_held(state) and not self.grabs_mouse:
+                        cmds.append(fhomm.command.cmd_update(Element.State.stop_hold))
 
-            relpos = Pos(event.rel[0], event.rel[1])
-            return self.on_mouse_move(pos, relpos, event.buttons)
+                    return cmds
+
+            else:               # motion within the element rect
+                relpos = Pos(event.rel[0], event.rel[1])
+                return self.on_mouse_move(pos, relpos, event.buttons)
 
         elif event.type == pygame.MOUSEBUTTONDOWN:
-            #print(f"mousedown: {event}")
-            if event.button == 4 or event.button == 5:
+            if event.button == 4 or event.button == 5: # mouse wheel
                 pass
 
             else:
-                if self.hold_event is None:
-                    self.start_hold(event)
+                cmds = fhomm.command.aslist(self.on_mouse_down(pos, event.button))
 
-                return self.on_mouse_down(pos, event.button)
+                if state.hold_event is None:
+                    cmds.append(fhomm.command.cmd_update(Element.State.start_hold(event)))
+
+                return cmds
 
         elif event.type == pygame.MOUSEBUTTONUP:
-            #print(f"mouseup: {event}")
             if event.button == 4:
                 return self.on_mouse_wheel(pos, 0, -1)
 
             elif event.button == 5:
                 return self.on_mouse_wheel(pos, 0, 1)
 
-            elif self.is_mouse_held(event.button):
-                self.stop_hold()
+            else:
+                cmds = fhomm.command.aslist(self.on_mouse_up(pos, event.button))
 
-                return self.on_mouse_up(pos, event.button)
+                if Element.is_mouse_held(state, event.button):
+                    cmds.append(fhomm.command.cmd_update(Element.State.stop_hold))
+
+                return cmds
 
         elif event.type == pygame.MOUSEWHEEL:
-            # print(f"mousewheel: {event}")
-            return self.on_mouse_wheel(mouse_pos, event.x, event.y)
+            return self.on_mouse_wheel(pos, event.x, event.y)
 
-    def start_hold(self, event):
-        # print(f"start_hold: {event}")
-        self.hold_event = event
-        self.hold_ticks = -HOLD_TICKS_REPEAT_DELAY
+    @staticmethod
+    def is_key_held(state, key=None):
+        return state.hold_event is not None and \
+            state.hold_event.type == pygame.KEYDOWN and \
+            (key is None or state.hold_event.key == key)
 
-    def stop_hold(self):
-        # print(f"stop_hold: {self.hold_event}")
-        self.hold_event = None
-        self.hold_ticks = 0
+    @staticmethod
+    def is_mouse_held(state, button=None):
+        return state.hold_event is not None and \
+            state.hold_event.type == pygame.MOUSEBUTTONDOWN and \
+            (button is None or state.hold_event.button == button)
 
-    def is_key_held(self, key=None):
-        return self.hold_event is not None and \
-            self.hold_event.type == pygame.KEYDOWN and \
-            (key is None or self.hold_event.key == key)
-
-    def is_mouse_held(self, button=None):
-        return self.hold_event is not None and \
-            self.hold_event.type == pygame.MOUSEBUTTONDOWN and \
-            (button is None or self.hold_event.button == button)
-
-    def on_hold(self, dt):
+    def on_hold(self, state, dt):
         commands = []
 
-        self.hold_ticks += dt
-        while self.hold_ticks >= HOLD_TICKS_REPEAT_EVERY:
-            self.hold_ticks -= HOLD_TICKS_REPEAT_EVERY
+        ticks = state.hold_ticks + dt
+        while ticks >= HOLD_TICKS_REPEAT_EVERY:
+            ticks -= HOLD_TICKS_REPEAT_EVERY
 
-            if self.hold_event.type == pygame.KEYDOWN:
-                cmds = self.on_key_hold(self.hold_event.key)
+            if state.hold_event.type == pygame.KEYDOWN:
+                cmds = self.on_key_hold(state.hold_event.key)
 
-            elif self.hold_event.type == pygame.MOUSEBUTTONDOWN:
-                cmds = self.on_mouse_hold(self.hold_event.button)
+            elif state.hold_event.type == pygame.MOUSEBUTTONDOWN:
+                cmds = self.on_mouse_hold(state.hold_event.button)
 
             else:
                 cmds = None
 
             commands.extend(fhomm.command.aslist(cmds))
+
+        commands.append(fhomm.command.cmd_update(Element.State.set_hold_ticks(ticks)))
 
         return commands
 
@@ -354,8 +374,11 @@ class Window(Element):
             return self.on_update(event.key, event.old, event.new)
 
         # if mouse is held, only the active element must be able to handle
-        is_mouse_held = self.is_mouse_held() or \
-            any(child.element.is_mouse_held() for child in self.child_slots)
+        is_mouse_held = Element.is_mouse_held(state_map['_self']) or \
+            any(
+                Element.is_mouse_held(state_map[child.key])
+                for child in self.child_slots
+            )
 
         commands = []
 
@@ -392,7 +415,7 @@ class Window(Element):
 
     def handle_mouse_by_child(self, is_mouse_held, child, child_state, event):
         if is_mouse_held:
-            should_handle = child.element.is_mouse_held()
+            should_handle = Element.is_mouse_held(child_state)
 
         else:
             cur_pos = Pos(event.pos[0], event.pos[1])
