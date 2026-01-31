@@ -89,7 +89,7 @@ class ItemSelectorWindow(fhomm.ui.Window):
         if key == 'lst_items' and new.selected_idx is not None:
             return fhomm.command.cmd_update_other(
                 'btn_okay',
-                fhomm.ui.button.State.active,
+                fhomm.ui.Element.State.active,
             )
 
     def make_return_value(self, state):

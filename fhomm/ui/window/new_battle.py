@@ -16,7 +16,7 @@ import fhomm.ui.button
 
 class SmallArmyIcon(fhomm.ui.button.ActiveArea):
     def __init__(self, toolkit, monster=None, count=None, **kwargs):
-        super().__init__(Size(34, 44), **kwargs)
+        super().__init__(Size(34, 44), SmallArmyIcon.State(), **kwargs)
         self.toolkit = toolkit
         self.monster = monster
         self.count = count
@@ -66,13 +66,16 @@ class NewBattleWindow(fhomm.ui.Window):
     def __init__(self, toolkit):
         self.toolkit = toolkit
 
+        attacker = 0
+        defender = 35
+
         self.icn_attacker = self.toolkit.icon(
-            'port0000.icn',
+            self.hero_portrait_icn_name(attacker),
             action=self.cmd_select_attacker,
             hotkey=pygame.K_a,
         )
         self.icn_defender = self.toolkit.icon(
-            'port0035.icn',
+            self.hero_portrait_icn_name(defender),
             action=self.cmd_select_defender,
             hotkey=pygame.K_d,
         )
@@ -127,12 +130,19 @@ class NewBattleWindow(fhomm.ui.Window):
             children,
             border_width=4,
             state=State(
-                attacker=0,
-                defender=35,
+                attacker=attacker,
+                defender=defender,
                 aarmy1=23,
                 aart1=1,
             ),
         )
+
+    @staticmethod
+    def hero_portrait_icn_name(idx):
+        return "port%04d.icn" % idx
+
+    def hero_portrait_img(self, idx):
+        return self.toolkit.load_sprite(self.hero_portrait_icn_name(idx))
 
     @staticmethod
     def versus_label_text(state):
@@ -179,13 +189,19 @@ class NewBattleWindow(fhomm.ui.Window):
 
     def on_return(self, key, value):
         if key == 'attacker':
-            self.icn_attacker.set_image(
-                self.toolkit.load_sprite("port%04d.icn" % value)
-            )
-            return fhomm.command.cmd_update(State.set_attacker(value))
+            return fhomm.command.cmd_update(State.set_attacker(value)), \
+                fhomm.command.cmd_update_other(
+                    'icn_attacker',
+                    fhomm.ui.button.ActiveIcon.State.set_image(
+                        self.hero_portrait_img(value)
+                    ),
+                )
 
         elif key == 'defender':
-            self.icn_defender.set_image(
-                self.toolkit.load_sprite("port%04d.icn" % value)
-            )
-            return fhomm.command.cmd_update(State.set_defender(value))
+            return fhomm.command.cmd_update(State.set_defender(value)), \
+                fhomm.command.cmd_update_other(
+                    'icn_defender',
+                    fhomm.ui.button.ActiveIcon.State.set_image(
+                        self.hero_portrait_img(value)
+                    ),
+                )

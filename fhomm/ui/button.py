@@ -6,26 +6,44 @@ import fhomm.render
 import fhomm.ui
 
 
-class State(
-    fhomm.ui.state_tuple(['is_pressed'], defaults=[False], submodule='button')
-):
-    @staticmethod
-    def pressed(s):
-        return s._replace(is_pressed=True)
+def state_tuple(fields=[], defaults=[], submodule='', **kwargs):
 
-    @staticmethod
-    def released(s):
-        return s._replace(is_pressed=False)
+    class State(
+        fhomm.ui.state_tuple(
+            fields + ['is_pressed'],
+            defaults=(defaults + [False]),
+            submodule=('button.' + submodule),
+            **kwargs
+        )
+    ):
+        @staticmethod
+        def pressed(s):
+            return s._replace(is_pressed=True)
+
+        @staticmethod
+        def released(s):
+            return s._replace(is_pressed=False)
+
+    return State
 
 
 class ActiveArea(fhomm.ui.Element):
 
+    State = state_tuple(submodule='ActiveArea')
+
     CMD_PRESS = fhomm.command.cmd_update(State.pressed)
     CMD_RELEASE = fhomm.command.cmd_update(State.released)
 
-    def __init__(self, size, action, act_on_hold=False, hotkey=None, **kwargs):
-        # super().__init__(size, State(), **kwargs)
-        super().__init__(size, State(**kwargs))
+    def __init__(
+            self,
+            size,
+            state,
+            action,
+            act_on_hold=False,
+            hotkey=None,
+            **kwargs
+    ):
+        super().__init__(size, state, **kwargs)
         self.action = action
         self.act_on_hold = act_on_hold
         self.hotkey = hotkey
@@ -66,23 +84,32 @@ class ActiveArea(fhomm.ui.Element):
 
 
 class ActiveIcon(ActiveArea):
-    def __init__(self, img, **kwargs):
-        super().__init__(img.size, **kwargs)
-        self.img = img
 
-    def on_render(self, ctx, _):
-        self.img.render(ctx)
+    class State(state_tuple(['img'], submodule='ActiveIcon')):
+        @staticmethod
+        def set_image(img):
+            return lambda s: s._replace(img=img)
 
-    # TODO: move to the state
-    def set_image(self, img):
-        self.img = img
+    def __init__(self, state, **kwargs):
+        super().__init__(state.img.size, state, **kwargs)
+
+    def on_render(self, ctx, state):
+        state.img.render(ctx)
 
 
 class Button(ActiveIcon):
-    def __init__(self, img, img_pressed, **kwargs):
-        super().__init__(img, **kwargs)
+
+    State = state_tuple(['img', 'img_pressed'], submodule='Button')
+
+    def __init__(self, img, img_pressed, is_active=True, **kwargs):
+        super().__init__(Button.State(img, img_pressed, is_active=is_active), **kwargs)
         self.img_pressed = img_pressed
 
     def on_render(self, ctx, state):
-        img = self.img_pressed if state.is_pressed or not state.is_active else self.img
+        if state.is_pressed or not state.is_active:
+            img = state.img_pressed
+
+        else:
+            img = state.img
+
         img.render(ctx)
