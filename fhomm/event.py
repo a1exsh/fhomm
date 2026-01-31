@@ -11,10 +11,11 @@ def post_tick(dt):
     )
 
 
-def post_window_close(return_key, return_value):
+def post_window_close(state_key, return_key, return_value):
     pygame.event.post(
         pygame.event.Event(
             EVENT_WINDOW_CLOSED,
+            state_key=state_key,
             return_key=return_key,
             return_value=return_value,
         )

@@ -305,6 +305,10 @@ class Element(object):
         pass
 
     def on_window_closed(self, key, value):
+        if value is not None:
+            return self.on_return(key, value)
+
+    def on_return(self, key, value):
         pass
 
 

@@ -24,6 +24,7 @@ class ActiveArea(fhomm.ui.Element):
     CMD_RELEASE = fhomm.command.cmd_update(State.released)
 
     def __init__(self, size, action, act_on_hold=False, hotkey=None, **kwargs):
+        # super().__init__(size, State(), **kwargs)
         super().__init__(size, State(**kwargs))
         self.action = action
         self.act_on_hold = act_on_hold

@@ -11,6 +11,7 @@ TOGGLE_DEBUG_UI_RENDER = 4
 TOGGLE_DEBUG_UI_EVENTS = 5
 TOGGLE_FPS = 6
 UPDATE = 7
+CLEAR_STATE = 8
 
 Command = namedtuple('Command', ['code', 'kwargs'], defaults=[{}])
 
@@ -48,6 +49,10 @@ def cmd_update(update_fn):
 
 def cmd_update_other(key, update_fn):
     return Command(UPDATE, {'key': key, 'update_fn': update_fn})
+
+
+def cmd_clear_state(state_key):
+    return Command(CLEAR_STATE, {'state_key': state_key})
 
 
 def aslist(cmd):

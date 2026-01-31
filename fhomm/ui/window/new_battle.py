@@ -177,8 +177,7 @@ class NewBattleWindow(fhomm.ui.Window):
     def cmd_cancel(self):
         return fhomm.command.CMD_CLOSE
 
-    # TODO: rename to on_return
-    def on_window_closed(self, key, value):
+    def on_return(self, key, value):
         if key == 'attacker':
             self.icn_attacker.set_image(
                 self.toolkit.load_sprite("port%04d.icn" % value)

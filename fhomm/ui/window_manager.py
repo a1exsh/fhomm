@@ -69,15 +69,18 @@ class WindowManager(object):
 
         window.dirty()          # FIXME: redundant?
 
-    def close_active_window(self):
+    def close(self, return_key):
         slot = self.window_slots.pop()
         if slot.bg_capture:
             slot.bg_capture.render(self.screen_ctx, slot.screen_pos)
 
-        return_value = slot.window.make_return_value(self.state[slot.state_key])
-        del self.state[slot.state_key]
+        if return_key:
+            return_value = slot.window.make_return_value(self.state[slot.state_key])
 
-        return return_value
+        else:
+            return_value = None
+
+        fhomm.event.post_window_close(slot.state_key, return_key, return_value)
 
     def _capture_background(self, window, screen_pos):
         if window.size.w < self.screen.get_width() or \
@@ -144,6 +147,9 @@ class WindowManager(object):
 
             elif event.key == pygame.K_q and event.mod & pygame.KMOD_CTRL:
                 return fhomm.command.CMD_QUIT # DEBUG: fast quit
+
+        elif event.type == fhomm.event.EVENT_WINDOW_CLOSED:
+            return fhomm.command.cmd_clear_state(event.state_key)
 
     def handle_by_active_window(self, event):
         slot = self.active_slot()
@@ -242,11 +248,10 @@ class WindowManager(object):
             self.show(**command.kwargs)
 
         elif command.code == fhomm.command.CLOSE:
-            return_value = self.close_active_window()
-            return_key = command.kwargs['return_key']
-            if return_key:
-                # print(f"CLOSE: {return_key}: {return_value}")
-                fhomm.event.post_window_close(return_key, return_value)
+            self.close(**command.kwargs)
+
+        elif command.code == fhomm.command.CLEAR_STATE:
+            self.clear_state(**command.kwargs)
 
         elif command.code == fhomm.command.UPDATE:
             self.update_state(slot, **command.kwargs)
@@ -263,3 +268,9 @@ class WindowManager(object):
             # TODO: here we know we need to re-render, but otherwise not really
             active_state.update({key: new})
             fhomm.event.post_state_update(key, old, new)
+
+    def clear_state(self, state_key):
+        if state_key not in self.state:
+            raise Exception(f"Window for {state_key} was not shown!")
+
+        del self.state[state_key]
