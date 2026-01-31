@@ -54,7 +54,7 @@ class Element(object):
     def on_render(self, ctx, state):
         pass
 
-    def handle(self, event, state):
+    def handle(self, state, event):
         if DEBUG_EVENTS and event.type != fhomm.event.EVENT_TICK:
             print(f"{self}.handle: {event}")
 
@@ -316,7 +316,7 @@ class Window(Element):
     def on_render(self, ctx, _):
         self.bg_image.render(ctx)
 
-    def handle(self, event, state):
+    def handle(self, state, event):
         if event.type == fhomm.event.EVENT_STATE_UPDATED:
             return self.on_update(event.key, event.old, event.new)
 
@@ -355,7 +355,7 @@ class Window(Element):
             return self.handle_mouse_by_child(is_mouse_held, child, child_state, event)
 
         else:
-            return child.element.handle(event, child_state)
+            return child.element.handle(child_state, event)
 
     def handle_mouse_by_child(self, is_mouse_held, child, child_state, event):
         if is_mouse_held:
@@ -378,8 +378,8 @@ class Window(Element):
 
         if should_handle:
             return child.element.handle(
-                Element.translate_mouse_event(event, child.relpos),
                 child_state,
+                Element.translate_mouse_event(event, child.relpos),
             )
 
     @staticmethod

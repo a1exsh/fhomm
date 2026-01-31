@@ -148,8 +148,8 @@ class WindowManager(object):
     def handle_by_active_window(self, event):
         slot = self.active_slot()
         return slot.window.handle(
-            fhomm.ui.Window.translate_event(event, slot.screen_pos),
             self.state[slot.state_key],
+            fhomm.ui.Window.translate_event(event, slot.screen_pos),
         )
 
     def handle_event(self, event):
