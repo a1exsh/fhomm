@@ -1,5 +1,5 @@
 from fhomm.render import Pos
-from fhomm.window.menu.main import MainMenu
+from fhomm.ui.menu.main import MainMenu
 import fhomm.command
 import fhomm.ui
 

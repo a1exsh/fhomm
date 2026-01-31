@@ -1,6 +1,6 @@
 import pygame
 
-from fhomm.window.select import ItemSelectorWindow
+from fhomm.ui.window.select import ItemSelectorWindow
 import fhomm.game.artifacts
 import fhomm.ui.list
 

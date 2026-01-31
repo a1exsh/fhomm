@@ -1,7 +1,7 @@
 import pygame
 
 from fhomm.render import Pos, Rect
-from fhomm.window.new_battle import NewBattleWindow
+from fhomm.ui.window.new_battle import NewBattleWindow
 import fhomm.command
 import fhomm.render
 import fhomm.ui
@@ -82,21 +82,21 @@ class NewGameMenu(fhomm.ui.Window):
 
     def cmd_standard_game(self):
         # return fhomm.command.cmd_show(
-        #     fhomm.window.new_game.Handler(self.toolkit),
+        #     fhomm.ui.window.new_game.Handler(self.toolkit),
         #     Pos(311, 14),
         # )
         pass
 
     def cmd_campaign_game(self):
         # return fhomm.command.cmd_show(
-        #     fhomm.window.load_game.Handler(self.toolkit),
+        #     fhomm.ui.window.load_game.Handler(self.toolkit),
         #     Pos(311, 14),
         # )
         pass
 
     def cmd_multiplayer_game(self):
         # return fhomm.command.cmd_show(
-        #     fhomm.window.high_scores.Handler(self.toolkit),
+        #     fhomm.ui.window.high_scores.Handler(self.toolkit),
         #     Pos(0, 0),
         # )
         pass

@@ -1,9 +1,9 @@
 import pygame
 
-from fhomm.window.credits import CreditsScreen
-from fhomm.window.high_scores import HighScoresWindow
-from fhomm.window.menu.new_game import NewGameMenu
-from fhomm.window.menu.load_game import LoadGameMenu
+from fhomm.ui.menu.load_game import LoadGameMenu
+from fhomm.ui.menu.new_game import NewGameMenu
+from fhomm.ui.window.credits import CreditsScreen
+from fhomm.ui.window.high_scores import HighScoresWindow
 from fhomm.render import Pos
 import fhomm.command
 import fhomm.ui

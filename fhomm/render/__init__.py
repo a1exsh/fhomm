@@ -2,9 +2,9 @@ from collections import namedtuple
 
 import pygame
 
-import fhomm.palette
 import fhomm.resource.bmp
 import fhomm.resource.icn
+import fhomm.ui.palette
 
 # halign values
 LEFT = 0
@@ -190,7 +190,7 @@ class Context(object):
     def copy_image_for_shadow(self, source):
         surface = pygame.Surface(source.size, depth=8)
         # TODO: get the pre-made shadow-safe palette from the Palette object
-        surface.set_palette(fhomm.palette.make_safe_for_shadow(self._surface.get_palette()))
+        surface.set_palette(fhomm.ui.palette.make_safe_for_shadow(self._surface.get_palette()))
         surface.blit(source._surface, (0, 0)) # area?
         return Image(surface)
 

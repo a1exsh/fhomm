@@ -1,7 +1,7 @@
 import pygame
 
 from fhomm.render import Pos, Size, Rect
-from fhomm.window.select import ItemSelectorWindow
+from fhomm.ui.window.select import ItemSelectorWindow
 import fhomm.game.monsters
 import fhomm.ui.list
 

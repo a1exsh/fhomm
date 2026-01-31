@@ -4,9 +4,9 @@ import pygame
 
 from fhomm.game.heroes import HEROES
 from fhomm.render import Pos, Size, Rect
-from fhomm.window.select.army import ArmySelectorWindow
-from fhomm.window.select.artifact import ArtifactSelectorWindow
-from fhomm.window.select.hero import HeroSelectorWindow
+from fhomm.ui.window.select.army import ArmySelectorWindow
+from fhomm.ui.window.select.artifact import ArtifactSelectorWindow
+from fhomm.ui.window.select.hero import HeroSelectorWindow
 import fhomm.command
 import fhomm.render
 import fhomm.toolkit
@@ -51,7 +51,7 @@ class State(
             'aarmy1',
             'aart1',
         ],
-        module='fhomm.window.new_battle',
+        module='fhomm.ui.window.new_battle',
     )
 ):
     __slots__ = ()
