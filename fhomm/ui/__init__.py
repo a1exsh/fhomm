@@ -35,6 +35,14 @@ def state_tuple(fields=[], defaults=[], submodule='', **kwargs):
         def inactive(s):
             return s._replace(is_active=False)
 
+        @staticmethod
+        def hovered(s):
+            return s._replace(is_hovered=True)
+
+        @staticmethod
+        def unhovered(s):
+            return s._replace(is_hovered=False)
+
     return State
 
 
@@ -48,7 +56,6 @@ class Element(object):
         self.initial_state = state
         self.grabs_mouse = grabs_mouse
 
-        self.is_hovered = False    # TODO: should be part of the state
         self.hold_event = None
 
         self._dirty = False
@@ -68,7 +75,7 @@ class Element(object):
         if force:
             self.on_render(ctx, state)
 
-            if DEBUG_RENDER and self.is_hovered:
+            if DEBUG_RENDER and state.is_hovered:
                 ctx.draw_rect(228, self.rect, 1)
 
             return True         # rendered, tell to update the screen
@@ -80,10 +87,10 @@ class Element(object):
 
     def handle(self, state, event):
         if DEBUG_EVENTS and event.type != fhomm.event.EVENT_TICK:
-            print(f"{self}.handle: {event}")
+            print(f"{self}.handle: {state} / {event}")
 
         if state.is_active:
-            return self.on_event(event)
+            return self.on_event(state, event)
 
     @staticmethod
     def is_mouse_event(event):
@@ -116,7 +123,7 @@ class Element(object):
         )
 
     # on_event is low level, better define one of the more specific on_XXX
-    def on_event(self, event):
+    def on_event(self, state, event):
         # if event.type != fhomm.event.EVENT_TICK:
         #     print(f"{self}.on_event: {event}")
 
@@ -128,7 +135,7 @@ class Element(object):
             return cmds + fhomm.command.aslist(self.on_tick(event.dt))
 
         elif Element.is_mouse_event(event):
-            return self.handle_mouse_event(event)
+            return self.handle_mouse_event(state, event)
 
         elif event.type == pygame.KEYDOWN:
             if self.hold_event is None:
@@ -148,23 +155,26 @@ class Element(object):
         elif event.type == fhomm.event.EVENT_WINDOW_CLOSED:
             return self.on_window_closed(event.return_key, event.return_value)
 
-    def handle_mouse_event(self, event):
+    def handle_mouse_event(self, state, event):
         pos = Pos(event.pos[0], event.pos[1])
 
         if event.type == pygame.MOUSEMOTION:
-            old, self.is_hovered = self.is_hovered, self.rect.contains(pos)
-            if old != self.is_hovered:
-                if DEBUG_RENDER:
-                    self.dirty()
+            is_hovered_now = self.rect.contains(pos)
 
-                if self.is_hovered:
-                    return self.on_mouse_enter()
+            if state.is_hovered != is_hovered_now:
+                if DEBUG_RENDER:
+                    self.dirty() # TODO: remove
+
+                if is_hovered_now:
+                    return fhomm.command.cmd_update(Element.State.hovered), \
+                        self.on_mouse_enter()
 
                 else:
                     if self.is_mouse_held() and not self.grabs_mouse:
                         self.stop_hold()
 
-                    return self.on_mouse_leave()
+                    return fhomm.command.cmd_update(Element.State.unhovered), \
+                        self.on_mouse_leave()
 
             relpos = Pos(event.rel[0], event.rel[1])
             return self.on_mouse_move(pos, relpos, event.buttons)
@@ -297,7 +307,7 @@ class Window(Element):
             bg_image,
             child_slots=[],
             border_width=0,
-            state=Element.State()
+            state=Element.State(),
     ):
         # a window must grab the mouse, otherwise it can lead to elements
         # getting input after mouse leaves and returns to the window area:
@@ -339,7 +349,7 @@ class Window(Element):
     def on_render(self, ctx, _):
         self.bg_image.render(ctx)
 
-    def handle(self, state, event):
+    def handle(self, state_map, event):
         if event.type == fhomm.event.EVENT_STATE_UPDATED:
             return self.on_update(event.key, event.old, event.new)
 
@@ -350,7 +360,9 @@ class Window(Element):
         commands = []
 
         for child in self.child_slots:
-            cmd = self.handle_by_child(is_mouse_held, child, state, event)
+            child_state = state_map[child.key]
+
+            cmd = self.handle_by_child(is_mouse_held, child, child_state, event)
             commands.extend(
                 self.cmd_with_key(child.key, c)
                 for c in fhomm.command.aslist(cmd)
@@ -360,7 +372,7 @@ class Window(Element):
         # events before any child?
         #
         # TODO: input focus?
-        cmd = self.on_event(event)
+        cmd = super().handle(state_map['_self'], event)
         commands.extend(
             self.cmd_with_key('_self', c)
             for c in fhomm.command.aslist(cmd)
@@ -371,9 +383,7 @@ class Window(Element):
     def on_update(self, key, old, new):
         pass
 
-    def handle_by_child(self, is_mouse_held, child, state, event):
-        child_state = state[child.key]
-
+    def handle_by_child(self, is_mouse_held, child, child_state, event):
         if Element.is_mouse_event(event):
             return self.handle_mouse_by_child(is_mouse_held, child, child_state, event)
 

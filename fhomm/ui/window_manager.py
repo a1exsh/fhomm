@@ -18,7 +18,7 @@ class WindowManager(object):
         namedtuple(
             'WindowSlot',
             ['window', 'screen_pos', 'state_key', 'bg_capture'],
-            module='fhomm'
+            module='fhomm.ui.WindowManager'
         )
     ):
         __slots__ = ()
@@ -156,7 +156,7 @@ class WindowManager(object):
         return fhomm.command.aslist(self.handle_global(event)) + \
             fhomm.command.aslist(self.handle_by_active_window(event))
 
-    # def on_event(self, event):
+    # def on_event(self, state, event):
     #     if event.type == pygame.QUIT:
     #         return fhomm.command.CMD_QUIT
 
