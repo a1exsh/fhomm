@@ -62,6 +62,7 @@ class ItemSelectorWindow(fhomm.ui.Window):
                     1,
                     action=self.cmd_return,
                     hotkey=pygame.K_RETURN,
+                    is_active=False,
                 ),
                 Pos(36, 280),
                 'btn_okay',
@@ -83,6 +84,13 @@ class ItemSelectorWindow(fhomm.ui.Window):
             children,
             border_width=16,
         )
+
+    def on_update(self, key, old, new):
+        if key == 'lst_items' and new.selected_idx is not None:
+            return fhomm.command.cmd_update_other(
+                'btn_okay',
+                fhomm.ui.button.State.active,
+            )
 
     def make_return_value(self, state):
         return state['lst_items'].selected_idx

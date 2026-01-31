@@ -6,8 +6,23 @@ import fhomm.render
 import fhomm.ui
 
 
-class State(namedtuple('State', ['is_pressed'], module='fhomm.ui.button')):
+class State(
+    namedtuple(
+        'State',
+        ['is_active', 'is_pressed'],
+        defaults=[True, False],
+        module='fhomm.ui.button',
+    )
+):
     __slots__ = ()
+
+    @staticmethod
+    def active(s):
+        return s._replace(is_active=True)
+
+    @staticmethod
+    def inactive(s):
+        return s._replace(is_active=False)
 
     @staticmethod
     def pressed(s):
@@ -23,8 +38,8 @@ class ActiveArea(fhomm.ui.Element):
     CMD_PRESS = fhomm.command.cmd_update(State.pressed)
     CMD_RELEASE = fhomm.command.cmd_update(State.released)
 
-    def __init__(self, size, action, act_on_hold=False, hotkey=None):
-        super().__init__(size, State(is_pressed=False))
+    def __init__(self, size, action, act_on_hold=False, hotkey=None, **kwargs):
+        super().__init__(size, State(**kwargs))
         self.action = action
         self.act_on_hold = act_on_hold
         self.hotkey = hotkey
@@ -72,6 +87,7 @@ class ActiveIcon(ActiveArea):
     def on_render(self, ctx, _):
         self.img.render(ctx)
 
+    # TODO: move to the state
     def set_image(self, img):
         self.img = img
 
@@ -82,5 +98,6 @@ class Button(ActiveIcon):
         self.img_pressed = img_pressed
 
     def on_render(self, ctx, state):
-        img = self.img_pressed if state.is_pressed else self.img
+        # TODO: is_active should be part of the state, right?
+        img = self.img_pressed if state.is_pressed or not state.is_active else self.img
         img.render(ctx)

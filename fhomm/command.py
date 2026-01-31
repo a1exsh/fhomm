@@ -2,10 +2,6 @@ from collections import namedtuple
 
 import pygame
 
-EVENT_TICK = pygame.USEREVENT   # pygame.event.custom_type()
-EVENT_WINDOW_CLOSED = pygame.USEREVENT + 1
-
-
 QUIT = -1
 IGNORE = 0
 TOGGLE_FULLSCREEN = 1

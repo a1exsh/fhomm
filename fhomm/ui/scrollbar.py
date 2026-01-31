@@ -9,7 +9,7 @@ import fhomm.ui.list
 class ScrollBar(fhomm.ui.Element):
 
     def __init__(self, size, img_thumb):
-        super().__init__(size, mouse_grab=True)
+        super().__init__(size, grabs_mouse=True)
 
         self.img_thumb = img_thumb
         self.vrange = self.size.h - self.img_thumb.size.h - 6

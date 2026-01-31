@@ -8,6 +8,7 @@ import pygame
 from fhomm import asdict
 from fhomm.render import Pos, Size, Rect
 import fhomm.command
+import fhomm.event
 import fhomm.ui
 
 
@@ -147,7 +148,8 @@ class WindowManager(object):
     def handle_by_active_window(self, event):
         slot = self.active_slot()
         return slot.window.handle(
-            fhomm.ui.Window.translate_event(event, slot.screen_pos)
+            fhomm.ui.Window.translate_event(event, slot.screen_pos),
+            self.state[slot.state_key],
         )
 
     def handle_event(self, event):
@@ -198,7 +200,7 @@ class WindowManager(object):
         if self.palette.update_tick(dt):
             self.screen.set_palette(self.palette.palette)
 
-        self.post_tick_event(dt)
+        fhomm.event.post_tick(dt)
 
     @contextmanager
     def logging_just_once(self):
@@ -210,18 +212,6 @@ class WindowManager(object):
                 traceback.print_exc()
 
             self.last_exception = e
-
-    def post_tick_event(self, dt):
-        pygame.event.post(pygame.event.Event(fhomm.command.EVENT_TICK, dt=dt))
-
-    def post_close_event(self, return_key, return_value):
-        pygame.event.post(
-            pygame.event.Event(
-                fhomm.command.EVENT_WINDOW_CLOSED,
-                return_key=return_key,
-                return_value=return_value,
-            )
-        )
 
     def run_command(self, command):
         # print(command)
@@ -254,7 +244,7 @@ class WindowManager(object):
             return_key = command.kwargs['return_key']
             if return_key:
                 # print(f"CLOSE: {return_key}: {return_value}")
-                self.post_close_event(return_key, return_value)
+                fhomm.event.post_window_close(return_key, return_value)
 
         elif command.code == fhomm.command.UPDATE:
             self.update_state(**command.kwargs)
@@ -265,4 +255,9 @@ class WindowManager(object):
     def update_state(self, key, update_fn):
         # print(f"update_state: {key} {update_fn}")
         active_state = self.state[self.active_slot().state_key]
-        active_state.update({key: update_fn(active_state[key])})
+        old = active_state[key]
+        new = update_fn(old)
+        if old != new:
+            # TODO: here we know we need to re-render, but otherwise not really
+            active_state.update({key: new})
+            fhomm.event.post_state_update(key, old, new)

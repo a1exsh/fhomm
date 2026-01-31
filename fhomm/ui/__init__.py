@@ -4,6 +4,7 @@ import pygame
 
 from fhomm.render import Pos, Size, Rect
 import fhomm.command
+import fhomm.event
 import fhomm.render
 
 DEBUG_RENDER = False
@@ -17,11 +18,11 @@ class Element(object):
 
     State = namedtuple('State', [], module='fhomm.ui.Element')
 
-    def __init__(self, size, state=State(), mouse_grab=False):
+    def __init__(self, size, state=State(), grabs_mouse=False):
         # print(f"{self.__class__}: {size} {state}")
         self.size = size
         self.initial_state = state
-        self.mouse_grab = mouse_grab
+        self.grabs_mouse = grabs_mouse
 
         self.is_hovered = False    # TODO: should be part of the state
         self.hold_event = None
@@ -53,14 +54,13 @@ class Element(object):
     def on_render(self, ctx, state):
         pass
 
-    def handle(self, event):
-        if DEBUG_EVENTS and event.type != fhomm.command.EVENT_TICK:
+    def handle(self, event, state):
+        if DEBUG_EVENTS and event.type != fhomm.event.EVENT_TICK:
             print(f"{self}.handle: {event}")
 
-        return self.on_event(event)
-
-    # def post_command(self, cmd):
-    #     pygame.event.post(pygame.event.Event(fhomm.handle.EVENT_COMMAND, cmd=cmd))
+        # TODO: make it part of the element state, sub-classes should provide it
+        if state._asdict().get('is_active', True):
+            return self.on_event(event)
 
     @staticmethod
     def is_mouse_event(event):
@@ -94,10 +94,10 @@ class Element(object):
 
     # on_event is low level, better define one of the more specific on_XXX
     def on_event(self, event):
-        # if event.type != fhomm.command.EVENT_TICK:
+        # if event.type != fhomm.event.EVENT_TICK:
         #     print(f"{self}.on_event: {event}")
 
-        if event.type == fhomm.command.EVENT_TICK:
+        if event.type == fhomm.event.EVENT_TICK:
             if self.hold_event is not None:
                 cmds = fhomm.command.aslist(self.on_hold(event.dt))
             else:
@@ -122,7 +122,7 @@ class Element(object):
         elif event.type == pygame.QUIT:
             return self.on_quit()
 
-        elif event.type == fhomm.command.EVENT_WINDOW_CLOSED:
+        elif event.type == fhomm.event.EVENT_WINDOW_CLOSED:
             return self.on_window_closed(event.return_key, event.return_value)
 
     def handle_mouse_event(self, event):
@@ -138,7 +138,7 @@ class Element(object):
                     return self.on_mouse_enter()
 
                 else:
-                    if self.is_mouse_held() and not self.mouse_grab:
+                    if self.is_mouse_held() and not self.grabs_mouse:
                         self.stop_hold()
 
                     return self.on_mouse_leave()
@@ -278,7 +278,7 @@ class Window(Element):
     ):
         # a window must grab the mouse, otherwise it can lead to elements
         # getting input after mouse leaves and returns to the window area:
-        super().__init__(bg_image.size, state, mouse_grab=True)
+        super().__init__(bg_image.size, state, grabs_mouse=True)
 
         self.bg_image = bg_image
         self.child_slots = child_slots
@@ -315,8 +315,11 @@ class Window(Element):
 
     def on_render(self, ctx, _):
         self.bg_image.render(ctx)
-        
-    def handle(self, event):
+
+    def handle(self, event, state):
+        if event.type == fhomm.event.EVENT_STATE_UPDATED:
+            return self.on_update(event.key, event.old, event.new)
+
         # if mouse is held, only the active element must be able to handle
         is_mouse_held = self.is_mouse_held() or \
             any(child.element.is_mouse_held() for child in self.child_slots)
@@ -324,7 +327,7 @@ class Window(Element):
         commands = []
 
         for child in self.child_slots:
-            cmd = self.handle_by_child(is_mouse_held, child, event)
+            cmd = self.handle_by_child(is_mouse_held, child, state, event)
             commands.extend(
                 self.cmd_with_key(child.key, c)
                 for c in fhomm.command.aslist(cmd)
@@ -342,14 +345,19 @@ class Window(Element):
 
         return commands
 
-    def handle_by_child(self, is_mouse_held, child, event):
+    def on_update(self, key, old, new):
+        pass
+
+    def handle_by_child(self, is_mouse_held, child, state, event):
+        child_state = state[child.key]
+
         if Element.is_mouse_event(event):
-            return self.handle_mouse_by_child(is_mouse_held, child, event)
+            return self.handle_mouse_by_child(is_mouse_held, child, child_state, event)
 
         else:
-            return child.element.handle(event)
+            return child.element.handle(event, child_state)
 
-    def handle_mouse_by_child(self, is_mouse_held, child, event):
+    def handle_mouse_by_child(self, is_mouse_held, child, child_state, event):
         if is_mouse_held:
             should_handle = child.element.is_mouse_held()
 
@@ -370,7 +378,8 @@ class Window(Element):
 
         if should_handle:
             return child.element.handle(
-                Element.translate_mouse_event(event, child.relpos)
+                Element.translate_mouse_event(event, child.relpos),
+                child_state,
             )
 
     @staticmethod
