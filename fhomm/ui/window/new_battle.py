@@ -2,7 +2,8 @@ from collections import namedtuple
 
 import pygame
 
-from fhomm.game.heroes import HEROES
+from fhomm.game.artifacts import ARTIFACTS
+from fhomm.game.heroes import HEROES, Hero
 from fhomm.render import Pos, Size, Rect
 from fhomm.ui.window.select.army import ArmySelectorWindow
 from fhomm.ui.window.select.artifact import ArtifactSelectorWindow
@@ -47,8 +48,7 @@ class State(
         [
             'attacker',
             'defender',
-            'aarmy1',
-            'aart1',
+            'aarmy0',
         ],
         submodule='window.new_battle',
     )
@@ -56,6 +56,10 @@ class State(
     @staticmethod
     def set_attacker(attacker):
         return lambda s: s._replace(attacker=attacker)
+
+    @staticmethod
+    def update_attacker(update_fn):
+        return lambda s: s._replace(attacker=update_fn(s.attacker))
 
     @staticmethod
     def set_defender(defender):
@@ -66,16 +70,18 @@ class NewBattleWindow(fhomm.ui.Window):
     def __init__(self, toolkit):
         self.toolkit = toolkit
 
-        attacker = 0
-        defender = 35
+        attacker_idx = 0
+        defender_idx = len(HEROES) - 1
+        attacker = HEROES[attacker_idx]
+        defender = HEROES[defender_idx]
 
         self.icn_attacker = self.toolkit.icon(
-            self.hero_portrait_icn_name(attacker),
+            self.hero_portrait_icn_name(attacker_idx),
             action=self.cmd_select_attacker,
             hotkey=pygame.K_a,
         )
         self.icn_defender = self.toolkit.icon(
-            self.hero_portrait_icn_name(defender),
+            self.hero_portrait_icn_name(defender_idx),
             action=self.cmd_select_defender,
             hotkey=pygame.K_d,
         )
@@ -138,7 +144,7 @@ class NewBattleWindow(fhomm.ui.Window):
             fhomm.ui.Window.Slot(
                 toolkit.dynamic_label(
                     Size(44, 10),
-                    lambda s: f"{HEROES[s.attacker].kind.default_stats.attack}",
+                    lambda s: f"{s.attacker.stats.attack}",
                     font=toolkit.get_small_font(),
                 ),
                 Pos(134, 50),
@@ -148,7 +154,7 @@ class NewBattleWindow(fhomm.ui.Window):
             fhomm.ui.Window.Slot(
                 toolkit.dynamic_label(
                     Size(44, 10),
-                    lambda s: f"{HEROES[s.attacker].kind.default_stats.defense}",
+                    lambda s: f"{s.attacker.stats.defense}",
                     font=toolkit.get_small_font(),
                 ),
                 Pos(134, 70),
@@ -158,7 +164,7 @@ class NewBattleWindow(fhomm.ui.Window):
             fhomm.ui.Window.Slot(
                 toolkit.dynamic_label(
                     Size(44, 10),
-                    lambda s: f"{HEROES[s.attacker].kind.default_stats.power}",
+                    lambda s: f"{s.attacker.stats.power}",
                     font=toolkit.get_small_font(),
                 ),
                 Pos(134, 90),
@@ -168,7 +174,7 @@ class NewBattleWindow(fhomm.ui.Window):
             fhomm.ui.Window.Slot(
                 toolkit.dynamic_label(
                     Size(44, 10),
-                    lambda s: f"{HEROES[s.attacker].kind.default_stats.knowledge}",
+                    lambda s: f"{s.attacker.stats.knowledge}",
                     font=toolkit.get_small_font(),
                 ),
                 Pos(134, 110),
@@ -179,7 +185,7 @@ class NewBattleWindow(fhomm.ui.Window):
             fhomm.ui.Window.Slot(
                 toolkit.dynamic_label(
                     Size(44, 10),
-                    lambda s: f"{HEROES[s.defender].kind.default_stats.attack}",
+                    lambda s: f"{s.defender.stats.attack}",
                     font=toolkit.get_small_font(),
                 ),
                 Pos(270, 50),
@@ -189,7 +195,7 @@ class NewBattleWindow(fhomm.ui.Window):
             fhomm.ui.Window.Slot(
                 toolkit.dynamic_label(
                     Size(44, 10),
-                    lambda s: f"{HEROES[s.defender].kind.default_stats.defense}",
+                    lambda s: f"{s.defender.stats.defense}",
                     font=toolkit.get_small_font(),
                 ),
                 Pos(270, 70),
@@ -199,7 +205,7 @@ class NewBattleWindow(fhomm.ui.Window):
             fhomm.ui.Window.Slot(
                 toolkit.dynamic_label(
                     Size(44, 10),
-                    lambda s: f"{HEROES[s.defender].kind.default_stats.power}",
+                    lambda s: f"{s.defender.stats.power}",
                     font=toolkit.get_small_font(),
                 ),
                 Pos(270, 90),
@@ -209,7 +215,7 @@ class NewBattleWindow(fhomm.ui.Window):
             fhomm.ui.Window.Slot(
                 toolkit.dynamic_label(
                     Size(44, 10),
-                    lambda s: f"{HEROES[s.defender].kind.default_stats.knowledge}",
+                    lambda s: f"{s.defender.stats.knowledge}",
                     font=toolkit.get_small_font(),
                 ),
                 Pos(270, 110),
@@ -225,16 +231,26 @@ class NewBattleWindow(fhomm.ui.Window):
                     action=self.cmd_select_army,
                 ),
                 Pos(23, 147),
-                'icn_attacker_army_1',
+                'icn_attacker_army_0',
             ),
+        ]
 
-            # artifact selectors
+        # artifact selectors
+        children.extend(
             fhomm.ui.Window.Slot(
-                self.toolkit.icon('artfx.icn', 37, action=self.cmd_select_artifact),
-                Pos(76, 194),
-                'icn_attacker_artifact_1',
-            ),
+                self.toolkit.icon(
+                    'artfx.icn',
+                    37,
+                    action=self.cmd_select_artifact(f'attacker_artifact_{7*x + y}'),
+                ),
+                Pos(76 + 35*x, 194 + 35*y),
+                f'icn_attacker_artifact_{7*x + y}',
+            )
+            for x in range(2)
+            for y in range(7)
+        )
 
+        children.append(
             # EXIT
             fhomm.ui.Window.Slot(
                 self.toolkit.button(
@@ -246,7 +262,7 @@ class NewBattleWindow(fhomm.ui.Window):
                 Pos(184, 413),
                 'btn_exit',
             ),
-        ]
+        )
 
         super().__init__(
             toolkit.load_image('swapwin.bmp'),
@@ -255,8 +271,7 @@ class NewBattleWindow(fhomm.ui.Window):
             state=State(
                 attacker=attacker,
                 defender=defender,
-                aarmy1=23,
-                aart1=1,
+                aarmy0=23,
             ),
         )
 
@@ -267,9 +282,12 @@ class NewBattleWindow(fhomm.ui.Window):
     def hero_portrait_img(self, idx):
         return self.toolkit.load_sprite(self.hero_portrait_icn_name(idx))
 
+    def artifact_img(self, idx):
+        return self.toolkit.load_sprite('artfx.icn', idx)
+
     @staticmethod
     def versus_label_text(state):
-        return f"{HEROES[state.attacker].name} vs. {HEROES[state.defender].name}"
+        return f"{state.attacker.name} vs. {state.defender.name}"
 
     def cmd_select_attacker(self):
         return fhomm.command.cmd_show(
@@ -295,36 +313,52 @@ class NewBattleWindow(fhomm.ui.Window):
 
     def cmd_select_army(self):
         return fhomm.command.cmd_show(
-            ArmySelectorWindow(self.toolkit, 'aarmy1'),
+            ArmySelectorWindow(self.toolkit, 'aarmy0'),
             Pos(0, 74),
             'select_army',
         )
 
-    def cmd_select_artifact(self):
-        return fhomm.command.cmd_show(
-            ArtifactSelectorWindow(self.toolkit, 'aart1'),
-            Pos(0, 74),
-            'select_artifact',
-        )
+    def cmd_select_artifact(self, key):
+        def cmd():
+            return fhomm.command.cmd_show(
+                ArtifactSelectorWindow(self.toolkit, key),
+                Pos(0, 74),
+                'select_artifact',
+            )
+
+        return cmd
 
     def cmd_cancel(self):
         return fhomm.command.CMD_CLOSE
 
     def on_return(self, key, value):
         if key == 'attacker':
-            return fhomm.command.cmd_update(State.set_attacker(value)), \
+            return fhomm.command.cmd_update(State.set_attacker(HEROES[value])), \
                 fhomm.command.cmd_update_other(
                     'icn_attacker',
-                    fhomm.ui.button.ActiveIcon.State.set_image(
+                    fhomm.ui.button.Icon.State.set_image(
                         self.hero_portrait_img(value)
                     ),
                 )
 
         elif key == 'defender':
-            return fhomm.command.cmd_update(State.set_defender(value)), \
+            return fhomm.command.cmd_update(State.set_defender(HEROES[value])), \
                 fhomm.command.cmd_update_other(
                     'icn_defender',
-                    fhomm.ui.button.ActiveIcon.State.set_image(
+                    fhomm.ui.button.Icon.State.set_image(
                         self.hero_portrait_img(value)
                     ),
                 )
+
+        elif key.startswith('attacker_artifact_'):
+            idx = int(key[len('attacker_artifact_'):])
+
+            return fhomm.command.cmd_update(
+                State.update_attacker(Hero.set_artifact(idx, ARTIFACTS[value]))
+            ), \
+            fhomm.command.cmd_update_other(
+                'icn_' + key,
+                fhomm.ui.button.Icon.State.set_image(
+                    self.artifact_img(value)
+                ),
+            )

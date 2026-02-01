@@ -83,9 +83,9 @@ class ActiveArea(fhomm.ui.Element):
         return self.CMD_RELEASE
 
 
-class ActiveIcon(ActiveArea):
+class Icon(ActiveArea):
 
-    class State(state_tuple(['img'], submodule='ActiveIcon')):
+    class State(state_tuple(['img'], submodule='Icon')):
         @staticmethod
         def set_image(img):
             return lambda s: s._replace(img=img)
@@ -94,10 +94,11 @@ class ActiveIcon(ActiveArea):
         super().__init__(state.img.size, state, **kwargs)
 
     def on_render(self, ctx, state):
-        state.img.render(ctx)
+        if state.img is not None:
+            state.img.render(ctx)
 
 
-class Button(ActiveIcon):
+class Button(Icon):
 
     State = state_tuple(['img', 'img_pressed'], submodule='Button')
 

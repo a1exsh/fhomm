@@ -111,8 +111,8 @@ class Toolkit(object):
         )
 
     def icon(self, icn_name, idx=0, **kwargs):
-        return fhomm.ui.button.ActiveIcon(
-            fhomm.ui.button.ActiveIcon.State(self.load_sprite(icn_name, idx)),
+        return fhomm.ui.button.Icon(
+            fhomm.ui.button.Icon.State(self.load_sprite(icn_name, idx)),
             **kwargs,
         )
 
