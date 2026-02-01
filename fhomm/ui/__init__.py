@@ -111,7 +111,7 @@ class Element(object):
             pygame.MOUSEMOTION,
             pygame.MOUSEBUTTONDOWN,
             pygame.MOUSEBUTTONUP,
-            pygame.MOUSEWHEEL,
+            # pygame.MOUSEWHEEL,
         ]
 
     @staticmethod
@@ -230,8 +230,8 @@ class Element(object):
 
                 return cmds
 
-        elif event.type == pygame.MOUSEWHEEL:
-            return self.on_mouse_wheel(pos, event.x, event.y)
+        # elif event.type == pygame.MOUSEWHEEL:
+        #     return self.on_mouse_wheel(pos, event.x, event.y)
 
     @staticmethod
     def is_key_held(state, key=None):

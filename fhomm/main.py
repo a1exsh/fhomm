@@ -25,7 +25,6 @@ PALETTE = fhomm.ui.palette.Palette(TOOLKIT.get_palette())
 # pygame setup
 pygame.init()
 SCREEN = pygame.display.set_mode((640, 480), depth=8)
-SCREEN.set_palette(TOOLKIT.get_palette())
 
 # DEBUG
 # def render_palette(screen, size, offx, offy):

@@ -6,7 +6,7 @@ import yaml
 import pygame
 
 from fhomm import asdict
-from fhomm.render import Pos, Size, Rect
+from fhomm.render import Pos, Size, Rect, Image
 import fhomm.command
 import fhomm.event
 import fhomm.ui
@@ -35,7 +35,14 @@ class WindowManager(object):
         self.toolkit = toolkit
         self.fps_limit = fps_limit
 
-        self.screen_ctx = fhomm.render.Context(screen)
+        self.buffer_surface = pygame.Surface(
+            (screen.get_width(), screen.get_height()),
+            depth=8,
+        )
+        self.buffer_surface.set_palette(toolkit.get_palette())
+
+        self.buffer_image = Image(self.buffer_surface)
+
         self.running = False
         self.last_exception = None
 
@@ -72,7 +79,8 @@ class WindowManager(object):
     def close(self, return_key):
         slot = self.window_slots.pop()
         if slot.bg_capture:
-            slot.bg_capture.render(self.screen_ctx, slot.screen_pos)
+            with self.buffer_image.get_context() as ctx:
+                slot.bg_capture.render(ctx, slot.screen_pos)
 
         if return_key:
             return_value = slot.window.make_return_value(self.state[slot.state_key])
@@ -93,26 +101,25 @@ class WindowManager(object):
         else:
             capture_size = window.size
 
-        return self.screen_ctx.capture(Rect.of(capture_size, screen_pos))
+        with self.buffer_image.get_context() as ctx:
+            return ctx.capture(Rect.of(capture_size, screen_pos))
 
     def _cast_shadow(self, background, screen_rect):
         img_shadow = fhomm.render.Context.make_shadow_image(screen_rect.size)
 
-        bg_copy = self.screen_ctx.copy_image_for_shadow(background)
-        img_shadow.render(bg_copy.get_context(), WindowManager._SHADOW_OFFSET)
-        bg_copy.render(self.screen_ctx, screen_rect.pos)
+        with self.buffer_image.get_context() as ctx:
+            bg_copy = ctx.copy_image_for_shadow(background)
+            img_shadow.render(bg_copy.get_context(), WindowManager._SHADOW_OFFSET)
+            bg_copy.render(ctx, screen_rect.pos)
 
     def active_slot(self):
         return self.window_slots[-1]
 
     def render_active_window(self, force=True): # False
         slot = self.active_slot()
-        with self.screen_ctx.restrict(slot.screen_rect) as window_ctx:
-            return slot.window.render(
-                window_ctx,
-                self.state[slot.state_key],
-                force,
-            )
+
+        with self.buffer_image.get_context().restrict(slot.screen_rect) as ctx:
+            return slot.window.render(ctx, self.state[slot.state_key], force)
 
     def render_fps(self, ctx, dt):
         fps = 0 if dt == 0 else 1000 // dt
@@ -191,21 +198,26 @@ class WindowManager(object):
                     self.run_command(slot, cmd)
 
             if self.render_active_window():
-                pygame.display.flip()
+                self.flush_buffer()
 
             self.tick_clock()
+
+    def flush_buffer(self):
+        with fhomm.render.Context(self.screen) as screen_ctx:
+            self.buffer_image.render(screen_ctx)
+
+        pygame.display.flip()
 
     def tick_clock(self):
         dt = self.clock.tick(self.fps_limit)
 
         if self.show_fps:
-            self.render_fps(self.screen_ctx, dt)
+            with self.buffer_image.get_context() as ctx:
+                self.render_fps(ctx, dt)
 
-        # TODO: for now no way to move it to on_event, as a child handling
-        # on tick will prevent palette from cycling a way to solve it may
-        # be by re-thinking the short-circuit on first returned command
+        # TODO: move to handle_global
         if self.palette.update_tick(dt):
-            self.screen.set_palette(self.palette.palette)
+            self.buffer_surface.set_palette(self.palette.palette)
 
         fhomm.event.post_tick(dt)
 
