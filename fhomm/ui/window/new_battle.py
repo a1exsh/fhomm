@@ -93,6 +93,129 @@ class NewBattleWindow(fhomm.ui.Window):
             fhomm.ui.Window.Slot(self.icn_attacker, Pos(28, 44), 'icn_attacker'),
             fhomm.ui.Window.Slot(self.icn_defender, Pos(319, 44), 'icn_defender'),
 
+            # heroes stats labels
+            fhomm.ui.Window.Slot(
+                toolkit.label(
+                    Size(92, 10),
+                    "Attack Skill",
+                    font=toolkit.get_small_font(),
+                ),
+                Pos(178, 50),
+                'lbl_attack_skill',
+            ),
+
+            fhomm.ui.Window.Slot(
+                toolkit.label(
+                    Size(92, 10),
+                    "Defense Skill",
+                    font=toolkit.get_small_font(),
+                ),
+                Pos(178, 70),
+                'lbl_defense_skill',
+            ),
+
+            fhomm.ui.Window.Slot(
+                toolkit.label(
+                    Size(92, 10),
+                    "Spell Power",
+                    font=toolkit.get_small_font(),
+                ),
+                Pos(178, 90),
+                'lbl_spell_power',
+            ),
+
+            fhomm.ui.Window.Slot(
+                toolkit.label(
+                    Size(92, 10),
+                    "Knowledge",
+                    font=toolkit.get_small_font(),
+                ),
+                Pos(178, 110),
+                'lbl_knowledge',
+            ),
+
+            # attacker stats
+            fhomm.ui.Window.Slot(
+                toolkit.dynamic_label(
+                    Size(44, 10),
+                    lambda s: f"{HEROES[s.attacker].kind.default_stats.attack}",
+                    font=toolkit.get_small_font(),
+                ),
+                Pos(134, 50),
+                '_self',
+            ),
+
+            fhomm.ui.Window.Slot(
+                toolkit.dynamic_label(
+                    Size(44, 10),
+                    lambda s: f"{HEROES[s.attacker].kind.default_stats.defense}",
+                    font=toolkit.get_small_font(),
+                ),
+                Pos(134, 70),
+                '_self',
+            ),
+
+            fhomm.ui.Window.Slot(
+                toolkit.dynamic_label(
+                    Size(44, 10),
+                    lambda s: f"{HEROES[s.attacker].kind.default_stats.power}",
+                    font=toolkit.get_small_font(),
+                ),
+                Pos(134, 90),
+                '_self',
+            ),
+
+            fhomm.ui.Window.Slot(
+                toolkit.dynamic_label(
+                    Size(44, 10),
+                    lambda s: f"{HEROES[s.attacker].kind.default_stats.knowledge}",
+                    font=toolkit.get_small_font(),
+                ),
+                Pos(134, 110),
+                '_self',
+            ),
+
+            # defender stats
+            fhomm.ui.Window.Slot(
+                toolkit.dynamic_label(
+                    Size(44, 10),
+                    lambda s: f"{HEROES[s.defender].kind.default_stats.attack}",
+                    font=toolkit.get_small_font(),
+                ),
+                Pos(270, 50),
+                '_self',
+            ),
+
+            fhomm.ui.Window.Slot(
+                toolkit.dynamic_label(
+                    Size(44, 10),
+                    lambda s: f"{HEROES[s.defender].kind.default_stats.defense}",
+                    font=toolkit.get_small_font(),
+                ),
+                Pos(270, 70),
+                '_self',
+            ),
+
+            fhomm.ui.Window.Slot(
+                toolkit.dynamic_label(
+                    Size(44, 10),
+                    lambda s: f"{HEROES[s.defender].kind.default_stats.power}",
+                    font=toolkit.get_small_font(),
+                ),
+                Pos(270, 90),
+                '_self',
+            ),
+
+            fhomm.ui.Window.Slot(
+                toolkit.dynamic_label(
+                    Size(44, 10),
+                    lambda s: f"{HEROES[s.defender].kind.default_stats.knowledge}",
+                    font=toolkit.get_small_font(),
+                ),
+                Pos(270, 110),
+                '_self',
+            ),
+
             # army selectors
             fhomm.ui.Window.Slot(
                 SmallArmyIcon(

@@ -96,11 +96,19 @@ class Toolkit(object):
         ]
         return fhomm.render.font.Font(sprites, **kwargs)
 
-    def label(self, size, text):
-        return fhomm.ui.label.Label(size, self.get_font(), text)
+    def label(self, size, text, font=None):
+        return fhomm.ui.label.Label(
+            size,
+            (self.get_font() if font is None else font),
+            text,
+        )
 
-    def dynamic_label(self, size, text_fn):
-        return fhomm.ui.label.DynamicLabel(size, self.get_font(), text_fn)
+    def dynamic_label(self, size, text_fn, font=None):
+        return fhomm.ui.label.DynamicLabel(
+            size,
+            (self.get_font() if font is None else font),
+            text_fn,
+        )
 
     def icon(self, icn_name, idx=0, **kwargs):
         return fhomm.ui.button.ActiveIcon(
