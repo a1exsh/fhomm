@@ -100,7 +100,7 @@ class Element(object):
 
     def handle(self, state, event):
         if DEBUG_EVENTS and event.type != fhomm.event.EVENT_TICK:
-            print(f"{self}.handle: {state} / {event}")
+            print(f"{self}.handle: {event}") # {state}
 
         if state.is_active:
             return self.on_event(state, event)
@@ -374,15 +374,18 @@ class Window(Element):
         self.bg_image.render(ctx)
 
     def handle(self, state_map, event):
+        # why does this stand out so much?
         if event.type == fhomm.event.EVENT_STATE_UPDATED:
             return self.on_update(event.key, event.old, event.new)
 
         # if mouse is held, only the active element must be able to handle
-        is_mouse_held = Element.is_mouse_held(state_map['_self']) or \
+        self_mouse_held = Element.is_mouse_held(state_map['_self'])
+        is_mouse_held = self_mouse_held or \
             any(
                 Element.is_mouse_held(state_map[child.key])
                 for child in self.child_slots
             )
+        # print(f"self_mouse_held: {self_mouse_held} / is_mouse_held: {is_mouse_held}")
 
         commands = []
 
@@ -394,6 +397,10 @@ class Window(Element):
                 self.cmd_with_key(child.key, c)
                 for c in fhomm.command.aslist(cmd)
             )
+
+        # skip processing if someone else's grabbed the mouse input
+        if is_mouse_held and not self_mouse_held:
+            return commands
 
         # TODO: are there situations where the window would want to handle
         # events before any child?
