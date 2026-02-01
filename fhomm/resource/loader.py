@@ -2,6 +2,7 @@ import os
 import fhomm.resource.agg
 import fhomm.resource.bmp
 import fhomm.resource.icn
+import fhomm.resource.pal
 
 
 def get_icn_class(name):
@@ -17,11 +18,7 @@ class AggResourceLoader(object):
         self.agg = agg
 
     def load_pal(self, name):
-        pal = self.agg.entries[name]
-        if 768 != pal.size:
-            raise Exception(f"Expected the palette chunk to have 768 bytes, but got: {pal.size}")
-
-        return fhomm.resource.agg.read_entry_data(self.agg.f, pal)
+        return fhomm.resource.pal.read_palette(self.agg, name)
 
     def load_bmp(self, name):
         self.seek_to(name)

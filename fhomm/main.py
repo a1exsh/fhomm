@@ -19,7 +19,7 @@ RESOURCE_LOADER = fhomm.resource.loader.CachingLoader(
     fhomm.resource.loader.AggResourceLoader(HEROES_AGG),
 )
 
-TOOLKIT = fhomm.toolkit.Toolkit(RESOURCE_LOADER, 'kb.pal')
+TOOLKIT = fhomm.toolkit.Toolkit(RESOURCE_LOADER)
 PALETTE = fhomm.ui.palette.Palette(TOOLKIT.get_palette())
 
 # pygame setup

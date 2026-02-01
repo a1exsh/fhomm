@@ -7,9 +7,9 @@ import fhomm.ui.scrollbar
 
 
 class Toolkit(object):
-    def __init__(self, loader, pal_name):
+    def __init__(self, loader):
         self.loader = loader
-        self.palette = self.load_palette(pal_name)
+        self.palette = loader.load_pal('kb.pal')
 
         self.font = None
         self.hl_font = None
@@ -59,17 +59,6 @@ class Toolkit(object):
             self.pressed_button_font = ButtonFont(self, is_pressed=True)
 
         return self.pressed_button_font
-
-    def load_palette(self, pal_name):
-        pal = self.loader.load_pal(pal_name)
-        return [
-            (
-                4*pal[i*3],
-                4*pal[i*3+1],
-                4*pal[i*3+2],
-            )
-            for i in range(256)
-        ]
 
     def load_image(self, bmp_name):
         bmp = self.loader.load_bmp(bmp_name)
