@@ -29,7 +29,7 @@ class WindowManager(object):
 
     _SHADOW_OFFSET = Pos(16, 16)
 
-    def __init__(self, screen, palette, toolkit, main_handler, fps_limit=10):
+    def __init__(self, screen, palette, toolkit, main_handler, fps_limit=20):
         self.screen = screen
         self.palette = palette
         self.toolkit = toolkit
@@ -123,7 +123,7 @@ class WindowManager(object):
 
     def render_fps(self, ctx, dt):
         fps = 0 if dt == 0 else 1000 // dt
-        fps_text = str(fps)
+        fps_text = "%.1f" % fps
 
         font = self.toolkit.get_font()
         layout = font.layout_text(fps_text)
