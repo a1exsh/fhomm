@@ -122,7 +122,7 @@ class WindowManager(object):
             return slot.window.render(ctx, self.state[slot.state_key], force)
 
     def render_fps(self, ctx, dt):
-        fps = 0 if dt == 0 else 1000 // dt
+        fps = 0 if dt == 0 else 1000 / dt
         fps_text = "%.1f" % fps
 
         font = self.toolkit.get_font()
