@@ -15,6 +15,7 @@ Sprite = namedtuple(
 )
 
 
+# TODO: instead of using classes here we should rather supply format from the call site
 ALL_MONO = 0
 ALL_COLOR = 1
 # MONSTER_ATK = 2
