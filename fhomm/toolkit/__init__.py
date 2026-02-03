@@ -111,10 +111,10 @@ class Toolkit(object):
         )
 
     def icon(self, icn_name, idx=0, **kwargs):
-        return fhomm.ui.button.Icon(
-            fhomm.ui.button.Icon.State(self.load_sprite(icn_name, idx)),
-            **kwargs,
-        )
+        return fhomm.ui.button.Icon(self.load_sprite(icn_name, idx), **kwargs)
+
+    def dynamic_icon(self, size, img_fn, **kwargs):
+        return fhomm.ui.button.DynamicIcon(size, img_fn, **kwargs)
 
     def button(self, icn_name, base_idx, **kwargs):
         return fhomm.ui.button.Button(

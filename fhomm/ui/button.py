@@ -5,16 +5,10 @@ import fhomm.command
 import fhomm.render
 import fhomm.ui
 
-
-def state_tuple(fields=[], defaults=[], submodule='', **kwargs):
+class ActiveArea(fhomm.ui.Element):
 
     class State(
-        fhomm.ui.state_tuple(
-            fields + ['is_pressed'],
-            defaults=(defaults + [False]),
-            submodule=('button.' + submodule),
-            **kwargs
-        )
+        fhomm.ui.state_tuple(['is_pressed'], defaults=[False], submodule='button')
     ):
         @staticmethod
         def pressed(s):
@@ -23,13 +17,6 @@ def state_tuple(fields=[], defaults=[], submodule='', **kwargs):
         @staticmethod
         def released(s):
             return s._replace(is_pressed=False)
-
-    return State
-
-
-class ActiveArea(fhomm.ui.Element):
-
-    State = state_tuple(submodule='ActiveArea')
 
     CMD_PRESS = fhomm.command.cmd_update(State.pressed)
     CMD_RELEASE = fhomm.command.cmd_update(State.released)
@@ -85,32 +72,40 @@ class ActiveArea(fhomm.ui.Element):
 
 class Icon(ActiveArea):
 
-    class State(state_tuple(['img'], submodule='Icon')):
-        @staticmethod
-        def set_image(img):
-            return lambda s: s._replace(img=img)
+    def __init__(self, img, is_active=True, **kwargs):
+        super().__init__(img.size, ActiveArea.State(is_active=is_active), **kwargs)
+        self.img = img
 
-    def __init__(self, state, **kwargs):
-        super().__init__(state.img.size, state, **kwargs)
+    def on_render(self, ctx, _):
+        if self.img is not None:
+            self.img.render(ctx)
+
+
+class DynamicIcon(ActiveArea):
+
+    def __init__(self, size, img_fn, is_active=True, **kwargs):
+        super().__init__(size, ActiveArea.State(is_active=is_active), **kwargs)
+        self.img_fn = img_fn
 
     def on_render(self, ctx, state):
-        if state.img is not None:
-            state.img.render(ctx)
+        img = self.img_fn(state)
+        if img is not None:
+            img.render(ctx)
 
 
-class Button(Icon):
-
-    State = state_tuple(['img', 'img_pressed'], submodule='Button')
+class Button(DynamicIcon):
 
     def __init__(self, img, img_pressed, is_active=True, **kwargs):
-        super().__init__(Button.State(img, img_pressed, is_active=is_active), **kwargs)
-        self.img_pressed = img_pressed
+        def select_img(state):
+            if state.is_pressed or not state.is_active:
+                return img_pressed
 
-    def on_render(self, ctx, state):
-        if state.is_pressed or not state.is_active:
-            img = state.img_pressed
+            else:
+                return img
 
-        else:
-            img = state.img
-
-        img.render(ctx)
+        super().__init__(
+            img.size,
+            select_img,
+            ActiveArea.State(is_active=is_active),
+            **kwargs
+        )
