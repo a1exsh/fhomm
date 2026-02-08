@@ -445,7 +445,7 @@ class Window(Element):
 
             cmd = self.handle_by_child(is_mouse_held, child, child_state, event)
             commands.extend(
-                self.cmd_with_key(child.int_key, c)
+                self.cmd_with_key(child.int_key, child.ext_key, c)
                 for c in fhomm.command.aslist(cmd)
             )
 
@@ -459,7 +459,7 @@ class Window(Element):
         # TODO: input focus?
         cmd = super().handle(state_map['_self'], event)
         commands.extend(
-            self.cmd_with_key('_self', c)
+            self.cmd_with_key('_self', None, c)
             for c in fhomm.command.aslist(cmd)
         )
 
@@ -501,12 +501,20 @@ class Window(Element):
             )
 
     @staticmethod
-    def cmd_with_key(key, cmd):
-        # print(f"cmd_with_key: {key} {cmd}")
+    def cmd_with_key(int_key, ext_key, cmd):
+        # print(f"cmd_with_key: {int_key} {ext_key} {cmd}")
+
+        # it could already have a key in case of a direct update for another element
         if cmd.code == fhomm.command.UPDATE and 'key' not in cmd.kwargs:
             return fhomm.command.Command(
                 fhomm.command.UPDATE,
-                dict(cmd.kwargs, key=key),
+                dict(cmd.kwargs, key=int_key),
+            )
+
+        elif cmd.code == fhomm.command.UPDATE_EXTERNAL:
+            return fhomm.command.Command(
+                fhomm.command.UPDATE,
+                dict(cmd.kwargs, key=ext_key),
             )
 
         else:

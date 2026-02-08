@@ -100,7 +100,7 @@ class DynamicIcon(ActiveArea):
 class Button(DynamicIcon):
 
     def __init__(self, img, img_pressed, **kwargs):
-        def select_img(state):
+        def select_img(state, ext_state=None):
             if state.is_pressed or not state.is_active:
                 return img_pressed
 

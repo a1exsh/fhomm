@@ -32,10 +32,12 @@ class ItemSelectorWindow(fhomm.ui.Window):
                 ),
                 Pos(280, 37),
                 'btn_scroll_up',
+                'lst_items',
             ),
             fhomm.ui.Window.Slot(
                 toolkit.scrollbar(Size(14, 179)),
                 Pos(280, 53),
+                'scbr_items',
                 'lst_items',
             ),
             fhomm.ui.Window.Slot(
@@ -47,13 +49,17 @@ class ItemSelectorWindow(fhomm.ui.Window):
                 ),
                 Pos(280, 234),
                 'btn_scroll_down',
+                'lst_items',
             ),
             fhomm.ui.Window.Slot(
                 toolkit.dynamic_label(
                     Size(225, 16),
-                    lambda s: (s.selected_item.text if s.selected_item else None),
+                    lambda _, lst_state: (
+                        lst_state.selected_item.text if lst_state.selected_item else None
+                    ),
                 ),
                 Pos(48, 254),
+                'lbl_selected',
                 'lst_items',
             ),
             fhomm.ui.Window.Slot(
@@ -96,14 +102,12 @@ class ItemSelectorWindow(fhomm.ui.Window):
         return state['lst_items'].selected_idx
 
     def cmd_scroll_up(self):
-        return fhomm.command.cmd_update_other(
-            'lst_items',
+        return fhomm.command.cmd_update_external(
             fhomm.ui.list.State.scroll_by(-1),
         )
 
     def cmd_scroll_down(self):
-        return fhomm.command.cmd_update_other(
-            'lst_items',
+        return fhomm.command.cmd_update_external(
             fhomm.ui.list.State.scroll_by(1),
         )
 
