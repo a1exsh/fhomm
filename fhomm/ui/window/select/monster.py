@@ -6,18 +6,18 @@ import fhomm.game.monsters
 import fhomm.ui.list
 
 
-class ArmySelectorWindow(ItemSelectorWindow):
+class MonsterSelectorWindow(ItemSelectorWindow):
     def __init__(self, toolkit, return_key):
         items = [
             fhomm.ui.list.Item(
-                ArmySelectorWindow.make_minimon_with_swapbg(toolkit, i),
+                MonsterSelectorWindow.make_minimon_with_swapbg(toolkit, i),
                 monster.name,
             )
             for i, monster in enumerate(fhomm.game.monsters.MONSTERS)
         ]
         super().__init__(
             toolkit,
-            "Select Army:",
+            "Select Monster:",
             items,
             Size(34, 34),
             return_key,

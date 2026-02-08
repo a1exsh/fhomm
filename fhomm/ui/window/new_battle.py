@@ -4,10 +4,11 @@ import pygame
 
 from fhomm.game.artifacts import ARTIFACTS
 from fhomm.game.heroes import HEROES, Hero
+from fhomm.game.monsters import MONSTERS
 from fhomm.render import Pos, Size, Rect
-from fhomm.ui.window.select.army import ArmySelectorWindow
 from fhomm.ui.window.select.artifact import ArtifactSelectorWindow
 from fhomm.ui.window.select.hero import HeroSelectorWindow
+from fhomm.ui.window.select.monster import MonsterSelectorWindow
 import fhomm.command
 import fhomm.render
 import fhomm.toolkit
@@ -15,32 +16,24 @@ import fhomm.ui
 import fhomm.ui.button
 
 
-class SmallArmyIcon(fhomm.ui.button.ActiveArea):
-    def __init__(self, toolkit, monster=None, count=None, **kwargs):
-        super().__init__(Size(34, 44), **kwargs)
+class SmallMonsterIcon(fhomm.ui.button.DynamicIcon):
+    def __init__(self, toolkit, img_fn, **kwargs):
+        super().__init__(Size(34, 44), img_fn, **kwargs)
         self.toolkit = toolkit
-        self.monster = monster
-        self.count = count
 
-        self._bg_capture = None
+    def on_render(self, ctx, state, ext_state):
+        img = self.img_fn(state, ext_state)
 
-    def on_render(self, ctx, _):
-        if self._bg_capture is None:
-            self._bg_capture = ctx.capture(self.rect)
-        else:
-            self._bg_capture.render(ctx)
-
-        if self.monster is not None:
-            img = self.toolkit.load_sprite('mons32.icn', self.monster)
+        if img is not None:
             img.render(ctx, Pos(1, 1))
 
-        if self.count is not None:
-            self.toolkit.get_small_font().draw_text(
-                ctx,
-                str(self.count),
-                Rect.ltrb(0, 37, self.size.w, self.size.h),
-                halign=fhomm.render.CENTER,
-            )
+        # if self.count is not None:
+        #     self.toolkit.get_small_font().draw_text(
+        #         ctx,
+        #         str(self.count),
+        #         Rect.ltrb(0, 37, self.size.w, self.size.h),
+        #         halign=fhomm.render.CENTER,
+        #     )
 
 
 class State(
@@ -48,7 +41,6 @@ class State(
         [
             'attacker',
             'defender',
-            'aarmy0',
         ],
         submodule='window.new_battle',
     )
@@ -240,30 +232,26 @@ class NewBattleWindow(fhomm.ui.Window):
                 'lbl_defender_knowledge',
                 '_self',
             ),
-
-            # army selectors
-            fhomm.ui.Window.Slot(
-                SmallArmyIcon(
-                    self.toolkit,
-                    monster=23,
-                    count=1,
-                    action=self.cmd_select_army,
-                ),
-                Pos(23, 147),
-                'icn_attacker_army_0',
-            ),
         ]
+
+        # monster selectors
+        children.extend(
+            self.monster_slot('attacker', Pos(23, 147), i)
+            for i in range(len(attacker.monsters))
+        )
+        children.extend(
+            self.monster_slot('defender', Pos(251, 147), i)
+            for i in range(len(defender.monsters))
+        )
 
         # artifact selectors
         children.extend(
-            self.artifact_slot('attacker', Pos(76, 194), x, y)
-            for x in range(2)
-            for y in range(7)
+            self.artifact_slot('attacker', Pos(76, 194), i)
+            for i in range(len(attacker.artifacts))
         )
         children.extend(
-            self.artifact_slot('defender', Pos(305, 194), x, y)
-            for x in range(2)
-            for y in range(7)
+            self.artifact_slot('defender', Pos(305, 194), i)
+            for i in range(len(defender.artifacts))
         )
 
         children.append(
@@ -287,7 +275,6 @@ class NewBattleWindow(fhomm.ui.Window):
             state=State(
                 attacker=attacker,
                 defender=defender,
-                aarmy0=23,
             ),
         )
 
@@ -298,12 +285,33 @@ class NewBattleWindow(fhomm.ui.Window):
     def hero_portrait_img(self, idx):
         return self.toolkit.load_sprite(self.hero_portrait_icn_name(idx))
 
-    def artifact_slot(self, hero_role, top_left, x, y):
+    def monster_slot(self, hero_role, top_left, idx):
+        def monster_slot_img(_, win):
+            monster = getattr(win, hero_role).monsters[idx]
+            return self.monster_img(monster.id) if monster else None
+
+        return fhomm.ui.Window.Slot(
+            SmallMonsterIcon(
+                self.toolkit,
+                monster_slot_img,
+                action=self.cmd_select_monster(f'{hero_role}_monster_{idx}'),
+            ),
+            Pos(top_left.x + 35*idx, top_left.y),
+            f'icn_{hero_role}_monster_{idx}',
+            '_self',
+        )
+
+    def monster_img(self, idx):
+        return self.toolkit.load_sprite('mons32.icn', idx)
+
+    def artifact_slot(self, hero_role, top_left, idx):
+        x = idx // 7
+        y = idx % 7
+
         def artifact_slot_img(_, win):
-            artifact = getattr(win, hero_role).artifacts[7*x + y]
+            artifact = getattr(win, hero_role).artifacts[idx]
             return self.artifact_img(artifact.id) if artifact else None
 
-        idx = 7*x + y
         return fhomm.ui.Window.Slot(
             self.toolkit.dynamic_icon(
                 Size(32, 32),
@@ -344,12 +352,15 @@ class NewBattleWindow(fhomm.ui.Window):
             'select_hero',
         )
 
-    def cmd_select_army(self):
-        return fhomm.command.cmd_show(
-            ArmySelectorWindow(self.toolkit, 'aarmy0'),
-            Pos(0, 74),
-            'select_army',
-        )
+    def cmd_select_monster(self, key):
+        def cmd():
+            return fhomm.command.cmd_show(
+                MonsterSelectorWindow(self.toolkit, key),
+                Pos(0, 74),
+                'select_monster',
+            )
+
+        return cmd
 
     def cmd_select_artifact(self, key):
         def cmd():
@@ -383,4 +394,18 @@ class NewBattleWindow(fhomm.ui.Window):
 
             return fhomm.command.cmd_update(
                 State.update_defender(Hero.set_artifact(idx, ARTIFACTS[value]))
+            )
+
+        elif key.startswith('attacker_monster_'):
+            idx = int(key[len('attacker_monster_'):])
+
+            return fhomm.command.cmd_update(
+                State.update_attacker(Hero.set_monster(idx, MONSTERS[value]))
+            )
+
+        elif key.startswith('defender_monster_'):
+            idx = int(key[len('defender_monster_'):])
+
+            return fhomm.command.cmd_update(
+                State.update_defender(Hero.set_monster(idx, MONSTERS[value]))
             )

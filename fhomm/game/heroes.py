@@ -10,8 +10,8 @@ Stats = namedtuple(
 class Hero(
     namedtuple(
         'Hero',
-        ['id', 'kind', 'name', 'artifacts'],
-        defaults=[(None,) * 14],
+        ['id', 'kind', 'name', 'artifacts', 'monsters'],
+        defaults=[(None,) * 14, (None,) * 5],
         module='fhomm.game',
     )
 ):
@@ -44,6 +44,15 @@ class Hero(
             return h._replace(artifacts=tuple(art_list))
 
         return set_art
+
+    @staticmethod
+    def set_monster(idx, monster):
+        def set_mon(h):
+            mon_list = list(h.monsters)
+            mon_list[idx] = monster
+            return h._replace(monsters=tuple(mon_list))
+
+        return set_mon
 
 
 Kind = namedtuple(
