@@ -80,13 +80,17 @@ class Element(object):
     def dirty(self):
         self._dirty = True
 
-    def render(self, ctx, state, force=False):
+    def render(self, ctx, state, ext_state=None, force=False):
         if self._dirty:
             self._dirty = False
             force = True
 
         if force:
-            self.on_render(ctx, state)
+            if ext_state is not None:
+                self.on_render(ctx, state, ext_state)
+
+            else:
+                self.on_render(ctx, state)
 
             if DEBUG_RENDER and state.is_hovered:
                 ctx.draw_rect(228, self.rect, 1)
@@ -95,7 +99,7 @@ class Element(object):
 
         return False
 
-    def on_render(self, ctx, state):
+    def on_render(self, ctx, state, ext_state=None):
         pass
 
     def handle(self, state, event):
@@ -313,12 +317,13 @@ class Element(object):
 
 
 class Window(Element):
-    #
-    # We externalize the state key so that an element cannot accidentally
-    # affect state of an unrelated element.
-    #
     class Slot(
-        namedtuple('ChildSlot', ['element', 'relpos', 'key'], module='fhomm.ui')
+        namedtuple(
+            'ChildSlot',
+            ['element', 'relpos', 'int_key', 'ext_key'],
+            defaults=[None],
+            module='fhomm.ui',
+        )
     ):
         __slots__ = ()
 
@@ -353,19 +358,25 @@ class Window(Element):
             '_self': self.initial_state,
         }
         for child in self.child_slots:
-            if child.key not in self.initial_state_map:
+            if child.int_key not in self.initial_state_map:
                 # first write wins!
-                self.initial_state_map[child.key] = child.element.initial_state
+                self.initial_state_map[child.int_key] = child.element.initial_state
 
-    def render(self, ctx, state, force=False):
-        update = super().render(ctx, state['_self'], force)
+    def render(self, ctx, state_map, force=False):
+        update = super().render(ctx, state_map['_self'], ext_state=None, force=force)
         if update:
             force = True
 
         with ctx.restrict(self.content_rect) as content_ctx:
             for child in self.child_slots:
                 with ctx.restrict(child.rect) as child_ctx:
-                    if child.element.render(child_ctx, state[child.key], force):
+                    ext_state = state_map[child.ext_key] if child.ext_key else None
+                    if child.element.render(
+                            child_ctx,
+                            state_map[child.int_key],
+                            ext_state,
+                            force,
+                    ):
                         update = True
 
         return update
@@ -382,7 +393,7 @@ class Window(Element):
         self_mouse_held = Element.is_mouse_held(state_map['_self'])
         is_mouse_held = self_mouse_held or \
             any(
-                Element.is_mouse_held(state_map[child.key])
+                Element.is_mouse_held(state_map[child.int_key])
                 for child in self.child_slots
             )
         # print(f"self_mouse_held: {self_mouse_held} / is_mouse_held: {is_mouse_held}")
@@ -390,11 +401,11 @@ class Window(Element):
         commands = []
 
         for child in self.child_slots:
-            child_state = state_map[child.key]
+            child_state = state_map[child.int_key]
 
             cmd = self.handle_by_child(is_mouse_held, child, child_state, event)
             commands.extend(
-                self.cmd_with_key(child.key, c)
+                self.cmd_with_key(child.int_key, c)
                 for c in fhomm.command.aslist(cmd)
             )
 

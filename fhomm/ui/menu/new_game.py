@@ -22,7 +22,7 @@ class NewGameMenu(fhomm.ui.Window):
             fhomm.ui.Window.Slot(
                 toolkit.button('btnnewgm.icn', base_idx, action=cmd, hotkey=key),
                 Pos(33, 45 + 66*i),
-                key=f"btn_{name}",
+                int_key=f"btn_{name}",
             )
             for i, base_idx, key, cmd, name in buttons
         ]
@@ -35,7 +35,7 @@ class NewGameMenu(fhomm.ui.Window):
                     hotkey=pygame.K_b,
                 ),
                 Pos(33, 45 + 66*3),
-                key='btn_battle',
+                int_key='btn_battle',
             )
         )
 

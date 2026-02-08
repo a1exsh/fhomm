@@ -87,8 +87,12 @@ class DynamicIcon(ActiveArea):
         super().__init__(size, ActiveArea.State(is_active=is_active), **kwargs)
         self.img_fn = img_fn
 
-    def on_render(self, ctx, state):
-        img = self.img_fn(state)
+    def on_render(self, ctx, state, ext_state=None):
+        if ext_state is not None:
+            img = self.img_fn(state, ext_state)
+        else:
+            img = self.img_fn(state)
+
         if img is not None:
             img.render(ctx)
 

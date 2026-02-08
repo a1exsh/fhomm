@@ -24,7 +24,7 @@ class MainMenu(fhomm.ui.Window):
             fhomm.ui.Window.Slot(
                 toolkit.button('btnmain.icn', base_idx, action=cmd, hotkey=key),
                 Pos(33, 45 + 66*i),
-                key=f"btn_{name}",
+                int_key=f"btn_{name}",
             )
             for i, (base_idx, key, cmd, name) in enumerate(buttons)
         ]

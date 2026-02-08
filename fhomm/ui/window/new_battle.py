@@ -75,13 +75,15 @@ class NewBattleWindow(fhomm.ui.Window):
         attacker = HEROES[attacker_idx]
         defender = HEROES[defender_idx]
 
-        self.icn_attacker = self.toolkit.icon(
-            self.hero_portrait_icn_name(attacker_idx),
+        self.icn_attacker = self.toolkit.dynamic_icon(
+            Size(101, 93),
+            lambda _, win: self.hero_portrait_img(win.attacker.id),
             action=self.cmd_select_attacker,
             hotkey=pygame.K_a,
         )
-        self.icn_defender = self.toolkit.icon(
-            self.hero_portrait_icn_name(defender_idx),
+        self.icn_defender = self.toolkit.dynamic_icon(
+            Size(101, 93),
+            lambda _, win: self.hero_portrait_img(win.defender.id),
             action=self.cmd_select_defender,
             hotkey=pygame.K_d,
         )
@@ -96,8 +98,12 @@ class NewBattleWindow(fhomm.ui.Window):
                 '_self',
             ),
 
-            fhomm.ui.Window.Slot(self.icn_attacker, Pos(28, 44), 'icn_attacker'),
-            fhomm.ui.Window.Slot(self.icn_defender, Pos(319, 44), 'icn_defender'),
+            fhomm.ui.Window.Slot(
+                self.icn_attacker, Pos(28, 44), 'icn_attacker', '_self'
+            ),
+            fhomm.ui.Window.Slot(
+                self.icn_defender, Pos(319, 44), 'icn_defender', '_self'
+            ),
 
             # heroes stats labels
             fhomm.ui.Window.Slot(
@@ -237,15 +243,7 @@ class NewBattleWindow(fhomm.ui.Window):
 
         # artifact selectors
         children.extend(
-            fhomm.ui.Window.Slot(
-                self.toolkit.icon(
-                    'artfx.icn',
-                    37,
-                    action=self.cmd_select_artifact(f'attacker_artifact_{7*x + y}'),
-                ),
-                Pos(76 + 35*x, 194 + 35*y),
-                f'icn_attacker_artifact_{7*x + y}',
-            )
+            self.artifact_slot('attacker', Pos(76, 194), x, y)
             for x in range(2)
             for y in range(7)
         )
@@ -281,6 +279,23 @@ class NewBattleWindow(fhomm.ui.Window):
 
     def hero_portrait_img(self, idx):
         return self.toolkit.load_sprite(self.hero_portrait_icn_name(idx))
+
+    def artifact_slot(self, hero_role, top_left, x, y):
+        def slot_artifact_img(_, win):
+            artifact = getattr(win, hero_role).artifacts[7*x + y]
+            return self.artifact_img(artifact.id) if artifact else None
+
+        idx = 7*x + y
+        return fhomm.ui.Window.Slot(
+            self.toolkit.dynamic_icon(
+                Size(32, 32),
+                slot_artifact_img,
+                action=self.cmd_select_artifact(f'{hero_role}_artifact_{idx}'),
+            ),
+            Pos(35*x, 35*y).moved_by(top_left),
+            f'icn_{hero_role}_artifact_{idx}',
+            '_self',
+        )
 
     def artifact_img(self, idx):
         return self.toolkit.load_sprite('artfx.icn', idx)
@@ -333,32 +348,14 @@ class NewBattleWindow(fhomm.ui.Window):
 
     def on_return(self, key, value):
         if key == 'attacker':
-            return fhomm.command.cmd_update(State.set_attacker(HEROES[value])), \
-                fhomm.command.cmd_update_other(
-                    'icn_attacker',
-                    fhomm.ui.button.Icon.State.set_image(
-                        self.hero_portrait_img(value)
-                    ),
-                )
+            return fhomm.command.cmd_update(State.set_attacker(HEROES[value]))
 
         elif key == 'defender':
-            return fhomm.command.cmd_update(State.set_defender(HEROES[value])), \
-                fhomm.command.cmd_update_other(
-                    'icn_defender',
-                    fhomm.ui.button.Icon.State.set_image(
-                        self.hero_portrait_img(value)
-                    ),
-                )
+            return fhomm.command.cmd_update(State.set_defender(HEROES[value]))
 
         elif key.startswith('attacker_artifact_'):
             idx = int(key[len('attacker_artifact_'):])
 
             return fhomm.command.cmd_update(
                 State.update_attacker(Hero.set_artifact(idx, ARTIFACTS[value]))
-            ), \
-            fhomm.command.cmd_update_other(
-                'icn_' + key,
-                fhomm.ui.button.Icon.State.set_image(
-                    self.artifact_img(value)
-                ),
             )
