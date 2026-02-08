@@ -17,7 +17,7 @@ import fhomm.ui.button
 
 class SmallArmyIcon(fhomm.ui.button.ActiveArea):
     def __init__(self, toolkit, monster=None, count=None, **kwargs):
-        super().__init__(Size(34, 44), SmallArmyIcon.State(), **kwargs)
+        super().__init__(Size(34, 44), **kwargs)
         self.toolkit = toolkit
         self.monster = monster
         self.count = count
