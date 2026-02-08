@@ -25,8 +25,13 @@ class DynamicLabel(fhomm.ui.Element):
         self.font = font
         self.text_fn = text_fn
 
-    def on_render(self, ctx, state):
-        text = self.text_fn(state)
+    def on_render(self, ctx, state, ext_state=None):
+        if ext_state is not None:
+            text = self.text_fn(state, ext_state)
+
+        else:
+            text = self.text_fn(state)
+
         if text:
             self.font.draw_text(
                 ctx,
