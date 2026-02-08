@@ -19,8 +19,14 @@ def state_tuple(fields=[], defaults=[], submodule='', **kwargs):
     class State(
         namedtuple(
             'State',
-            fields + ['is_active', 'is_hovered', 'hold_event', 'hold_ticks'],
-            defaults=(defaults + [True, False, None, 0]),
+            fields + [
+                'is_active',
+                'is_hovered',
+                'is_highlighted',
+                'hold_event',
+                'hold_ticks',
+            ],
+            defaults=(defaults + [True, False, False, None, 0]),
             module=('fhomm.ui.' + submodule),
             **kwargs
         )
@@ -42,6 +48,14 @@ def state_tuple(fields=[], defaults=[], submodule='', **kwargs):
         @staticmethod
         def unhovered(s):
             return s._replace(is_hovered=False)
+
+        @staticmethod
+        def highlighted(s):
+            return s._replace(is_highlighted=True)
+
+        @staticmethod
+        def dehighlighted(s):
+            return s._replace(is_highlighted=False)
 
         @staticmethod
         def start_hold(event):
@@ -92,12 +106,24 @@ class Element(object):
             else:
                 self.on_render(ctx, state)
 
-            if DEBUG_RENDER and state.is_hovered:
-                ctx.draw_rect(228, self.rect, 1)
+            if DEBUG_RENDER:
+                self.on_render_debug(ctx, state)
 
             return True         # rendered, tell to update the screen
 
         return False
+
+    def on_render_debug(self, ctx, state):
+        outline_color = None
+
+        if state.is_highlighted:
+            outline_color = 224
+
+        if state.is_hovered:
+            outline_color = 228
+
+        if outline_color is not None:
+            ctx.draw_rect(outline_color, self.rect, 1)
 
     def on_render(self, ctx, state, ext_state=None):
         pass
@@ -108,6 +134,10 @@ class Element(object):
 
         if state.is_active:
             return self.on_event(state, event)
+
+    @staticmethod
+    def is_keyboard_event(event):
+        return event.type in [pygame.KEYDOWN, pygame.KEYUP]
 
     @staticmethod
     def is_mouse_event(event):
@@ -152,11 +182,24 @@ class Element(object):
 
             return cmds + fhomm.command.aslist(self.on_tick(event.dt))
 
+        elif Element.is_keyboard_event(event):
+            return self.handle_keyboard_event(state, event)
+
         elif Element.is_mouse_event(event):
             return self.handle_mouse_event(state, event)
 
-        elif event.type == pygame.KEYDOWN:
+        elif event.type == pygame.QUIT:
+            return self.on_quit()
+
+        elif event.type == fhomm.event.EVENT_WINDOW_CLOSED:
+            return self.on_window_closed(event.return_key, event.return_value)
+
+    def handle_keyboard_event(self, state, event):
+        if event.type == pygame.KEYDOWN:
             cmds = fhomm.command.aslist(self.on_key_down(event.key))
+
+            if event.key == pygame.K_LCTRL:
+                cmds.append(fhomm.command.cmd_update(Element.State.highlighted))
 
             if state.hold_event is None: # start_hold could also check that
                 cmds.append(fhomm.command.cmd_update(Element.State.start_hold(event)))
@@ -166,16 +209,13 @@ class Element(object):
         elif event.type == pygame.KEYUP:
             cmds = fhomm.command.aslist(self.on_key_up(event.key))
 
+            if event.key == pygame.K_LCTRL:
+                cmds.append(fhomm.command.cmd_update(Element.State.dehighlighted))
+
             if Element.is_key_held(state, event.key):
                 cmds.append(fhomm.command.cmd_update(Element.State.stop_hold))
 
             return cmds
-
-        elif event.type == pygame.QUIT:
-            return self.on_quit()
-
-        elif event.type == fhomm.event.EVENT_WINDOW_CLOSED:
-            return self.on_window_closed(event.return_key, event.return_value)
 
     def handle_mouse_event(self, state, event):
         pos = Pos(event.pos[0], event.pos[1])
