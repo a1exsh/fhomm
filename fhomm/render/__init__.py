@@ -2,9 +2,9 @@ from collections import namedtuple
 
 import pygame
 
+import fhomm.palette
 import fhomm.resource.bmp
 import fhomm.resource.icn
-import fhomm.ui.palette
 
 # halign values
 LEFT = 0
@@ -56,6 +56,10 @@ class Rect(namedtuple('Rect', ['x', 'y', 'w', 'h'], module='fhomm.render')):
     def ltrb(cls, left, top, right, bottom):
         return cls(left, top, right - left + 1, bottom - top + 1)
 
+    @classmethod
+    def from_pygame(cls, rect):
+        return cls(rect.x, rect.y, rect.w, rect.h)
+
     @property
     def pos(self):
         return Pos(self.x, self.y)
@@ -82,6 +86,16 @@ class Rect(namedtuple('Rect', ['x', 'y', 'w', 'h'], module='fhomm.render')):
 
     def moved_by(self, relpos):
         return Rect(self.x + relpos.x, self.y + relpos.y, self.w, self.h)
+
+    def intersected_by(self, rect):
+        ret = Rect.ltrb(
+            max(self.left,   rect.left),
+            max(self.top,    rect.top),
+            min(self.right,  rect.right),
+            min(self.bottom, rect.bottom),
+        )
+        # print(f"{self}.intersected_by({rect}) => {ret}")
+        return ret
 
     # TODO: __contains__
     def contains(self, pos):
@@ -168,7 +182,7 @@ class Sprite(Image):
         return Sprite(self._surface, self.offset.moved_by(relpos))
 
     def render(self, ctx, pos=Pos(0, 0)):
-        super().render(ctx, Pos(pos.x + self.offset.x, pos.y + self.offset.y))
+        super().render(ctx, pos.moved_by(self.offset))
 
 
 class Context(object):
@@ -190,14 +204,16 @@ class Context(object):
     def copy_image_for_shadow(self, source):
         surface = pygame.Surface(source.size, depth=8)
         # TODO: get the pre-made shadow-safe palette from the Palette object
-        surface.set_palette(fhomm.ui.palette.make_safe_for_shadow(self._surface.get_palette()))
+        surface.set_palette(
+            fhomm.palette.make_safe_for_shadow(self._surface.get_palette())
+        )
         surface.blit(source._surface, (0, 0)) # area?
         return Image(surface)
 
     @classmethod
     def make_shadow_image(cls, size):
         surface = pygame.Surface(size)
-        surface.set_alpha(96)
+        surface.set_alpha(48)
         return Image(surface)
 
     def draw_rect(self, color, rect, width=0):
@@ -211,33 +227,74 @@ class Context(object):
         image.get_context().blit(Image(self._surface), (0, 0), rect)
         return image
 
+    def clip(self, rect):
+        print(f"clip: {rect}")
+        old = self._surface.get_clip()
+        self._surface.set_clip(rect)
+        return Rect(old.x, old.y, old.w, old.h)
+
+    # def translate(self, pos):
+    #     return TranslatingContext(self, pos)
+
     def restrict(self, rect):
         # print(f"restricting to {rect}")
         return RestrictingContext(self, rect)
 
 
+# TODO: right now it mixes functions of both restricting and translating
 class RestrictingContext(Context):
     def __init__(self, ctx, rect):
-        super().__init__(ctx._surface)
-        self._restriction = rect
+        parent_rect = Rect.from_pygame(ctx._surface.get_rect())
+        # print(f"restricting: {parent_rect}, {rect}")
+        # intersect to prevent "ValueError: subsurface rectangle outside surface area"
+        super().__init__(
+            ctx._surface.subsurface(rect.intersected_by(parent_rect))
+        )
 
-    def __enter__(self):
-        self._old_clip = self._surface.get_clip()
-        self._surface.set_clip(self._restriction)
-        return self
+    # def __enter__(self):
+    #     return self
 
-    def __exit__(self, *args, **kwargs):
-        self._surface.set_clip(self._old_clip)
+    # def __exit__(self, *args, **kwargs):
+    #     pass
 
-    def draw_rect(self, color, rect, width=0):
-        super().draw_rect(color, rect.moved_by(self._restriction.pos), width)
+    # def draw_rect(self, color, rect, width=0):
+    #     super().draw_rect(color, rect.moved_by(self._rect.pos), width)
 
-    def blit(self, source, pos=Pos(0, 0), rect=None):
-        super().blit(source, pos.moved_by(self._restriction.pos), rect=rect)
+    # def blit(self, source, pos=Pos(0, 0), rect=None):
+    #     super().blit(source, pos.moved_by(self._rect.pos), rect=rect)
 
-    def capture(self, rect):
-        return super().capture(rect.moved_by(self._restriction.pos))
+    # def capture(self, rect):
+    #     return super().capture(rect.moved_by(self._rect.pos))
 
-    def restrict(self, rect):
-        # TODO: should also restrict width and height
-        return super().restrict(rect.moved_by(self._restriction.pos))
+    # def clip(self, rect):
+    #     return super().clip(rect.moved_by(self._rect.pos))
+
+    # def translate(self, pos):
+    #     return super().translate(pos.moved_by(self._pos))
+
+    # def restrict(self, rect):
+    #     return super().restrict(
+    #         rect.moved_by(self._rect.pos).intersected_by(self._rect)
+    #     )
+
+
+# class RestrictingContext(TranslatingContext):
+#     def __init__(self, ctx, rect):
+#         super().__init__(ctx, rect.pos)
+#         self._rect = rect
+
+#     def __enter__(self):
+#         self._old_clip = self._wrapped.clip(Rect.of(self._rect.size))
+#         return self
+
+#     def __exit__(self, *args, **kwargs):
+#         pass
+#         self._wrapped.clip(
+#             self._old_clip)
+#         # .moved_by(Pos(-self._rect.pos.x, -self._rect.pos.y))
+#         # )
+
+#     # def restrict(self, rect):
+#     #     return super().restrict(
+#     #         rect.intersected_by(self._rect)
+#     #     )

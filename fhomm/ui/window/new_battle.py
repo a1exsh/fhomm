@@ -6,6 +6,7 @@ from fhomm.game.artifacts import ARTIFACTS
 from fhomm.game.heroes import HEROES, Hero
 from fhomm.game.monsters import MONSTERS
 from fhomm.render import Pos, Size, Rect
+from fhomm.ui.window.recruit import RecruitMonstersWindow
 from fhomm.ui.window.select.artifact import ArtifactSelectorWindow
 from fhomm.ui.window.select.hero import HeroSelectorWindow
 from fhomm.ui.window.select.monster import MonsterSelectorWindow
@@ -74,13 +75,13 @@ class NewBattleWindow(fhomm.ui.Window):
         self.icn_attacker = self.toolkit.dynamic_icon(
             Size(101, 93),
             lambda _, win: self.hero_portrait_img(win.attacker.id),
-            action=self.cmd_select_attacker,
+            action=self.cmd_select_hero('attacker'),
             hotkey=pygame.K_a,
         )
         self.icn_defender = self.toolkit.dynamic_icon(
             Size(101, 93),
             lambda _, win: self.hero_portrait_img(win.defender.id),
-            action=self.cmd_select_defender,
+            action=self.cmd_select_hero('defender'),
             hotkey=pygame.K_d,
         )
 
@@ -294,7 +295,7 @@ class NewBattleWindow(fhomm.ui.Window):
             SmallMonsterIcon(
                 self.toolkit,
                 monster_slot_img,
-                action=self.cmd_select_monster(f'{hero_role}_monster_{idx}'),
+                action=self.cmd_select_monster(hero_role, idx),
             ),
             Pos(top_left.x + 35*idx, top_left.y),
             f'icn_{hero_role}_monster_{idx}',
@@ -316,7 +317,7 @@ class NewBattleWindow(fhomm.ui.Window):
             self.toolkit.dynamic_icon(
                 Size(32, 32),
                 artifact_slot_img,
-                action=self.cmd_select_artifact(f'{hero_role}_artifact_{idx}'),
+                action=self.cmd_select_artifact(hero_role, idx),
             ),
             Pos(35*x, 35*y).moved_by(top_left),
             f'icn_{hero_role}_artifact_{idx}',
@@ -330,43 +331,45 @@ class NewBattleWindow(fhomm.ui.Window):
     def versus_label_text(_, win):
         return f"{win.attacker.name} vs. {win.defender.name}"
 
-    def cmd_select_attacker(self):
-        return fhomm.command.cmd_show(
-            HeroSelectorWindow(
-                self.toolkit,
-                "Select Attacking Hero:",
-                'attacker',
-            ),
-            Pos(0, 74),
-            'select_hero',
-        )
+    @staticmethod
+    def selector_window_pos(hero_role):
+        if hero_role == 'attacker':
+            return Pos(0, 74)
 
-    def cmd_select_defender(self):
-        return fhomm.command.cmd_show(
-            HeroSelectorWindow(
-                self.toolkit,
-                "Select Defending Hero:",
-                'defender',
-            ),
-            Pos(320, 74),
-            'select_hero',
-        )
+        else:
+            return Pos(320, 74)
 
-    def cmd_select_monster(self, key):
+    def cmd_select_hero(self, hero_role):
+        if hero_role == 'attacker':
+            title = "Select Attacking Hero:"
+        
+        else:
+            title = "Select Defending Hero:"
+
         def cmd():
             return fhomm.command.cmd_show(
-                MonsterSelectorWindow(self.toolkit, key),
-                Pos(0, 74),
+                HeroSelectorWindow(self.toolkit, title, hero_role),
+                self.selector_window_pos(hero_role),
+                'select_hero',
+            )
+
+        return cmd
+
+    def cmd_select_monster(self, hero_role, idx):
+        def cmd():
+            return fhomm.command.cmd_show(
+                MonsterSelectorWindow(self.toolkit, f'{hero_role}_monster_{idx}'),
+                self.selector_window_pos(hero_role),
                 'select_monster',
             )
 
         return cmd
 
-    def cmd_select_artifact(self, key):
+    def cmd_select_artifact(self, hero_role, idx):
         def cmd():
             return fhomm.command.cmd_show(
-                ArtifactSelectorWindow(self.toolkit, key),
-                Pos(0, 74),
+                ArtifactSelectorWindow(self.toolkit, f'{hero_role}_artifact_{idx}'),
+                self.selector_window_pos(hero_role),
                 'select_artifact',
             )
 
@@ -399,9 +402,14 @@ class NewBattleWindow(fhomm.ui.Window):
         elif key.startswith('attacker_monster_'):
             idx = int(key[len('attacker_monster_'):])
 
-            return fhomm.command.cmd_update(
-                State.update_attacker(Hero.set_monster(idx, MONSTERS[value]))
+            return fhomm.command.cmd_show(
+                RecruitMonstersWindow(self.toolkit, MONSTERS[value]),
+                Pos(0, 74),
+                'recruit',
             )
+            # return fhomm.command.cmd_update(
+            #     State.update_attacker(Hero.set_monster(idx, MONSTERS[value]))
+            # )
 
         elif key.startswith('defender_monster_'):
             idx = int(key[len('defender_monster_'):])

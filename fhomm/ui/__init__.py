@@ -393,14 +393,18 @@ class Window(Element):
             ),
             Pos(border_width, border_width),
         )
+        self.border_correction_offset = Pos(-border_width, -border_width)
 
         self.initial_state_map = {
             '_self': self.initial_state,
         }
         for child in self.child_slots:
-            if child.int_key not in self.initial_state_map:
-                # first write wins!
-                self.initial_state_map[child.int_key] = child.element.initial_state
+            if child.int_key in self.initial_state_map:
+                raise Exception(
+                    f"Child for the key {child.int_key} is already in the state map!"
+                )
+
+            self.initial_state_map[child.int_key] = child.element.initial_state
 
     def render(self, ctx, state_map, force=False):
         update = super().render(ctx, state_map['_self'], ext_state=None, force=force)
@@ -408,8 +412,13 @@ class Window(Element):
             force = True
 
         with ctx.restrict(self.content_rect) as content_ctx:
+            # content_ctx.draw_rect(228, Rect.of(self.content_rect.size), width=1)
+
             for child in self.child_slots:
-                with ctx.restrict(child.rect) as child_ctx:
+                clip_rect = child.rect.moved_by(self.border_correction_offset)
+                with content_ctx.restrict(clip_rect) as child_ctx:
+                    # child_ctx.draw_rect(240, Rect.of(child.rect.size), width=1)
+
                     ext_state = state_map[child.ext_key] if child.ext_key else None
                     if child.element.render(
                             child_ctx,

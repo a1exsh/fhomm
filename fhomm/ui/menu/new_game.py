@@ -42,7 +42,7 @@ class NewGameMenu(fhomm.ui.Window):
         super().__init__(
             toolkit.load_image('redback.bmp'),
             children,
-            border_width=25,
+            border_width=25,    # why not 16?
         )
 
     # TODO: memoize
