@@ -19,10 +19,10 @@ class RecruitMonstersWindow(fhomm.ui.Window):
         children = [
             fhomm.ui.Window.Slot(
                 toolkit.label(
-                    Size(280, 22),
+                    Size(286, 22),
                     f"Recruit {monster.name}", # TODO: make this translation-friendly
                 ),
-                Pos(179, 75),
+                Pos(17, 17),
                 'lbl_title',
             ),
         ]
