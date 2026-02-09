@@ -6,10 +6,10 @@ import pygame
 
 from fhomm.ui.screen.title_screen import TitleScreen
 from fhomm.ui.window_manager import WindowManager
+import fhomm.palette
 import fhomm.resource.agg
 import fhomm.resource.loader
 import fhomm.toolkit
-import fhomm.ui.palette
 
 
 HEROES_AGG_PATH = os.path.join(os.getenv('FHOMM_DATA'), 'HEROES.AGG')
@@ -20,7 +20,7 @@ RESOURCE_LOADER = fhomm.resource.loader.CachingLoader(
 )
 
 TOOLKIT = fhomm.toolkit.Toolkit(RESOURCE_LOADER)
-PALETTE = fhomm.ui.palette.Palette(TOOLKIT.get_palette())
+PALETTE = fhomm.palette.Palette(TOOLKIT.get_palette())
 
 # pygame setup
 pygame.init()
