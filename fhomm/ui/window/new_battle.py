@@ -237,12 +237,16 @@ class NewBattleWindow(fhomm.ui.Window):
 
         # monster selectors
         children.extend(
-            self.monster_slot('attacker', Pos(23, 147), i)
-            for i in range(len(attacker.monsters))
+            self.monster_slot('attacker', Pos(23, 147), i, hotkey)
+            for i, hotkey in enumerate(
+                [pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4, pygame.K_5]
+            )
         )
         children.extend(
-            self.monster_slot('defender', Pos(251, 147), i)
-            for i in range(len(defender.monsters))
+            self.monster_slot('defender', Pos(251, 147), i, hotkey)
+            for i, hotkey in enumerate(
+                [pygame.K_6, pygame.K_7, pygame.K_8, pygame.K_9, pygame.K_0]
+            )
         )
 
         # artifact selectors
@@ -286,7 +290,7 @@ class NewBattleWindow(fhomm.ui.Window):
     def hero_portrait_img(self, idx):
         return self.toolkit.load_sprite(self.hero_portrait_icn_name(idx))
 
-    def monster_slot(self, hero_role, top_left, idx):
+    def monster_slot(self, hero_role, top_left, idx, hotkey):
         def monster_slot_img(_, win):
             monster = getattr(win, hero_role).monsters[idx]
             return self.monster_img(monster.id) if monster else None
@@ -296,6 +300,7 @@ class NewBattleWindow(fhomm.ui.Window):
                 self.toolkit,
                 monster_slot_img,
                 action=self.cmd_select_monster(hero_role, idx),
+                hotkey=hotkey,
             ),
             Pos(top_left.x + 35*idx, top_left.y),
             f'icn_{hero_role}_monster_{idx}',

@@ -123,6 +123,15 @@ class Toolkit(object):
             **kwargs,
         )
 
+    def animated_icon(self, icn_name, idxs, **kwargs):
+        return fhomm.ui.button.AnimatedIcon(
+            [
+                self.load_sprite(icn_name, i)
+                for i in idxs
+            ],
+            **kwargs
+        )
+
     def list(self, size, items, img_size, **kwargs):
         return fhomm.ui.list.List(
             size, self.get_font(), self.get_hl_font(), items, img_size, **kwargs,

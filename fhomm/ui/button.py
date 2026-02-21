@@ -113,3 +113,18 @@ class Button(DynamicIcon):
                 return img
 
         super().__init__(img.aligned_size, select_img, **kwargs)
+
+
+class AnimatedIcon(DynamicIcon):
+
+    def __init__(self, imgs, **kwargs):
+        def select_img(state):
+            return imgs[(state.ticks // 150) % len(imgs)]
+
+        super().__init__(imgs[0].size, select_img, counts_ticks=True, **kwargs)
+
+    def on_render(self, ctx, state):
+        img = self.img_fn(state)
+
+        if img is not None:
+            img.render(ctx, Pos(50, 100)) # TEMP

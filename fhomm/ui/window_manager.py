@@ -54,7 +54,7 @@ class WindowManager(object):
 
         self.show(main_handler, Pos(0, 0), 'main_handler')
 
-    def show(self, window, screen_pos, state_key):
+    def show(self, window, screen_pos, state_key, casts_shadow=True):
         if state_key in self.state:
             raise Exception(f"Window for {state_key} is already shown!")
 
@@ -62,7 +62,7 @@ class WindowManager(object):
         # print(yaml.dump(asdict(self.state)))
 
         if self.window_slots:
-            bg_capture = self._capture_background(window, screen_pos)
+            bg_capture = self._capture_background(window, screen_pos, casts_shadow)
             if bg_capture.size.w > window.size.w or \
                bg_capture.size.h > window.size.h:
                 self._cast_shadow(bg_capture, Rect.of(window.size, screen_pos))
@@ -90,9 +90,11 @@ class WindowManager(object):
 
         fhomm.event.post_window_close(slot.state_key, return_key, return_value)
 
-    def _capture_background(self, window, screen_pos):
-        if window.size.w < self.screen.get_width() or \
-           window.size.h < self.screen.get_height():
+    def _capture_background(self, window, screen_pos, casts_shadow):
+        if casts_shadow and (
+                window.size.w < self.screen.get_width() or
+                window.size.h < self.screen.get_height()
+        ):
             capture_size = Size(
                 window.size.w + WindowManager._SHADOW_OFFSET.x,
                 window.size.h + WindowManager._SHADOW_OFFSET.y,

@@ -25,13 +25,14 @@ CMD_TOGGLE_FPS = Command(TOGGLE_FPS)
 
 
 # TODO: the opposite of "close" is not "show"...  "open" maybe?
-def cmd_show(window, screen_pos, state_key):
+def cmd_show(window, screen_pos, state_key, casts_shadow=True):
     return Command(
         SHOW,
         {
             'window': window,
             'screen_pos': screen_pos,
             'state_key': state_key,
+            'casts_shadow': casts_shadow,
         }
     )
 

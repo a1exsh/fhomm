@@ -23,10 +23,11 @@ def state_tuple(fields=[], defaults=[], submodule='', **kwargs):
                 'is_active',
                 'is_hovered',
                 'is_highlighted',
+                'ticks',
                 'hold_event',
                 'hold_ticks',
             ],
-            defaults=(defaults + [True, False, False, None, 0]),
+            defaults=(defaults + [True, False, False, 0, None, 0]),
             module=('fhomm.ui.' + submodule),
             **kwargs
         )
@@ -58,6 +59,10 @@ def state_tuple(fields=[], defaults=[], submodule='', **kwargs):
             return s._replace(is_highlighted=False)
 
         @staticmethod
+        def add_ticks(dt):
+            return lambda s: s._replace(ticks=(s.ticks + dt))
+
+        @staticmethod
         def start_hold(event):
             return lambda s: s._replace(
                 hold_event=event,
@@ -79,10 +84,11 @@ class Element(object):
 
     State = state_tuple(submodule='Element')
 
-    def __init__(self, size, state=State(), grabs_mouse=False):
+    def __init__(self, size, state=State(), counts_ticks=False, grabs_mouse=False):
         # print(f"{self.__class__}: {size} {state}")
         self.size = size
         self.initial_state = state
+        self.counts_ticks = counts_ticks
         self.grabs_mouse = grabs_mouse
 
         self._dirty = False
@@ -175,12 +181,19 @@ class Element(object):
         #     print(f"{self}.on_event: {event}")
 
         if event.type == fhomm.event.EVENT_TICK:
-            if state.hold_event is not None:
-                cmds = fhomm.command.aslist(self.on_hold(state, event.dt))
-            else:
-                cmds = []
+            cmds = []
 
-            return cmds + fhomm.command.aslist(self.on_tick(event.dt))
+            if self.counts_ticks:
+                cmds.append(
+                    fhomm.command.cmd_update(Element.State.add_ticks(event.dt))
+                )
+
+            if state.hold_event is not None:
+                cmds.extend(fhomm.command.aslist(self.on_hold(state, event.dt)))
+
+            cmds.extend(fhomm.command.aslist(self.on_tick(event.dt)))
+
+            return cmds
 
         elif Element.is_keyboard_event(event):
             return self.handle_keyboard_event(state, event)

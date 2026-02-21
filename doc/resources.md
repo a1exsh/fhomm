@@ -74,6 +74,7 @@
 - `system.icn`: OKAY, CANCEL, YES, NO, OKAY, CANCEL once again, and the purple bar
 - `tent.icn`: hero's tent in the battle
 - `textbar.icn`: battle log bar and the AUTO, and SKIP buttons
+- `townwind.icn`: misc. icons for use in the town windows, incl. recruit, spells, build
 - `vgenback.icn`: TBD: fancy Coats of Arms
 - `viewarmy.icn`: view or dismiss troop
 - `viewgen.icn`: hero's "General" options during a battle
