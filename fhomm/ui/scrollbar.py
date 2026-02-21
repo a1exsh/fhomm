@@ -8,12 +8,12 @@ import fhomm.ui.list
 
 class ScrollBar(fhomm.ui.Element):
 
-    def __init__(self, rect, img_thumb, pad=Size(3, 3)):
-        super().__init__(rect, grabs_mouse=True)
+    def __init__(self, size, img_thumb, pad=Size(3, 3)):
+        super().__init__(size, grabs_mouse=True)
 
         self.img_thumb = img_thumb
         self.pad = pad
-        self.vrange = self.rect.h - self.img_thumb.size.h - 6
+        self.vrange = self.size.h - self.img_thumb.size.h - 6
 
     # could have a pressed internal state with a pressed thumb image
     def on_render(self, ctx, _, lst_state):

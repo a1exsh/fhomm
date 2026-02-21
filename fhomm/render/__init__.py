@@ -111,9 +111,14 @@ class Image(object):
         self._surface = surface
         self.size = Size(surface.get_width(), surface.get_height())
 
+    # @property
+    # def rect(self):
+    #     return Rect.of(self.size)
+
+    # needed to support override in Sprite below
     @property
-    def rect(self):
-        return Rect.of(self.size)
+    def aligned_size(self):
+        return self.size
 
     @classmethod
     def make_surface(cls, data, width, height, palette):
@@ -159,9 +164,12 @@ class Sprite(Image):
         self.offset = offset
 
     @property
-    def rect(self):
+    def aligned_size(self):
         return Rect.of(
-            Size(self.size.w + self.offset.x, self.size.h + self.offset.y)
+            Size(
+                self.size.w + self.offset.x,
+                self.size.h + self.offset.y,
+            )
         )
 
     @classmethod
