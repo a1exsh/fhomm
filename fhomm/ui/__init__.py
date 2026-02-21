@@ -79,17 +79,17 @@ class Element(object):
 
     State = state_tuple(submodule='Element')
 
-    def __init__(self, size, state=State(), grabs_mouse=False):
-        # print(f"{self.__class__}: {size} {state}")
-        self.size = size
+    def __init__(self, rect, state=State(), grabs_mouse=False):
+        # print(f"{self.__class__}: {rect} {state}")
+        self.rect = rect
         self.initial_state = state
         self.grabs_mouse = grabs_mouse
 
         self._dirty = False
 
     @property
-    def rect(self):
-        return Rect.of(self.size)
+    def size(self):
+        return self.rect.size
 
     def dirty(self):
         self._dirty = True
@@ -369,7 +369,7 @@ class Window(Element):
 
         @property
         def rect(self):
-            return Rect.of(self.element.size, self.relpos)
+            return self.element.rect.moved_by(self.relpos)
 
     def __init__(
             self,
@@ -380,7 +380,7 @@ class Window(Element):
     ):
         # a window must grab the mouse, otherwise it can lead to elements
         # getting input after mouse leaves and returns to the window area:
-        super().__init__(bg_image.size, state, grabs_mouse=True)
+        super().__init__(bg_image.rect, state, grabs_mouse=True)
 
         self.bg_image = bg_image
         self.child_slots = child_slots
@@ -388,8 +388,8 @@ class Window(Element):
 
         self.content_rect = Rect.of(
             Size(
-                self.size.w - 2*border_width,
-                self.size.h - 2*border_width,
+                self.rect.w - 2*border_width,
+                self.rect.h - 2*border_width,
             ),
             Pos(border_width, border_width),
         )
@@ -412,12 +412,12 @@ class Window(Element):
             force = True
 
         with ctx.restrict(self.content_rect) as content_ctx:
-            # content_ctx.draw_rect(228, Rect.of(self.content_rect.size), width=1)
+            # DEBUG: content_ctx.draw_rect(228, Rect.of(self.content_rect.size), width=1)
 
             for child in self.child_slots:
                 clip_rect = child.rect.moved_by(self.border_correction_offset)
                 with content_ctx.restrict(clip_rect) as child_ctx:
-                    # child_ctx.draw_rect(240, Rect.of(child.rect.size), width=1)
+                    # DEBUG: child_ctx.draw_rect(240, Rect.of(child.rect.size), width=1)
 
                     ext_state = state_map[child.ext_key] if child.ext_key else None
                     if child.element.render(

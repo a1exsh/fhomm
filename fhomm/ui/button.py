@@ -5,6 +5,11 @@ import fhomm.command
 import fhomm.render
 import fhomm.ui
 
+
+def no_action(*args, **kwargs):
+    pass
+
+
 class ActiveArea(fhomm.ui.Element):
 
     class State(
@@ -23,14 +28,14 @@ class ActiveArea(fhomm.ui.Element):
 
     def __init__(
             self,
-            size,
-            action,
+            rect,
+            action=no_action,
             is_active=True,
             act_on_hold=False,
             hotkey=None,
             **kwargs
     ):
-        super().__init__(size, ActiveArea.State(is_active=is_active), **kwargs)
+        super().__init__(rect, ActiveArea.State(is_active=is_active), **kwargs)
         self.action = action
         self.act_on_hold = act_on_hold
         self.hotkey = hotkey
@@ -73,7 +78,7 @@ class ActiveArea(fhomm.ui.Element):
 class Icon(ActiveArea):
 
     def __init__(self, img, **kwargs):
-        super().__init__(img.size, **kwargs)
+        super().__init__(img.rect, **kwargs)
         self.img = img
 
     def on_render(self, ctx, _):
@@ -83,8 +88,8 @@ class Icon(ActiveArea):
 
 class DynamicIcon(ActiveArea):
 
-    def __init__(self, size, img_fn, **kwargs):
-        super().__init__(size, **kwargs)
+    def __init__(self, rect, img_fn, **kwargs):
+        super().__init__(rect, **kwargs)
         self.img_fn = img_fn
 
     def on_render(self, ctx, state, ext_state=None):
@@ -107,4 +112,4 @@ class Button(DynamicIcon):
             else:
                 return img
 
-        super().__init__(img.size, select_img, **kwargs)
+        super().__init__(img.rect, select_img, **kwargs)

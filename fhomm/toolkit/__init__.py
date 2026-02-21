@@ -1,10 +1,11 @@
 import fhomm.render
-from fhomm.toolkit.button_font import ButtonFont
 import fhomm.ui
 import fhomm.ui.button
 import fhomm.ui.label
 import fhomm.ui.scrollbar
 
+from fhomm.render import Rect
+from fhomm.toolkit.button_font import ButtonFont
 
 class Toolkit(object):
     def __init__(self, loader):
@@ -98,14 +99,14 @@ class Toolkit(object):
 
     def label(self, size, text, font=None):
         return fhomm.ui.label.Label(
-            size,
+            Rect.of(size),
             (self.get_font() if font is None else font),
             text,
         )
 
     def dynamic_label(self, size, text_fn, font=None):
         return fhomm.ui.label.DynamicLabel(
-            size,
+            Rect.of(size),
             (self.get_font() if font is None else font),
             text_fn,
         )
@@ -114,7 +115,7 @@ class Toolkit(object):
         return fhomm.ui.button.Icon(self.load_sprite(icn_name, idx), **kwargs)
 
     def dynamic_icon(self, size, img_fn, **kwargs):
-        return fhomm.ui.button.DynamicIcon(size, img_fn, **kwargs)
+        return fhomm.ui.button.DynamicIcon(Rect.of(size), img_fn, **kwargs)
 
     def button(self, icn_name, base_idx, **kwargs):
         return fhomm.ui.button.Button(
@@ -125,12 +126,17 @@ class Toolkit(object):
 
     def list(self, size, items, img_size, **kwargs):
         return fhomm.ui.list.List(
-            size, self.get_font(), self.get_hl_font(), items, img_size, **kwargs,
+            Rect.of(size),
+            self.get_font(),
+            self.get_hl_font(),
+            items,
+            img_size,
+            **kwargs,
         )
 
     def scrollbar(self, size, **kwargs):
         return fhomm.ui.scrollbar.ScrollBar(
-            size,
+            Rect.of(size),
             self.load_sprite('scroll.icn', 4),
             **kwargs,
         )

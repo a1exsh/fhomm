@@ -111,6 +111,10 @@ class Image(object):
         self._surface = surface
         self.size = Size(surface.get_width(), surface.get_height())
 
+    @property
+    def rect(self):
+        return Rect.of(self.size)
+
     @classmethod
     def make_surface(cls, data, width, height, palette):
         surface = pygame.image.frombuffer(data, (width, height), 'P')
@@ -153,6 +157,12 @@ class Sprite(Image):
     def __init__(self, surface, offset):
         super().__init__(surface)
         self.offset = offset
+
+    @property
+    def rect(self):
+        return Rect.of(
+            Size(self.size.w + self.offset.x, self.size.h + self.offset.y)
+        )
 
     @classmethod
     def from_icn_sprite(cls, icn_sprite, palette):

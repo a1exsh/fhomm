@@ -175,7 +175,7 @@ class List(fhomm.ui.Element):
 
     def __init__(
             self,
-            size,
+            rect,
             font,
             hl_font,
             items,
@@ -188,23 +188,23 @@ class List(fhomm.ui.Element):
         self.img_size = img_size
         self.text_hpad = text_hpad
 
-        num_items_per_page = size.h // img_size.h
+        num_items_per_page = rect.h // img_size.h
         if num_items_per_page > 0:
-            self.item_vpad = (size.h % img_size.h) // num_items_per_page
+            self.item_vpad = (rect.h % img_size.h) // num_items_per_page
         else:
             self.item_vpad = 0
 
         self.list_pad = Size(
             0,
             (
-                size.h
+                rect.h
                 - num_items_per_page * img_size.h
                 - max(0, num_items_per_page - 1) * self.item_vpad
             ) // 2,
         )
 
         super().__init__(
-            size,
+            rect,
             fhomm.ui.list.State(
                 items=items,
                 num_items_per_page=num_items_per_page,

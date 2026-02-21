@@ -4,8 +4,8 @@ import fhomm.ui
 
 # TODO: text_fn=constantly(text)
 class Label(fhomm.ui.Element):
-    def __init__(self, size, font, text):
-        super().__init__(size)
+    def __init__(self, rect, font, text):
+        super().__init__(rect)
         self.font = font
         self.text = text
 
@@ -20,8 +20,8 @@ class Label(fhomm.ui.Element):
 
 
 class DynamicLabel(fhomm.ui.Element):
-    def __init__(self, size, font, text_fn):
-        super().__init__(size)
+    def __init__(self, rect, font, text_fn):
+        super().__init__(rect)
         self.font = font
         self.text_fn = text_fn
 

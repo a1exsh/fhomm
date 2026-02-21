@@ -25,6 +25,11 @@ class RecruitMonstersWindow(fhomm.ui.Window):
                 Pos(17, 17),
                 'lbl_title',
             ),
+            fhomm.ui.Window.Slot(
+                toolkit.icon('monsters.icn', monster.id),
+                Pos(46, 46),
+                'icn_monster',
+            ),
         ]
 
         super().__init__(

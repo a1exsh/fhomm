@@ -19,7 +19,7 @@ import fhomm.ui.button
 
 class SmallMonsterIcon(fhomm.ui.button.DynamicIcon):
     def __init__(self, toolkit, img_fn, **kwargs):
-        super().__init__(Size(34, 44), img_fn, **kwargs)
+        super().__init__(Rect.of(Size(34, 44)), img_fn, **kwargs)
         self.toolkit = toolkit
 
     def on_render(self, ctx, state, ext_state):
