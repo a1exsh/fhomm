@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-from fhomm.render import Pos
+from fhomm.render import Pos, Size
 import fhomm.command
 import fhomm.render
 import fhomm.ui
@@ -121,10 +121,12 @@ class AnimatedIcon(DynamicIcon):
         def select_img(state):
             return imgs[(state.ticks // 150) % len(imgs)]
 
-        super().__init__(imgs[0].size, select_img, counts_ticks=True, **kwargs)
+        w = max(i.size.w for i in imgs)
+        h = max(i.size.h for i in imgs)
+        super().__init__(Size(w, h), select_img, counts_ticks=True, **kwargs)
 
-    def on_render(self, ctx, state):
-        img = self.img_fn(state)
+    # def on_render(self, ctx, state):
+    #     img = self.img_fn(state)
 
-        if img is not None:
-            img.render(ctx, Pos(50, 100)) # TEMP
+    #     if img is not None:
+    #         img.render(ctx, Pos(50, 100)) # TEMP

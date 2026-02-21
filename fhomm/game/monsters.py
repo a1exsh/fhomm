@@ -38,3 +38,28 @@ MONSTERS = [
     Monster(26, "Ghost",        'ghost'),
     Monster(27, "Genie",        'genie'),
 ]
+
+# list of monster icn_name's that have a .wip icon set
+WIP_ICN_MONSTERS = set([
+    'archer',
+    'cavalry',
+    'centaur',
+    'cyclops',
+    'druid',
+    'dwarf',
+    'elf',
+    'goblin',
+    'hydra',
+    'minotaur',
+    'nomad',
+    'ogre',
+    'orc',
+    'paladin',
+    'peasant',
+    'pikeman',
+    'rogue',
+    'swrdsman',
+    'troll',
+    'unicorn',
+    'wolf',
+])

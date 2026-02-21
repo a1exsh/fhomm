@@ -124,13 +124,15 @@ class Toolkit(object):
         )
 
     def animated_icon(self, icn_name, idxs, **kwargs):
-        return fhomm.ui.button.AnimatedIcon(
-            [
-                self.load_sprite(icn_name, i)
-                for i in idxs
-            ],
-            **kwargs
-        )
+        imgs = [
+            self.load_sprite(icn_name, i)
+            for i in idxs
+        ]
+        imgs = [
+            img.moved_by(fhomm.render.Pos(-img.offset.x, -img.offset.y))
+            for img in imgs
+        ]
+        return fhomm.ui.button.AnimatedIcon(imgs, **kwargs)
 
     def list(self, size, items, img_size, **kwargs):
         return fhomm.ui.list.List(
