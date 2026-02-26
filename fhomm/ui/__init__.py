@@ -188,6 +188,7 @@ class Element(object):
                     fhomm.command.cmd_update(Element.State.add_ticks(event.dt))
                 )
 
+            # TODO: detect double-click in a similar fashion
             if state.hold_event is not None:
                 cmds.extend(fhomm.command.aslist(self.on_hold(state, event.dt)))
 
