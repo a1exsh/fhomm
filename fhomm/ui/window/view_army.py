@@ -1,22 +1,47 @@
 import pygame
 
 import fhomm.ui
-from fhomm.game.monsters import WIP_ICN_MONSTERS
+from fhomm.game.monsters import MONSTERS, WIP_ICN_MONSTERS
 from fhomm.render import Pos
 from fhomm.ui.button import AnimatedIcon
 
 
+class State(fhomm.ui.state_tuple(['monster_id'], submodule='view_army')):
+    @property
+    def monster(self):
+        return MONSTERS[self.monster_id]
+
+    @staticmethod
+    def next_monster(s):
+        return s._replace(monster_id=((s.monster_id + 1) % len(MONSTERS)))
+
+    @staticmethod
+    def prev_monster(s):
+        return s._replace(monster_id=((s.monster_id - 1) % len(MONSTERS)))
+
+
 class ViewArmyWindow(fhomm.ui.Window):
+
+    CMD_NEXT_MONSTER = fhomm.command.cmd_update(State.next_monster)
+    CMD_PREV_MONSTER = fhomm.command.cmd_update(State.prev_monster)
+
     def __init__(self, toolkit, monster):
-        self.toolkit = toolkit
-        self.monster = monster
+
+        all_monster_imgs = [
+            toolkit.load_sprite(icn, idx)
+            for icn in [self.icn_name(m.icn_name) for m in MONSTERS]
+            for idx in range(0, 6)
+        ]
+        min_off_x = min(img.offset.x for img in all_monster_imgs)
+        min_off_y = min(img.offset.y for img in all_monster_imgs)
+        imgs = [
+            img.moved_by(fhomm.render.Pos(-min_off_x, -min_off_y))
+            for img in all_monster_imgs
+        ]
 
         children = [
             fhomm.ui.Window.Slot(
-                toolkit.animated_icon(
-                    ViewArmyWindow.icn_name(monster.icn_name),
-                    range(0, 6),
-                ),
+                fhomm.ui.button.AnimatedIcon(imgs),
                 Pos(46, 46),
                 'ani_monster_walk',
             ),
@@ -26,6 +51,7 @@ class ViewArmyWindow(fhomm.ui.Window):
             toolkit.load_sprite('viewarmy.icn'),
             children,
             border_width=37,    # TODO: may need separate w/h here
+            state=State(monster_id=monster.id),
         )
 
     @staticmethod

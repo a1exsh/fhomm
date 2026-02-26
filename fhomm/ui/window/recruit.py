@@ -13,8 +13,8 @@ import fhomm.ui.button
 
 class State(fhomm.ui.state_tuple(['monster_id'], submodule='recruit')):
     @property
-    def monster_name(self):
-        return MONSTERS[self.monster_id].name
+    def monster(self):
+        return MONSTERS[self.monster_id]
 
     @staticmethod
     def next_monster(s):
@@ -39,7 +39,7 @@ class RecruitMonstersWindow(fhomm.ui.Window):
                 toolkit.dynamic_label(
                     Size(286, 22),
                     # TODO: make this translation-friendly
-                    lambda _, s: f"Recruit {s.monster_name}",
+                    lambda _, s: f"Recruit {s.monster.name}",
                 ),
                 Pos(17, 17),
                 'lbl_title',
